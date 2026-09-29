@@ -4,93 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syncro</title>
+    <!-- Importing Inter and Poppins fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    
     <style>
-        /* Base Styling & Background */
+        /* Base Styling & Background Classes */
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            /* Matches the dark teal to gold gradient */
-            background: linear-gradient(135deg, #093b4f 0%, #000000 50%, #876c12 100%);
+            font-family: 'Inter', sans-serif; /* Main Font */
             color: white;
             height: 100vh;
             overflow: hidden;
+            transition: background 0.5s ease;
+        }
+
+        /* Dynamic Backgrounds */
+        .bg-home {
+            background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%);
+        }
+        .bg-lobby {
+            /* Black fading into yellow */
+            background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%);
+        }
+
+        /* Subheading Font Application */
+        h3, p, .nav-item {
+            font-family: 'Poppins', sans-serif;
         }
 
         /* Navigation Bar */
         nav {
             display: flex;
             align-items: center;
-            padding: 20px 40px;
+            padding: 30px 50px;
         }
         .logo {
-            font-size: 24px;
-            font-weight: normal;
-            margin-right: 30px;
+            font-size: 28px;
+            font-weight: 600;
+            margin-right: 40px;
         }
         .nav-container {
             display: flex;
             position: relative;
-            gap: 10px;
+            gap: 15px;
         }
         .nav-item {
-            padding: 6px 16px;
+            padding: 8px 20px;
+            font-size: 16px;
             cursor: pointer;
-            z-index: 1; /* Keeps text above the pill */
-            border-radius: 20px;
+            z-index: 1;
+            border-radius: 25px;
             transition: color 0.3s ease;
         }
         .nav-item.active {
             color: black;
+            font-weight: 500;
         }
-        /* The Sliding Pill */
+        /* Top Nav Sliding Pill */
         #active-pill {
             position: absolute;
             top: 0;
             left: 0;
             height: 100%;
             background-color: white;
-            border-radius: 20px;
-            z-index: 0; /* Stays behind the text */
+            border-radius: 25px;
+            z-index: 0;
             transition: all 0.3s ease;
         }
 
         /* Page Layouts */
         .page {
-            display: none; /* Hide all pages by default */
-            padding: 60px 40px;
-            text-align: center;
+            display: none;
+            padding: 80px 50px;
             animation: fadeIn 0.4s ease-in-out;
         }
         .page.active-page {
-            display: block; /* Only show active page */
+            display: block;
         }
 
-        /* Home Page Specifics */
+        /* Home Page Specifics (Enlarged) */
+        .home-content {
+            text-align: center;
+            margin-top: 5vh;
+        }
         .home-content h1 {
-            font-size: 48px;
-            font-weight: normal;
-            margin-bottom: 10px;
+            font-size: 64px; /* Enlarged */
+            font-weight: 600;
+            margin-bottom: 15px;
         }
         .home-content p {
-            font-size: 20px;
-            margin-bottom: 40px;
-            color: #d1d1d1;
+            font-size: 24px; /* Enlarged */
+            margin-bottom: 50px;
+            color: #e0e0e0;
+            font-weight: 300;
         }
         .btn-group {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 30px; /* Wider gap */
         }
         .btn {
             background-color: white;
             color: black;
             border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-size: 16px;
+            padding: 18px 36px; /* Enlarged */
+            border-radius: 30px;
+            font-size: 18px; /* Enlarged */
+            font-weight: 500;
             cursor: pointer;
             transition: transform 0.2s;
+            font-family: 'Inter', sans-serif;
         }
         .btn:hover {
             transform: scale(1.05);
@@ -99,73 +123,96 @@
         /* Lobby / Create Room Specifics */
         .lobby-content {
             text-align: left;
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
         .lobby-content h1 {
-            font-size: 36px;
-            font-weight: normal;
+            font-size: 48px; /* Enlarged */
+            font-weight: 600;
             display: inline-block;
-            margin-right: 20px;
+            margin-right: 30px;
         }
         .input-dark {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
             border: none;
-            padding: 10px 15px;
-            border-radius: 10px;
+            padding: 15px 20px;
+            border-radius: 12px;
             color: white;
-            font-size: 16px;
+            font-size: 18px;
             outline: none;
+            font-family: 'Inter', sans-serif;
         }
         .input-dark::placeholder {
-            color: #a9a9a9;
+            color: #b0b0b0;
         }
-        .room-type-group {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-        }
-        .btn-dark {
-            background-color: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 15px;
-            cursor: pointer;
-        }
-        .btn-light {
-            background-color: white;
-            color: black;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 15px;
-            cursor: pointer;
-        }
+        
         .form-section {
-            margin-bottom: 25px;
+            margin-bottom: 35px;
         }
         .form-section h3 {
-            font-weight: normal;
-            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 15px;
         }
+
+        /* Room Type Sliding Pill Logic */
+        .room-type-container {
+            display: flex;
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            width: fit-content;
+            padding: 5px;
+        }
+        .room-btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            z-index: 1;
+            transition: color 0.3s ease;
+            color: #e0e0e0;
+            border-radius: 15px;
+        }
+        .room-btn.active-room {
+            color: black;
+            font-weight: 500;
+        }
+        #room-type-pill {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            height: calc(100% - 10px);
+            background-color: white;
+            border-radius: 15px;
+            z-index: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
         .create-final-btn {
             background-color: white;
             color: black;
             border: none;
-            padding: 15px 30px;
-            border-radius: 25px;
-            font-size: 16px;
+            padding: 18px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 40px;
+            margin-top: 30px;
+            font-family: 'Inter', sans-serif;
+            transition: transform 0.2s;
+        }
+        .create-final-btn:hover {
+            transform: scale(1.05);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
+<body class="bg-home">
 
     <!-- Navigation Bar -->
     <nav>
@@ -191,60 +238,86 @@
 
     <!-- Lobby Page -->
     <div id="lobby" class="page lobby-content">
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; margin-bottom: 40px;">
             <h1>Create a room</h1>
-            <input type="text" class="input-dark" placeholder="Room name">
+            <input type="text" class="input-dark" placeholder="Room name" style="width: 250px;">
         </div>
         
         <div class="form-section">
             <h3>Room type</h3>
-            <div class="room-type-group">
-                <button class="btn-dark">Private room</button>
-                <button class="btn-light">Public room</button>
+            <!-- New Sliding Pill for Room Type -->
+            <div class="room-type-container">
+                <div id="room-type-pill"></div>
+                <div class="room-btn active-room" onclick="selectRoomType('private', this)">Private room</div>
+                <div class="room-btn" onclick="selectRoomType('public', this)">Public room</div>
             </div>
         </div>
 
         <div class="form-section">
             <h3>Invite friends</h3>
-            <input type="text" class="input-dark" placeholder="Search username" style="width: 300px;">
+            <input type="text" class="input-dark" placeholder="Search username" style="width: 400px;">
         </div>
 
         <button class="create-final-btn">Create Syncro room</button>
     </div>
 
-    <!-- JavaScript for Animations and Logic -->
+    <!-- JavaScript -->
     <script>
-        // Set the initial pill position
+        // Setup initial pills on load
         window.onload = function() {
-            const activeItem = document.querySelector('.nav-item.active');
-            updatePillPosition(activeItem);
+            // Main Nav Pill
+            const activeNav = document.querySelector('.nav-item.active');
+            updateNavPill(activeNav);
+
+            // Room Type Pill
+            const activeRoom = document.querySelector('.room-btn.active-room');
+            updateRoomPill(activeRoom);
         };
 
-        function updatePillPosition(element) {
+        // --- Navigation Logic ---
+        function updateNavPill(element) {
             const pill = document.getElementById('active-pill');
-            // Match the pill's width and position to the clicked nav item
             pill.style.width = element.offsetWidth + 'px';
             pill.style.left = element.offsetLeft + 'px';
         }
 
         function navigateTo(pageId, navElement) {
-            // Update active text colors
+            // Change text colors
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
             navElement.classList.add('active');
+            updateNavPill(navElement);
 
-            // Move the pill
-            updatePillPosition(navElement);
-
-            // Switch the visible page
+            // Switch page visibility
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
+
+            // Dynamic Background Switching
+            if (pageId === 'lobby') {
+                document.body.className = 'bg-lobby';
+            } else {
+                document.body.className = 'bg-home';
+            }
         }
 
-        // Special function for the "Create new room" button
         function goToLobby() {
-            // Find the "Lobby" nav element and simulate a click on it
             const lobbyNav = document.querySelectorAll('.nav-item')[1]; 
             navigateTo('lobby', lobbyNav);
+        }
+
+        // --- Room Type Sliding Logic ---
+        function updateRoomPill(element) {
+            const pill = document.getElementById('room-type-pill');
+            pill.style.width = element.offsetWidth + 'px';
+            pill.style.left = element.offsetLeft + 'px';
+        }
+
+        function selectRoomType(type, element) {
+            // Change text colors
+            document.querySelectorAll('.room-btn').forEach(el => el.classList.remove('active-room'));
+            element.classList.add('active-room');
+            
+            // Move the pill
+            updateRoomPill(element);
         }
     </script>
 </body>
