@@ -15,7 +15,6 @@
             color: white;
             height: 100vh;
             overflow: hidden;
-            /* Base Home Gradient (Blue to Yellow) */
             background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%);
         }
 
@@ -23,13 +22,11 @@
         #bg-lobby-layer {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            /* Black fading into yellow */
             background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%);
-            opacity: 0; /* Hidden by default */
+            opacity: 0;
             transition: opacity 0.6s ease-in-out;
             z-index: -1; 
         }
-        /* Only active on the setup screen */
         body.lobby-active #bg-lobby-layer {
             opacity: 1; 
         }
@@ -87,6 +84,15 @@
             display: block;
         }
 
+        /* Glassmorphism Reusable Class */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
         /* Home Page */
         .home-content {
             text-align: center;
@@ -137,18 +143,16 @@
             margin-right: 20px;
         }
         .input-dark {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: none;
-            padding: 10px 16px; 
-            border-radius: 10px;
+            border-radius: 12px;
             color: white;
             font-size: 15px; 
             outline: none;
+            padding: 10px 16px;
             font-family: 'Inter', sans-serif;
             transition: background 0.3s ease;
         }
         .input-dark:focus {
-            background-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
         }
         .input-dark::placeholder {
             color: #b0b0b0;
@@ -167,7 +171,6 @@
         .room-type-container {
             display: flex;
             position: relative;
-            background-color: rgba(255, 255, 255, 0.08);
             border-radius: 16px;
             width: fit-content;
             padding: 4px;
@@ -233,27 +236,29 @@
             font-size: 24px;
         }
         .room-code-badge {
-            background-color: rgba(255,255,255,0.1);
-            padding: 5px 12px;
-            border-radius: 8px;
-            font-family: monospace;
-            font-size: 20px;
+            padding: 6px 14px;
+            border-radius: 10px;
+            font-family: 'Inter', sans-serif; /* Fixed Font */
+            font-size: 18px;
+            font-weight: 600;
             letter-spacing: 2px;
-            color: #c49a02;
+            color: #ffd700;
         }
         .end-room-btn {
-            background: #ff4c4c;
-            color: white;
-            border: none;
+            background: rgba(255, 76, 76, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 76, 76, 0.5);
+            color: #ff6b6b;
             padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
             font-weight: 500;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
         .end-room-btn:hover {
-            background: #ff3333;
+            background: #ff4c4c;
+            color: white;
         }
         
         .dashboard-grid {
@@ -262,11 +267,8 @@
             gap: 20px;
         }
         .glass-card {
-            background-color: rgba(255, 255, 255, 0.05);
             border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(4px);
+            padding: 25px;
         }
         
         /* Dummy Player UI */
@@ -279,7 +281,8 @@
         .album-art-placeholder {
             width: 100px;
             height: 100px;
-            background-color: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -305,7 +308,8 @@
         }
         .user-list li {
             padding: 10px 15px;
-            background-color: rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
             margin-bottom: 8px;
             border-radius: 8px;
             font-size: 14px;
@@ -316,8 +320,90 @@
         .avatar {
             width: 24px;
             height: 24px;
-            background-color: #c49a02;
+            background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%);
             border-radius: 50%;
+        }
+
+        /* --- NEW: Floating Return Button --- */
+        #floating-return-btn {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            padding: 12px 24px;
+            border-radius: 30px;
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            font-weight: 500;
+            z-index: 100;
+            transition: transform 0.2s ease;
+        }
+        #floating-return-btn:hover {
+            transform: translateY(-3px);
+        }
+        .ping-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e; /* Green status */
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        /* --- NEW: Custom Glass Modal --- */
+        #custom-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-content {
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            max-width: 350px;
+        }
+        .modal-content h3 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        .modal-btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+        }
+        .modal-btn-end {
+            background: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
         }
 
         @keyframes fadeIn {
@@ -330,6 +416,24 @@
 
     <!-- Smooth Background Transition Layer -->
     <div id="bg-lobby-layer"></div>
+
+    <!-- NEW: Custom Modal Overlay -->
+    <div id="custom-modal">
+        <div class="modal-content glass-effect">
+            <h3>End Session?</h3>
+            <p style="font-size: 14px; color: #ccc;">Are you sure you want to close this room? Everyone will be disconnected.</p>
+            <div class="modal-actions">
+                <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="modal-btn-end" onclick="confirmEndRoom()">End Room</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW: Floating Return Button -->
+    <div id="floating-return-btn" class="glass-effect" onclick="returnToRoom()">
+        <div class="ping-dot"></div>
+        Return to Room
+    </div>
 
     <!-- Navigation Bar -->
     <nav>
@@ -357,12 +461,12 @@
     <div id="lobby" class="page lobby-content">
         <div style="display: flex; align-items: center; margin-bottom: 30px;">
             <h1>Create a room</h1>
-            <input type="text" id="room-name-input" class="input-dark" placeholder="Room name" style="width: 200px;">
+            <input type="text" id="room-name-input" class="input-dark glass-effect" placeholder="Room name" style="width: 200px;">
         </div>
         
         <div class="form-section">
             <h3>Room type</h3>
-            <div class="room-type-container">
+            <div class="room-type-container glass-effect">
                 <div id="room-type-pill"></div>
                 <div class="room-btn active-room" onclick="selectRoomType('private', this)">Private room</div>
                 <div class="room-btn" onclick="selectRoomType('public', this)">Public room</div>
@@ -371,10 +475,9 @@
 
         <div class="form-section">
             <h3>Invite friends</h3>
-            <input type="text" class="input-dark" placeholder="Search username" style="width: 300px;">
+            <input type="text" class="input-dark glass-effect" placeholder="Search username" style="width: 300px;">
         </div>
 
-        <!-- Triggers the actual room creation -->
         <button class="create-final-btn" onclick="launchLiveRoom()">Create Syncro room</button>
     </div>
 
@@ -383,14 +486,13 @@
         <div class="room-header">
             <h2 id="display-room-title">My Syncro Room</h2>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div>Room Code: <span id="display-room-code" class="room-code-badge">------</span></div>
-                <button class="end-room-btn" onclick="endRoom()">End Room</button>
+                <div>Room Code: <span id="display-room-code" class="room-code-badge glass-effect">------</span></div>
+                <button class="end-room-btn" onclick="openModal()">End Room</button>
             </div>
         </div>
 
         <div class="dashboard-grid">
-            <!-- Left Side: Player -->
-            <div class="glass-card">
+            <div class="glass-card glass-effect">
                 <h3>Now Playing</h3>
                 <div class="dummy-player">
                     <div class="album-art-placeholder">
@@ -403,8 +505,7 @@
                 </div>
             </div>
 
-            <!-- Right Side: Listeners -->
-            <div class="glass-card">
+            <div class="glass-card glass-effect">
                 <h3>Listeners (1)</h3>
                 <ul class="user-list">
                     <li><div class="avatar"></div> You (Host)</li>
@@ -422,17 +523,16 @@
             const savedRoomName = localStorage.getItem('syncro_room_name');
 
             if (savedRoomCode) {
-                // Restore the active room state
+                // Restore room UI
                 document.getElementById('display-room-code').innerText = savedRoomCode;
                 if (savedRoomName) {
                     document.getElementById('display-room-title').innerText = savedRoomName;
                 }
                 
-                // Go straight to active room, keep 'Lobby' highlighted as the active tab
+                // Jump straight into the room on load
                 const lobbyNav = document.querySelectorAll('.nav-item')[1];
-                navigateTo('active-room', lobbyNav, true); // true flag to bypass alert on load
+                navigateTo('active-room', lobbyNav);
             } else {
-                // Standard load
                 const activeNav = document.querySelector('.nav-item.active');
                 updateNavPill(activeNav);
             }
@@ -446,35 +546,47 @@
             }
         }
 
-        function navigateTo(pageId, navElement, bypassAlert = false) {
-            // Prevent navigating away from the active room unless ending it
+        function navigateTo(pageId, navElement) {
+            // Check if there is a live room running
             const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
-            if (!bypassAlert && isRoomActive && pageId !== 'active-room' && pageId !== 'settings') {
-                alert("You are currently in a live room! End the room to go back home.");
-                return;
+            
+            // Logic for the floating "Return to Room" button
+            const floatingBtn = document.getElementById('floating-return-btn');
+            if (isRoomActive && pageId !== 'active-room') {
+                floatingBtn.style.display = 'flex';
+            } else {
+                floatingBtn.style.display = 'none';
             }
 
-            // Update Nav UI
+            // Navigation Update
             if (navElement) {
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
                 navElement.classList.add('active');
                 updateNavPill(navElement);
             }
 
-            // Switch Page Visibility
+            // Page Switch
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
 
-            // Handle Background Gradient
-            if (pageId === 'lobby') {
+            // Background Switcher
+            if (pageId === 'lobby' || pageId === 'active-room') {
                 document.body.classList.add('lobby-active'); 
-                setTimeout(() => {
-                    const activeRoom = document.querySelector('.room-btn.active-room');
-                    updateRoomPill(activeRoom);
-                }, 10);
+                if(pageId === 'lobby') {
+                    setTimeout(() => {
+                        const activeRoom = document.querySelector('.room-btn.active-room');
+                        updateRoomPill(activeRoom);
+                    }, 10);
+                }
             } else {
                 document.body.classList.remove('lobby-active'); 
             }
+        }
+
+        // Helper for the Floating Button
+        function returnToRoom() {
+            const lobbyNav = document.querySelectorAll('.nav-item')[1]; 
+            navigateTo('active-room', lobbyNav);
         }
 
         function goToLobby() {
@@ -498,7 +610,6 @@
         }
 
         function launchLiveRoom() {
-            // Generate a random 6 character code
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let roomCode = '';
             for (let i = 0; i < 6; i++) {
@@ -507,40 +618,50 @@
             
             const customName = document.getElementById('room-name-input').value;
 
-            // Save to Local Storage
+            // Save Memory
             localStorage.setItem('syncro_room_code', roomCode);
             if (customName.trim() !== '') {
                 localStorage.setItem('syncro_room_name', customName);
             }
 
-            // Update UI
+            // Render
             document.getElementById('display-room-code').innerText = roomCode;
-            if (customName.trim() !== '') {
-                document.getElementById('display-room-title').innerText = customName;
-            } else {
-                document.getElementById('display-room-title').innerText = 'My Syncro Room';
-            }
+            document.getElementById('display-room-title').innerText = customName.trim() !== '' ? customName : 'My Syncro Room';
 
-            // Navigate without triggering the block alert
             const lobbyNav = document.querySelectorAll('.nav-item')[1];
-            navigateTo('active-room', lobbyNav, true);
+            navigateTo('active-room', lobbyNav);
         }
 
-        // Function to kill the room
-        function endRoom() {
-            if(confirm("Are you sure you want to end this session?")) {
-                // Wipe memory
-                localStorage.removeItem('syncro_room_code');
-                localStorage.removeItem('syncro_room_name');
-                
-                // Reset Inputs
-                document.getElementById('room-name-input').value = '';
-                document.getElementById('display-room-title').innerText = 'My Syncro Room';
-                
-                // Send back home
-                const homeNav = document.querySelectorAll('.nav-item')[0];
-                navigateTo('home', homeNav, true);
-            }
+        // --- Custom Modal Logic ---
+        function openModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.style.opacity = '1', 10); // small delay for CSS transition
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('custom-modal');
+            modal.style.opacity = '0';
+            setTimeout(() => modal.style.display = 'none', 300); // wait for fade out
+        }
+
+        function confirmEndRoom() {
+            closeModal();
+            
+            // Wipe Memory
+            localStorage.removeItem('syncro_room_code');
+            localStorage.removeItem('syncro_room_name');
+            
+            // Reset fields
+            document.getElementById('room-name-input').value = '';
+            document.getElementById('display-room-title').innerText = 'My Syncro Room';
+            
+            // Hide floating button just in case
+            document.getElementById('floating-return-btn').style.display = 'none';
+
+            // Send home
+            const homeNav = document.querySelectorAll('.nav-item')[0];
+            navigateTo('home', homeNav);
         }
     </script>
 </body>
