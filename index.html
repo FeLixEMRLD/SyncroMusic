@@ -45,7 +45,7 @@
             padding: 20px 40px;
         }
         .logo {
-            font-size: 22px; /* Scaled down */
+            font-size: 22px; 
             font-weight: 600;
             margin-right: 40px;
         }
@@ -56,7 +56,7 @@
         }
         .nav-item {
             padding: 6px 16px;
-            font-size: 14px; /* Scaled down */
+            font-size: 14px; 
             cursor: pointer;
             z-index: 1;
             border-radius: 20px;
@@ -93,12 +93,12 @@
             margin-top: 10vh;
         }
         .home-content h1 {
-            font-size: 46px; /* Scaled down */
+            font-size: 46px; 
             font-weight: 600;
             margin-bottom: 8px;
         }
         .home-content p {
-            font-size: 18px; /* Scaled down */
+            font-size: 18px; 
             margin-bottom: 35px;
             color: #e0e0e0;
             font-weight: 300;
@@ -112,9 +112,9 @@
             background-color: white;
             color: black;
             border: none;
-            padding: 12px 24px; /* Scaled down */
+            padding: 12px 24px; 
             border-radius: 25px;
-            font-size: 15px; /* Scaled down */
+            font-size: 15px; 
             font-weight: 500;
             cursor: pointer;
             transition: transform 0.2s;
@@ -131,7 +131,7 @@
             margin: 0 auto;
         }
         .lobby-content h1 {
-            font-size: 32px; /* Scaled down */
+            font-size: 32px; 
             font-weight: 600;
             display: inline-block;
             margin-right: 20px;
@@ -139,10 +139,10 @@
         .input-dark {
             background-color: rgba(255, 255, 255, 0.1);
             border: none;
-            padding: 10px 16px; /* Scaled down */
+            padding: 10px 16px; 
             border-radius: 10px;
             color: white;
-            font-size: 15px; /* Scaled down */
+            font-size: 15px; 
             outline: none;
             font-family: 'Inter', sans-serif;
             transition: background 0.3s ease;
@@ -158,7 +158,7 @@
             margin-bottom: 25px;
         }
         .form-section h3 {
-            font-size: 18px; /* Scaled down */
+            font-size: 18px; 
             font-weight: 400;
             margin-bottom: 10px;
         }
@@ -201,7 +201,7 @@
             background-color: white;
             color: black;
             border: none;
-            padding: 12px 28px; /* Scaled down */
+            padding: 12px 28px; 
             border-radius: 25px;
             font-size: 15px;
             font-weight: 600;
@@ -214,7 +214,7 @@
             transform: scale(1.05);
         }
 
-        /* Active Room Dashboard (New!) */
+        /* Active Room Dashboard */
         .active-room-content {
             max-width: 900px;
             margin: 0 auto;
@@ -240,6 +240,20 @@
             font-size: 20px;
             letter-spacing: 2px;
             color: #c49a02;
+        }
+        .end-room-btn {
+            background: #ff4c4c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+        .end-room-btn:hover {
+            background: #ff3333;
         }
         
         .dashboard-grid {
@@ -364,11 +378,14 @@
         <button class="create-final-btn" onclick="launchLiveRoom()">Create Syncro room</button>
     </div>
 
-    <!-- Active Live Room Dashboard (NEW) -->
+    <!-- Active Live Room Dashboard -->
     <div id="active-room" class="page active-room-content">
         <div class="room-header">
             <h2 id="display-room-title">My Syncro Room</h2>
-            <div>Room Code: <span id="display-room-code" class="room-code-badge">------</span></div>
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div>Room Code: <span id="display-room-code" class="room-code-badge">------</span></div>
+                <button class="end-room-btn" onclick="endRoom()">End Room</button>
+            </div>
         </div>
 
         <div class="dashboard-grid">
@@ -399,9 +416,26 @@
 
     <!-- JavaScript -->
     <script>
+        // Check for an existing room on load
         window.onload = function() {
-            const activeNav = document.querySelector('.nav-item.active');
-            updateNavPill(activeNav);
+            const savedRoomCode = localStorage.getItem('syncro_room_code');
+            const savedRoomName = localStorage.getItem('syncro_room_name');
+
+            if (savedRoomCode) {
+                // Restore the active room state
+                document.getElementById('display-room-code').innerText = savedRoomCode;
+                if (savedRoomName) {
+                    document.getElementById('display-room-title').innerText = savedRoomName;
+                }
+                
+                // Go straight to active room, keep 'Lobby' highlighted as the active tab
+                const lobbyNav = document.querySelectorAll('.nav-item')[1];
+                navigateTo('active-room', lobbyNav, true); // true flag to bypass alert on load
+            } else {
+                // Standard load
+                const activeNav = document.querySelector('.nav-item.active');
+                updateNavPill(activeNav);
+            }
         };
 
         function updateNavPill(element) {
@@ -412,7 +446,14 @@
             }
         }
 
-        function navigateTo(pageId, navElement) {
+        function navigateTo(pageId, navElement, bypassAlert = false) {
+            // Prevent navigating away from the active room unless ending it
+            const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
+            if (!bypassAlert && isRoomActive && pageId !== 'active-room' && pageId !== 'settings') {
+                alert("You are currently in a live room! End the room to go back home.");
+                return;
+            }
+
             // Update Nav UI
             if (navElement) {
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -426,15 +467,13 @@
 
             // Handle Background Gradient
             if (pageId === 'lobby') {
-                document.body.classList.add('lobby-active'); // Switches to Black/Yellow
-                
-                // Recalculate room pill when visible
+                document.body.classList.add('lobby-active'); 
                 setTimeout(() => {
                     const activeRoom = document.querySelector('.room-btn.active-room');
                     updateRoomPill(activeRoom);
                 }, 10);
             } else {
-                document.body.classList.remove('lobby-active'); // Reverts to Blue/Yellow
+                document.body.classList.remove('lobby-active'); 
             }
         }
 
@@ -458,26 +497,50 @@
             updateRoomPill(element);
         }
 
-        // NEW: Launch the live room
         function launchLiveRoom() {
-            // 1. Generate a random 6 character code
+            // Generate a random 6 character code
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let roomCode = '';
             for (let i = 0; i < 6; i++) {
                 roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             }
             
-            // 2. Set the code in the UI
-            document.getElementById('display-room-code').innerText = roomCode;
-
-            // 3. Set the room name (if user typed one)
             const customName = document.getElementById('room-name-input').value;
+
+            // Save to Local Storage
+            localStorage.setItem('syncro_room_code', roomCode);
             if (customName.trim() !== '') {
-                document.getElementById('display-room-title').innerText = customName;
+                localStorage.setItem('syncro_room_name', customName);
             }
 
-            // 4. Navigate to the active room (bypassing clicking a nav item directly, keeping "Lobby" highlighted)
-            navigateTo('active-room', null);
+            // Update UI
+            document.getElementById('display-room-code').innerText = roomCode;
+            if (customName.trim() !== '') {
+                document.getElementById('display-room-title').innerText = customName;
+            } else {
+                document.getElementById('display-room-title').innerText = 'My Syncro Room';
+            }
+
+            // Navigate without triggering the block alert
+            const lobbyNav = document.querySelectorAll('.nav-item')[1];
+            navigateTo('active-room', lobbyNav, true);
+        }
+
+        // Function to kill the room
+        function endRoom() {
+            if(confirm("Are you sure you want to end this session?")) {
+                // Wipe memory
+                localStorage.removeItem('syncro_room_code');
+                localStorage.removeItem('syncro_room_name');
+                
+                // Reset Inputs
+                document.getElementById('room-name-input').value = '';
+                document.getElementById('display-room-title').innerText = 'My Syncro Room';
+                
+                // Send back home
+                const homeNav = document.querySelectorAll('.nav-item')[0];
+                navigateTo('home', homeNav, true);
+            }
         }
     </script>
 </body>
