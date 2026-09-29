@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Syncro</title>
+    <style>
+        /* Base Styling & Background */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Matches the dark teal to gold gradient */
+            background: linear-gradient(135deg, #093b4f 0%, #000000 50%, #876c12 100%);
+            color: white;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Navigation Bar */
+        nav {
+            display: flex;
+            align-items: center;
+            padding: 20px 40px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: normal;
+            margin-right: 30px;
+        }
+        .nav-container {
+            display: flex;
+            position: relative;
+            gap: 10px;
+        }
+        .nav-item {
+            padding: 6px 16px;
+            cursor: pointer;
+            z-index: 1; /* Keeps text above the pill */
+            border-radius: 20px;
+            transition: color 0.3s ease;
+        }
+        .nav-item.active {
+            color: black;
+        }
+        /* The Sliding Pill */
+        #active-pill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: white;
+            border-radius: 20px;
+            z-index: 0; /* Stays behind the text */
+            transition: all 0.3s ease;
+        }
+
+        /* Page Layouts */
+        .page {
+            display: none; /* Hide all pages by default */
+            padding: 60px 40px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        .page.active-page {
+            display: block; /* Only show active page */
+        }
+
+        /* Home Page Specifics */
+        .home-content h1 {
+            font-size: 48px;
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .home-content p {
+            font-size: 20px;
+            margin-bottom: 40px;
+            color: #d1d1d1;
+        }
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        .btn {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+
+        /* Lobby / Create Room Specifics */
+        .lobby-content {
+            text-align: left;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .lobby-content h1 {
+            font-size: 36px;
+            font-weight: normal;
+            display: inline-block;
+            margin-right: 20px;
+        }
+        .input-dark {
+            background-color: rgba(255, 255, 255, 0.2);
+            border: none;
+            padding: 10px 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+        .input-dark::placeholder {
+            color: #a9a9a9;
+        }
+        .room-type-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        .btn-dark {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .btn-light {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 15px;
+            cursor: pointer;
+        }
+        .form-section {
+            margin-bottom: 25px;
+        }
+        .form-section h3 {
+            font-weight: normal;
+            margin-bottom: 10px;
+        }
+        .create-final-btn {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 40px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    <nav>
+        <div class="logo">Syncro</div>
+        <div class="nav-container">
+            <div id="active-pill"></div>
+            <div class="nav-item active" onclick="navigateTo('home', this)">Home</div>
+            <div class="nav-item" onclick="navigateTo('lobby', this)">Lobby</div>
+            <div class="nav-item" onclick="navigateTo('explore', this)">Explore</div>
+            <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div id="home" class="page active-page home-content">
+        <h1>Welcome to Syncro</h1>
+        <p>Ready to sync up your music?</p>
+        <div class="btn-group">
+            <button class="btn" onclick="goToLobby()">Create new room</button>
+            <button class="btn">Join a room</button>
+        </div>
+    </div>
+
+    <!-- Lobby Page -->
+    <div id="lobby" class="page lobby-content">
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <h1>Create a room</h1>
+            <input type="text" class="input-dark" placeholder="Room name">
+        </div>
+        
+        <div class="form-section">
+            <h3>Room type</h3>
+            <div class="room-type-group">
+                <button class="btn-dark">Private room</button>
+                <button class="btn-light">Public room</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>Invite friends</h3>
+            <input type="text" class="input-dark" placeholder="Search username" style="width: 300px;">
+        </div>
+
+        <button class="create-final-btn">Create Syncro room</button>
+    </div>
+
+    <!-- JavaScript for Animations and Logic -->
+    <script>
+        // Set the initial pill position
+        window.onload = function() {
+            const activeItem = document.querySelector('.nav-item.active');
+            updatePillPosition(activeItem);
+        };
+
+        function updatePillPosition(element) {
+            const pill = document.getElementById('active-pill');
+            // Match the pill's width and position to the clicked nav item
+            pill.style.width = element.offsetWidth + 'px';
+            pill.style.left = element.offsetLeft + 'px';
+        }
+
+        function navigateTo(pageId, navElement) {
+            // Update active text colors
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            navElement.classList.add('active');
+
+            // Move the pill
+            updatePillPosition(navElement);
+
+            // Switch the visible page
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+        }
+
+        // Special function for the "Create new room" button
+        function goToLobby() {
+            // Find the "Lobby" nav element and simulate a click on it
+            const lobbyNav = document.querySelectorAll('.nav-item')[1]; 
+            navigateTo('lobby', lobbyNav);
+        }
+    </script>
+</body>
+</html>
