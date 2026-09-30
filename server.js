@@ -25,12 +25,17 @@ app.get('/check-room/:code', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
-    // NEW: Explicitly handle Room Creation (Host only)
+    // Create Room - Now saves the Custom Room Name
     socket.on('create_room', (data) => {
-        const { roomCode, username } = data;
+        const { roomCode, username, customRoomName } = data;
         socket.join(roomCode);
         
-        activeRooms[roomCode] = { hostId: socket.id, hostName: username, sockets: {} };
+        activeRooms[roomCode] = { 
+            hostId: socket.id, 
+            hostName: username, 
+            customRoomName: customRoomName || '', 
+            sockets: {} 
+        };
         activeRooms[roomCode].sockets[socket.id] = username;
         
         socket.username = username;
@@ -38,15 +43,15 @@ io.on('connection', (socket) => {
 
         io.to(roomCode).emit('room_updated', {
             hostName: activeRooms[roomCode].hostName,
+            customRoomName: activeRooms[roomCode].customRoomName,
             users: [username]
         });
     });
 
-    // NEW: Explicitly handle Joining (Guests & Refreshing Hosts)
+    // Join Room - Now sends the Custom Room Name back to the guest
     socket.on('join_room', (data, callback) => {
         const { roomCode, username } = data;
         
-        // If room was deleted (e.g., host closed tab), reject the join
         if (!activeRooms[roomCode]) {
             if (callback) callback({ success: false });
             return;
@@ -60,10 +65,10 @@ io.on('connection', (socket) => {
         const uniqueUsers = [...new Set(Object.values(activeRooms[roomCode].sockets))];
         io.to(roomCode).emit('room_updated', {
             hostName: activeRooms[roomCode].hostName,
+            customRoomName: activeRooms[roomCode].customRoomName,
             users: uniqueUsers
         });
         
-        // Broadcast join message to everyone EXCEPT the person who just joined
         socket.to(roomCode).emit('toast_message', `${username} joined the room`);
         
         if (callback) callback({ success: true });
@@ -81,12 +86,10 @@ io.on('connection', (socket) => {
         if (sock.roomCode && activeRooms[sock.roomCode]) {
             const room = activeRooms[sock.roomCode];
             
-            // If HOST disconnects or closes tab
             if (room.hostId === sock.id) {
                 io.to(sock.roomCode).emit('room_ended');
                 delete activeRooms[sock.roomCode];
             } else {
-                // If GUEST disconnects or closes tab
                 const exitingUser = sock.username;
                 delete room.sockets[sock.id];
                 sock.leave(sock.roomCode);
@@ -94,6 +97,7 @@ io.on('connection', (socket) => {
                 const uniqueUsers = [...new Set(Object.values(room.sockets))];
                 io.to(sock.roomCode).emit('room_updated', {
                     hostName: room.hostName,
+                    customRoomName: room.customRoomName,
                     users: uniqueUsers
                 });
                 
