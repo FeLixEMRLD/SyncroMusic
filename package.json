@@ -1,0 +1,14 @@
+{
+  "name": "syncro-backend",
+  "version": "1.0.0",
+  "description": "Real-time backend for Syncro",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5"
+  }
+}
