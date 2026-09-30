@@ -10,10 +10,9 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); }
         
-        /* Background Layers */
         #bg-lobby-layer, #bg-explore-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -1; }
         #bg-lobby-layer { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
-        #bg-explore-layer { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } /* Dark Purple */
+        #bg-explore-layer { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } 
         body.lobby-active #bg-lobby-layer { opacity: 1; }
         body.explore-active #bg-explore-layer { opacity: 1; }
 
@@ -96,7 +95,6 @@
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
-        /* Toast Notification System */
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
@@ -118,11 +116,8 @@
 </head>
 <body>
 
-    <!-- Dynamic Backgrounds -->
     <div id="bg-lobby-layer"></div>
     <div id="bg-explore-layer"></div>
-
-    <!-- Toast Notifications -->
     <div id="toast-container"></div>
 
     <div id="custom-modal">
@@ -131,7 +126,7 @@
             <p id="modal-desc" style="font-size: 14px; color: #ddd; font-weight: 300;">Are you sure you want to close this room? Everyone will be disconnected.</p>
             <div class="modal-actions">
                 <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
-                <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmEndRoom()">End Room</button>
+                <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmModalAction()">End Room</button>
             </div>
         </div>
     </div>
@@ -184,7 +179,7 @@
         </div>
         <p>6-digit code shared by room host</p>
         
-        <button id="join-room-btn" disabled onclick="joinExistingRoom()">Join room</button>
+        <button id="join-room-btn" disabled onclick="initiateJoinRoom()">Join room</button>
     </div>
 
     <div id="lobby" class="page lobby-content">
@@ -208,7 +203,7 @@
             <h2 id="display-room-title">My Syncro Room</h2>
             <div class="room-actions">
                 <div class="room-code-badge glass-effect">Code: <span id="display-room-code" style="margin-left: 6px;">------</span></div>
-                <button class="end-room-btn" onclick="openModal()"><span id="header-end-btn-text">End Room</span></button>
+                <button class="end-room-btn" onclick="openEndLeaveModal()"><span id="header-end-btn-text">End Room</span></button>
             </div>
         </div>
         <div class="dashboard-grid">
@@ -233,12 +228,13 @@
         const socket = io(RENDER_URL);
         let currentUsername = '';
         let isCurrentUserHost = false;
+        let modalActionContext = 'leave'; 
+        let pendingSwitchCode = '';
 
         window.onload = function() {
             generateIdentity();
             checkExistingRoomState();
-            const activeNav = document.querySelector('.nav-item.active');
-            updatePillPos('active-pill', activeNav);
+            updatePillPos('active-pill', document.querySelector('.nav-item.active'));
         };
 
         function generateIdentity() {
@@ -252,45 +248,43 @@
             document.getElementById('display-username').innerText = currentUsername;
         }
 
-        // --- Toast System ---
         function triggerToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'glass-effect toast-msg';
             toast.style.animation = 'slideInRight 0.4s forwards';
             toast.innerHTML = `<div class="ping-dot" style="animation: none;"></div> ${message}`;
-            
             container.appendChild(toast);
-            
             setTimeout(() => {
                 toast.style.animation = 'fadeOutRight 0.4s forwards';
                 setTimeout(() => toast.remove(), 400);
             }, 3000);
         }
 
-        socket.on('toast_message', (msg) => {
-            triggerToast(msg);
-        });
+        socket.on('toast_message', (msg) => triggerToast(msg));
 
+        // --- NEW: Update UI with Dynamic Room Names ---
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
+            const titleEl = document.getElementById('display-room-title');
+            if (data.customRoomName && data.customRoomName.trim() !== '') {
+                titleEl.innerText = data.customRoomName;
+                localStorage.setItem('syncro_room_name', data.customRoomName);
+            } else {
+                titleEl.innerText = `${data.hostName}'s Syncro Room`;
+                localStorage.setItem('syncro_room_name', `${data.hostName}'s Syncro Room`);
+            }
+            
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
-            document.getElementById('modal-title').innerText = isCurrentUserHost ? 'End Session?' : 'Leave Room?';
-            document.getElementById('modal-desc').innerText = isCurrentUserHost 
-                ? 'Are you sure you want to close this room? Everyone will be disconnected.' 
-                : 'Are you sure you want to leave this room?';
-            document.getElementById('modal-confirm-btn').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
 
             const listEl = document.getElementById('live-user-list');
             listEl.innerHTML = ''; 
-            
             data.users.forEach(user => {
                 const li = document.createElement('li');
                 let displayName = user;
                 if (user === currentUsername) displayName += " (You)";
                 if (user === data.hostName) displayName += " (Host)";
-                
                 li.innerHTML = `<div class="avatar"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
             });
@@ -307,7 +301,7 @@
                     closeModal();
                     forceClearRoomState();
                     document.querySelector('.modal-btn-cancel').style.display = 'inline-block';
-                    document.getElementById('modal-confirm-btn').onclick = confirmEndRoom;
+                    document.getElementById('modal-confirm-btn').onclick = confirmModalAction;
                 };
                 openModal();
             }
@@ -330,7 +324,6 @@
         function navigateTo(pageId, navElement) {
             const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
             const floatingBtn = document.getElementById('floating-return-btn');
-            
             floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
 
             if (navElement) {
@@ -358,7 +351,6 @@
             element.classList.add('active-pill');
             updatePillPos('room-type-pill', element);
         }
-
         function toggleExploreType(type, element) {
             document.querySelectorAll('#explore .pill-btn').forEach(el => el.classList.remove('active-pill'));
             element.classList.add('active-pill');
@@ -371,12 +363,9 @@
 
         function handleInput(element, index) {
             element.value = element.value.toUpperCase();
-            if (element.value.length === 1 && index < 5) {
-                document.querySelectorAll('.code-box')[index + 1].focus();
-            }
+            if (element.value.length === 1 && index < 5) document.querySelectorAll('.code-box')[index + 1].focus();
             validateRoomCode();
         }
-        
         function handleBackspace(event, index) {
             if (event.key === 'Backspace' && document.querySelectorAll('.code-box')[index].value === '' && index > 0) {
                 document.querySelectorAll('.code-box')[index - 1].focus();
@@ -392,32 +381,24 @@
                 try {
                     const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
                     const data = await response.json();
-                    
-                    if (data.valid) {
-                        btn.classList.add('valid');
-                        btn.disabled = false;
-                    } else {
-                        btn.classList.remove('valid');
-                        btn.disabled = true;
-                    }
+                    if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
+                    else { btn.classList.remove('valid'); btn.disabled = true; }
                 } catch (error) { console.error("Failed to verify room:", error); }
             } else {
-                btn.classList.remove('valid');
-                btn.disabled = true;
+                btn.classList.remove('valid'); btn.disabled = true;
             }
         }
 
-        // Modified check to verify room with server callback
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
             const savedName = localStorage.getItem('syncro_room_name');
             if (savedCode) {
                 socket.emit('join_room', { roomCode: savedCode, username: currentUsername }, (response) => {
                     if (response && response.success) {
-                        renderActiveRoom(savedCode, savedName);
+                        document.getElementById('display-room-code').innerText = savedCode;
+                        document.getElementById('display-room-title').innerText = savedName;
                         navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
                     } else {
-                        // Room doesn't exist anymore, silently clean up
                         forceClearRoomState();
                     }
                 });
@@ -430,34 +411,41 @@
             for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             const customName = document.getElementById('room-name-input').value;
 
-            socket.emit('create_room', { roomCode: roomCode, username: currentUsername });
+            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, customRoomName: customName });
 
             localStorage.setItem('syncro_room_code', roomCode);
-            if (customName.trim() !== '') localStorage.setItem('syncro_room_name', customName);
-
-            renderActiveRoom(roomCode, customName);
+            document.getElementById('display-room-code').innerText = roomCode;
             navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
         }
 
-        function joinExistingRoom() {
+        // --- NEW: Intercepting Join Requests to check for active rooms ---
+        function initiateJoinRoom() {
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
             
-            socket.emit('join_room', { roomCode: enteredCode, username: currentUsername }, (response) => {
+            const currentRoom = localStorage.getItem('syncro_room_code');
+            if (currentRoom) {
+                if (currentRoom === enteredCode) {
+                    navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                    return;
+                }
+                openSwitchRoomModal(enteredCode);
+            } else {
+                proceedToJoinRoom(enteredCode);
+            }
+        }
+
+        function proceedToJoinRoom(code) {
+            socket.emit('join_room', { roomCode: code, username: currentUsername }, (response) => {
                 if (response && response.success) {
-                    localStorage.setItem('syncro_room_code', enteredCode);
-                    localStorage.setItem('syncro_room_name', 'Joined Syncro Room');
-                    renderActiveRoom(enteredCode, 'Joined Syncro Room');
+                    localStorage.setItem('syncro_room_code', code);
+                    document.getElementById('display-room-code').innerText = code;
                     navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
                 }
             });
         }
 
-        function renderActiveRoom(code, name) {
-            document.getElementById('display-room-code').innerText = code;
-            document.getElementById('display-room-title').innerText = (name && name.trim() !== '') ? name : 'My Syncro Room';
-        }
-
+        // --- MODAL LOGIC ---
         function openModal() {
             const modal = document.getElementById('custom-modal');
             modal.style.display = 'flex';
@@ -469,10 +457,36 @@
             setTimeout(() => modal.style.display = 'none', 300);
         }
 
-        function confirmEndRoom() {
+        function openEndLeaveModal() {
+            modalActionContext = 'leave';
+            document.getElementById('modal-title').innerText = isCurrentUserHost ? 'End Session?' : 'Leave Room?';
+            document.getElementById('modal-desc').innerText = isCurrentUserHost 
+                ? 'Are you sure you want to close this room? Everyone will be disconnected.' 
+                : 'Are you sure you want to leave this room?';
+            document.getElementById('modal-confirm-btn').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
+            openModal();
+        }
+
+        function openSwitchRoomModal(newCode) {
+            modalActionContext = 'switch';
+            pendingSwitchCode = newCode;
+            document.getElementById('modal-title').innerText = 'Switch Rooms?';
+            document.getElementById('modal-desc').innerText = isCurrentUserHost 
+                ? 'You are currently hosting a room. Joining a new one will close your current room for everyone. Continue?' 
+                : 'You are already in a room. Do you want to leave it to join this new one?';
+            document.getElementById('modal-confirm-btn').innerText = 'Switch Room';
+            openModal();
+        }
+
+        function confirmModalAction() {
             closeModal();
             socket.emit('leave_room');
-            forceClearRoomState();
+            
+            if (modalActionContext === 'switch') {
+                setTimeout(() => { proceedToJoinRoom(pendingSwitchCode); }, 200);
+            } else {
+                forceClearRoomState();
+            }
         }
 
         function forceClearRoomState() {
