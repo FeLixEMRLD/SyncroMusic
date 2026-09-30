@@ -110,11 +110,11 @@
 
     <div id="custom-modal">
         <div class="modal-content">
-            <h3>End Session?</h3>
-            <p style="font-size: 14px; color: #ddd; font-weight: 300;">Are you sure you want to close this room? Everyone will be disconnected.</p>
+            <h3 id="modal-title">End Session?</h3>
+            <p id="modal-desc" style="font-size: 14px; color: #ddd; font-weight: 300;">Are you sure you want to close this room? Everyone will be disconnected.</p>
             <div class="modal-actions">
                 <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
-                <button class="modal-btn-end" onclick="confirmEndRoom()">End Room</button>
+                <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmEndRoom()">End Room</button>
             </div>
         </div>
     </div>
@@ -158,7 +158,6 @@
 
         <h2>Join a private room</h2>
         <div class="code-input-container">
-            <!-- Switched to oninput for Mobile Support -->
             <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 0)" onkeydown="handleBackspace(event, 0)">
             <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 1)" onkeydown="handleBackspace(event, 1)">
             <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 2)" onkeydown="handleBackspace(event, 2)">
@@ -192,7 +191,7 @@
             <h2 id="display-room-title">My Syncro Room</h2>
             <div class="room-actions">
                 <div class="room-code-badge glass-effect">Code: <span id="display-room-code" style="margin-left: 6px;">------</span></div>
-                <button class="end-room-btn" onclick="openModal()">End Room</button>
+                <button class="end-room-btn" onclick="openModal()"><span id="header-end-btn-text">End Room</span></button>
             </div>
         </div>
         <div class="dashboard-grid">
@@ -218,6 +217,7 @@
         const RENDER_URL = 'https://syncroserver-rfy8.onrender.com';
         const socket = io(RENDER_URL);
         let currentUsername = '';
+        let isCurrentUserHost = false;
 
         window.onload = function() {
             generateIdentity();
@@ -239,16 +239,51 @@
             document.getElementById('display-username').innerText = currentUsername;
         }
 
-        socket.on('room_updated', (usersArray) => {
+        // --- NEW: Socket Listeners for Host Logic ---
+        socket.on('room_updated', (data) => {
+            isCurrentUserHost = (currentUsername === data.hostName);
+            
+            // Update UI based on Host or Guest status
+            document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
+            document.getElementById('modal-title').innerText = isCurrentUserHost ? 'End Session?' : 'Leave Room?';
+            document.getElementById('modal-desc').innerText = isCurrentUserHost 
+                ? 'Are you sure you want to close this room? Everyone will be disconnected.' 
+                : 'Are you sure you want to leave this room?';
+            document.getElementById('modal-confirm-btn').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
+
             const listEl = document.getElementById('live-user-list');
             listEl.innerHTML = ''; 
             
-            usersArray.forEach(user => {
+            data.users.forEach(user => {
                 const li = document.createElement('li');
-                const displayName = user === currentUsername ? `${user} (You)` : user;
+                let displayName = user;
+                if (user === currentUsername) displayName += " (You)";
+                if (user === data.hostName) displayName += " (Host)";
+                
                 li.innerHTML = `<div class="avatar"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
             });
+        });
+
+        // Broadcasted to guests when the Host clicks End Room
+        socket.on('room_ended', () => {
+            if (!isCurrentUserHost) {
+                // Modify modal to be an alert instead of a choice
+                document.getElementById('modal-title').innerText = 'Room Ended';
+                document.getElementById('modal-desc').innerText = 'The host has closed this session.';
+                document.querySelector('.modal-btn-cancel').style.display = 'none';
+                document.getElementById('modal-confirm-btn').innerText = 'Okay';
+                
+                // Override click to just clear state
+                document.getElementById('modal-confirm-btn').onclick = () => {
+                    closeModal();
+                    forceClearRoomState();
+                    // Reset modal behavior for next time
+                    document.querySelector('.modal-btn-cancel').style.display = 'inline-block';
+                    document.getElementById('modal-confirm-btn').onclick = confirmEndRoom;
+                };
+                openModal();
+            }
         });
 
         function updatePillPos(pillId, element) {
@@ -307,7 +342,6 @@
         function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
         function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
 
-        // --- NEW: Bulletproof Mobile Input Handlers ---
         function handleInput(element, index) {
             element.value = element.value.toUpperCase();
             if (element.value.length === 1 && index < 5) {
@@ -402,8 +436,15 @@
             modal.style.opacity = '0';
             setTimeout(() => modal.style.display = 'none', 300);
         }
+
         function confirmEndRoom() {
             closeModal();
+            // Explicitly tell the server this user is leaving/ending the room
+            socket.emit('leave_room');
+            forceClearRoomState();
+        }
+
+        function forceClearRoomState() {
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
             
