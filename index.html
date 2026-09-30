@@ -17,7 +17,7 @@
         .nav-left { display: flex; align-items: center; }
         .logo { font-size: 22px; font-weight: 600; margin-right: 40px; }
         .nav-container { display: flex; position: relative; gap: 10px; }
-        .nav-item { padding: 6px 16px; font-size: 14px; cursor: pointer; z-index: 1; border-radius: 20px; transition: color 0.3s ease; }
+        .nav-item { padding: 6px 16px; font-size: 14px; cursor: pointer; z-index: 1; border-radius: 20px; transition: color 0.3s ease; white-space: nowrap; }
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
@@ -38,7 +38,7 @@
         .explore-content { text-align: center; max-width: 600px; margin: 0 auto; margin-top: 5vh; }
         .explore-content h2 { font-size: 24px; font-weight: 500; margin: 40px 0 20px 0; }
         .explore-content p { color: #aaa; font-size: 14px; margin-bottom: 40px; }
-        .code-input-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+        .code-input-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
         .code-box { width: 50px; height: 60px; font-size: 24px; text-align: center; font-family: 'Inter', sans-serif; font-weight: 600; color: white; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; outline: none; transition: border 0.2s; text-transform: uppercase; }
         .code-box:focus { border-color: white; background: rgba(255, 255, 255, 0.1); }
         
@@ -47,7 +47,7 @@
         #join-room-btn.valid:hover { transform: scale(1.05); }
 
         .pill-toggle-container { display: flex; position: relative; border-radius: 20px; width: fit-content; padding: 4px; margin: 0 auto; background: rgba(255, 255, 255, 0.08); }
-        .pill-btn { padding: 8px 24px; font-size: 14px; cursor: pointer; z-index: 1; transition: color 0.3s ease; color: #e0e0e0; border-radius: 16px; }
+        .pill-btn { padding: 8px 24px; font-size: 14px; cursor: pointer; z-index: 1; transition: color 0.3s ease; color: #e0e0e0; border-radius: 16px; white-space: nowrap; }
         .pill-btn.active-pill { color: black; font-weight: 500; }
         .pill-bg { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); background-color: white; border-radius: 16px; z-index: 0; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
 
@@ -69,8 +69,6 @@
         .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
         
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        @media (max-width: 768px) { .dashboard-grid { grid-template-columns: 1fr; } }
-        
         .glass-card { border-radius: 16px; padding: 25px; }
         .dummy-player { display: flex; align-items: center; gap: 20px; margin-top: 15px; }
         .album-art-placeholder { width: 100px; height: 100px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; }
@@ -95,10 +93,13 @@
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
+        /* Fixed Mobile Layout */
         @media (max-width: 768px) {
-            nav { flex-direction: column; padding: 20px; gap: 20px; }
-            .nav-container { width: 100%; justify-content: center; flex-wrap: wrap; gap: 10px;}
-            .user-profile { justify-content: center; width: 100%;}
+            nav { flex-direction: column; padding: 20px; gap: 15px; }
+            .nav-container { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 5px; flex-wrap: nowrap; }
+            .user-profile { justify-content: center; width: 100%; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .code-input-container { flex-wrap: nowrap; gap: 6px; }
             .code-box { width: 40px; height: 50px; font-size: 20px; }
         }
     </style>
@@ -157,12 +158,13 @@
 
         <h2>Join a private room</h2>
         <div class="code-input-container">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 0)">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 1)">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 2)">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 3)">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 4)">
-            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 5)">
+            <!-- Switched to oninput for Mobile Support -->
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 0)" onkeydown="handleBackspace(event, 0)">
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 1)" onkeydown="handleBackspace(event, 1)">
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 2)" onkeydown="handleBackspace(event, 2)">
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 3)" onkeydown="handleBackspace(event, 3)">
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 4)" onkeydown="handleBackspace(event, 4)">
+            <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 5)" onkeydown="handleBackspace(event, 5)">
         </div>
         <p>6-digit code shared by room host</p>
         
@@ -305,23 +307,28 @@
         function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
         function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
 
-        // --- FIXED: REAL BACKEND VERIFICATION FOR EXPLORE PAGE ---
-        async function handleCodeInput(element, index) {
+        // --- NEW: Bulletproof Mobile Input Handlers ---
+        function handleInput(element, index) {
+            element.value = element.value.toUpperCase();
             if (element.value.length === 1 && index < 5) {
                 document.querySelectorAll('.code-box')[index + 1].focus();
             }
-            if (element.value.length === 0 && index > 0 && event.key === 'Backspace') {
+            validateRoomCode();
+        }
+        
+        function handleBackspace(event, index) {
+            if (event.key === 'Backspace' && document.querySelectorAll('.code-box')[index].value === '' && index > 0) {
                 document.querySelectorAll('.code-box')[index - 1].focus();
             }
-            
+        }
+
+        async function validateRoomCode() {
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
-            
             const btn = document.getElementById('join-room-btn');
             
             if (enteredCode.length === 6) {
                 try {
-                    // Ask the Render server if this room exists
                     const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
                     const data = await response.json();
                     
@@ -400,9 +407,7 @@
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
             
-            // Re-render empty list
             document.getElementById('live-user-list').innerHTML = '';
-            
             document.getElementById('room-name-input').value = '';
             document.getElementById('floating-return-btn').style.display = 'none';
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
