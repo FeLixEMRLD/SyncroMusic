@@ -17,7 +17,6 @@ const io = new Server(server, {
 // Store active rooms in server memory
 const activeRooms = {}; 
 
-// NEW: Endpoint for phones/new tabs to check if a room actually exists
 app.get('/check-room/:code', (req, res) => {
     const code = req.params.code.toUpperCase();
     if (activeRooms[code]) {
@@ -30,45 +29,37 @@ app.get('/check-room/:code', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
-    // User Creates or Joins a Room
     socket.on('join_room', (data) => {
         const { roomCode, username } = data;
         
         socket.join(roomCode);
         
-        // Initialize room if it doesn't exist
         if (!activeRooms[roomCode]) {
-            activeRooms[roomCode] = { host: socket.id, users: [] };
+            activeRooms[roomCode] = { host: socket.id, sockets: {} };
         }
         
-        // ANTI-DUPLICATION: Only add the user if they aren't already in the list
-        if (!activeRooms[roomCode].users.includes(username)) {
-            activeRooms[roomCode].users.push(username);
-        }
-
-        // Store data on the socket for when they disconnect
+        // Track by unique socket ID to prevent race conditions on page reload
+        activeRooms[roomCode].sockets[socket.id] = username;
         socket.username = username;
         socket.roomCode = roomCode;
 
-        console.log(`${username} joined room: ${roomCode}`);
-        
-        // Tell everyone in the room to update their Listener List
-        io.to(roomCode).emit('room_updated', activeRooms[roomCode].users);
+        // Broadcast a clean array of unique usernames
+        const uniqueUsers = [...new Set(Object.values(activeRooms[roomCode].sockets))];
+        io.to(roomCode).emit('room_updated', uniqueUsers);
     });
 
-    // Clean up when someone leaves or reloads
     socket.on('disconnect', () => {
         console.log(`User Disconnected: ${socket.id}`);
         
         if (socket.roomCode && activeRooms[socket.roomCode]) {
-            // Remove them from the room array
-            activeRooms[socket.roomCode].users = activeRooms[socket.roomCode].users.filter(user => user !== socket.username);
+            // Delete this specific connection's memory
+            delete activeRooms[socket.roomCode].sockets[socket.id];
             
-            // Tell the remaining users to update their list
-            io.to(socket.roomCode).emit('room_updated', activeRooms[socket.roomCode].users);
+            const uniqueUsers = [...new Set(Object.values(activeRooms[socket.roomCode].sockets))];
+            io.to(socket.roomCode).emit('room_updated', uniqueUsers);
             
-            // If the room is empty, delete it from the server
-            if (activeRooms[socket.roomCode].users.length === 0) {
+            // If zero connections remain, destroy the room
+            if (Object.keys(activeRooms[socket.roomCode].sockets).length === 0) {
                 delete activeRooms[socket.roomCode];
             }
         }
