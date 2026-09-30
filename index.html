@@ -9,478 +9,121 @@
     <style>
         /* Base Styling & Background */
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', sans-serif;
-            color: white;
-            height: 100vh;
-            overflow-x: hidden; 
+            margin: 0; padding: 0;
+            font-family: 'Inter', sans-serif; color: white;
+            height: 100vh; overflow-x: hidden; 
             background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%);
         }
-
-        /* Smooth Gradient Transition Layer */
         #bg-lobby-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%);
-            opacity: 0;
-            transition: opacity 0.6s ease-in-out;
-            z-index: -1; 
+            opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -1; 
         }
-        body.lobby-active #bg-lobby-layer {
-            opacity: 1; 
-        }
-
-        h3, p, .nav-item {
-            font-family: 'Poppins', sans-serif;
-        }
+        body.lobby-active #bg-lobby-layer { opacity: 1; }
+        h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
         /* Navigation Bar */
-        nav {
-            display: flex;
-            align-items: center;
-            padding: 20px 40px;
-        }
-        .logo {
-            font-size: 22px; 
-            font-weight: 600;
-            margin-right: 40px;
-        }
-        .nav-container {
-            display: flex;
-            position: relative;
-            gap: 10px;
-        }
-        .nav-item {
-            padding: 6px 16px;
-            font-size: 14px; 
-            cursor: pointer;
-            z-index: 1;
-            border-radius: 20px;
-            transition: color 0.3s ease;
-        }
-        .nav-item.active {
-            color: black;
-            font-weight: 500;
-        }
-        #active-pill {
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            background-color: white;
-            border-radius: 20px;
-            z-index: 0;
-            transition: all 0.3s ease;
-        }
+        nav { display: flex; align-items: center; padding: 20px 40px; justify-content: space-between; }
+        .nav-left { display: flex; align-items: center; }
+        .logo { font-size: 22px; font-weight: 600; margin-right: 40px; }
+        .nav-container { display: flex; position: relative; gap: 10px; }
+        .nav-item { padding: 6px 16px; font-size: 14px; cursor: pointer; z-index: 1; border-radius: 20px; transition: color 0.3s ease; }
+        .nav-item.active { color: black; font-weight: 500; }
+        #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
+        
+        /* User Profile Top Right */
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
+        .nav-avatar { width: 28px; height: 28px; background: white; border-radius: 50%; flex-shrink: 0; }
 
-        /* Page Layouts */
-        .page {
-            display: none;
-            padding: 40px 40px;
-            animation: fadeIn 0.4s ease-in-out;
-            box-sizing: border-box;
-        }
-        .page.active-page {
-            display: block;
-        }
-
-        /* Glassmorphism Reusable Class */
+        /* Page Layouts & Glassmorphism */
+        .page { display: none; padding: 40px 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
+        .page.active-page { display: block; }
         .glass-effect {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px);
+            border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
         }
 
         /* Home Page */
-        .home-content {
-            text-align: center;
-            margin-top: 10vh;
-        }
-        .home-content h1 {
-            font-size: 46px; 
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-        .home-content p {
-            font-size: 18px; 
-            margin-bottom: 35px;
-            color: #e0e0e0;
-            font-weight: 300;
-        }
-        .btn-group {
-            display: flex;
-            justify-content: center;
-            gap: 15px; 
-        }
-        .btn {
-            background-color: white;
-            color: black;
-            border: none;
-            padding: 12px 24px; 
-            border-radius: 25px;
-            font-size: 15px; 
-            font-weight: 500;
-            cursor: pointer;
-            transition: transform 0.2s;
-            font-family: 'Inter', sans-serif;
-        }
-        .btn:hover {
-            transform: scale(1.05);
-        }
+        .home-content { text-align: center; margin-top: 10vh; }
+        .home-content h1 { font-size: 46px; font-weight: 600; margin-bottom: 8px; }
+        .home-content p { font-size: 18px; margin-bottom: 35px; color: #e0e0e0; font-weight: 300; }
+        .btn-group { display: flex; justify-content: center; gap: 15px; }
+        .btn { background-color: white; color: black; border: none; padding: 12px 24px; border-radius: 25px; font-size: 15px; font-weight: 500; cursor: pointer; transition: transform 0.2s; font-family: 'Inter', sans-serif; }
+        .btn:hover { transform: scale(1.05); }
 
-        /* Create Lobby Setup Page */
-        .lobby-content {
-            text-align: left;
-            max-width: 650px;
-            margin: 0 auto;
-        }
-        .lobby-header {
-            display: flex; 
-            align-items: center; 
-            margin-bottom: 30px;
-        }
-        .lobby-content h1 {
-            font-size: 32px; 
-            font-weight: 600;
-            display: inline-block;
-            margin-right: 20px;
-        }
-        .input-dark {
-            border-radius: 12px;
-            color: white;
-            font-size: 15px; 
-            outline: none;
-            padding: 12px 16px;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.3s ease;
-            box-sizing: border-box;
-        }
-        .input-dark:focus {
-            background: rgba(255, 255, 255, 0.1);
-        }
-        .input-dark::placeholder {
-            color: #b0b0b0;
-        }
+        /* Explore Page (NEW) */
+        .explore-content { text-align: center; max-width: 600px; margin: 0 auto; margin-top: 5vh; }
+        .explore-content h2 { font-size: 24px; font-weight: 500; margin: 40px 0 20px 0; }
+        .explore-content p { color: #aaa; font-size: 14px; margin-bottom: 40px; }
         
-        .form-section {
-            margin-bottom: 25px;
+        .code-input-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+        .code-box {
+            width: 50px; height: 60px; font-size: 24px; text-align: center; font-family: 'Inter', sans-serif; font-weight: 600;
+            color: white; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px;
+            outline: none; transition: border 0.2s; text-transform: uppercase;
         }
-        .form-section h3 {
-            font-size: 18px; 
-            font-weight: 400;
-            margin-bottom: 10px;
+        .code-box:focus { border-color: white; background: rgba(255, 255, 255, 0.1); }
+        
+        #join-room-btn {
+            background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.2);
+            padding: 12px 40px; border-radius: 25px; font-size: 16px; font-weight: 500; cursor: not-allowed; transition: all 0.3s ease;
         }
+        #join-room-btn.valid { background: white; color: black; cursor: pointer; }
+        #join-room-btn.valid:hover { transform: scale(1.05); }
 
-        /* Room Type Sliding Pill */
-        .room-type-container {
-            display: flex;
-            position: relative;
-            border-radius: 16px;
-            width: fit-content;
-            padding: 4px;
+        /* Shared Sliding Pill Logic */
+        .pill-toggle-container {
+            display: flex; position: relative; border-radius: 20px; width: fit-content; padding: 4px; margin: 0 auto; background: rgba(255, 255, 255, 0.08);
         }
-        .room-btn {
-            padding: 8px 20px;
-            font-size: 14px;
-            font-family: 'Inter', sans-serif;
-            cursor: pointer;
-            z-index: 1;
-            transition: color 0.3s ease;
-            color: #e0e0e0;
-            border-radius: 12px;
-        }
-        .room-btn.active-room {
-            color: black;
-            font-weight: 500;
-        }
-        #room-type-pill {
-            position: absolute;
-            top: 4px;
-            left: 4px;
-            height: calc(100% - 8px);
-            background-color: white;
-            border-radius: 12px;
-            z-index: 0;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
+        .pill-btn { padding: 8px 24px; font-size: 14px; cursor: pointer; z-index: 1; transition: color 0.3s ease; color: #e0e0e0; border-radius: 16px; }
+        .pill-btn.active-pill { color: black; font-weight: 500; }
+        .pill-bg { position: absolute; top: 4px; left: 4px; height: calc(100% - 8px); background-color: white; border-radius: 16px; z-index: 0; transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
 
-        .create-final-btn {
-            background-color: white;
-            color: black;
-            border: none;
-            padding: 12px 28px; 
-            border-radius: 25px;
-            font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-            margin-top: 15px;
-            font-family: 'Inter', sans-serif;
-            transition: transform 0.2s;
-        }
-        .create-final-btn:hover {
-            transform: scale(1.05);
-        }
+        /* Lobby Page */
+        .lobby-content { text-align: left; max-width: 650px; margin: 0 auto; }
+        .lobby-header { display: flex; align-items: center; margin-bottom: 30px; }
+        .lobby-content h1 { font-size: 32px; font-weight: 600; margin-right: 20px; }
+        .input-dark { border-radius: 12px; color: white; font-size: 15px; outline: none; padding: 12px 16px; font-family: 'Inter', sans-serif; transition: background 0.3s ease; box-sizing: border-box; }
+        .input-dark:focus { background: rgba(255, 255, 255, 0.1); }
+        .form-section { margin-bottom: 25px; }
+        .form-section h3 { font-size: 18px; font-weight: 400; margin-bottom: 10px; }
+        .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
         /* Active Room Dashboard */
-        .active-room-content {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-        }
-        .room-header h2 {
-            font-weight: 500;
-            margin: 0;
-            font-size: 24px;
-        }
-        .room-actions {
-            display: flex; 
-            align-items: center; 
-            gap: 12px;
-        }
+        .active-room-content { max-width: 900px; margin: 0 auto; }
+        .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; }
+        .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
+        .room-actions { display: flex; align-items: center; gap: 12px; }
+        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; line-height: 1; }
+        .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; line-height: 1; transition: all 0.2s; }
+        .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
+        .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .glass-card { border-radius: 16px; padding: 25px; }
+        .dummy-player { display: flex; align-items: center; gap: 20px; margin-top: 15px; }
+        .album-art-placeholder { width: 100px; height: 100px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; }
+        .song-details h4 { margin: 0 0 5px 0; font-size: 18px; font-weight: 500; }
+        .song-details p { margin: 0; font-size: 14px; color: #aaa; }
+        .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
+        .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         
-        .room-code-badge {
-            padding: 10px 16px; 
-            border-radius: 12px; 
-            font-family: 'Inter', sans-serif; 
-            font-size: 15px;
-            font-weight: 500;
-            letter-spacing: 1px;
-            color: #ffffff; 
-            background: rgba(255, 255, 255, 0.08); 
-            display: flex;
-            align-items: center;
-            line-height: 1; 
-        }
-        .end-room-btn {
-            background: rgba(255, 76, 76, 0.15);
-            border: 1px solid rgba(255, 76, 76, 0.3);
-            color: #ff8a8a; 
-            padding: 10px 16px; 
-            border-radius: 12px; 
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 15px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            line-height: 1; 
-            transition: all 0.2s;
-        }
-        .end-room-btn:hover {
-            background: rgba(255, 76, 76, 0.25);
-            border-color: rgba(255, 76, 76, 0.5);
-            color: #ff4c4c;
-        }
+        /* Avatars */
+        .avatar { width: 24px; height: 24px; background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%); border-radius: 50%; flex-shrink: 0; }
         
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
-        }
-        .glass-card {
-            border-radius: 16px;
-            padding: 25px;
-        }
+        /* Floating Return */
+        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 12px 24px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; z-index: 100; transition: transform 0.2s ease; }
+        .ping-dot { width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+
+        /* Modals */
+        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
+        .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .modal-content h3 { margin-top: 0; font-size: 22px; font-weight: 600; }
+        .modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
+        .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+        .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
+        .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
-        .dummy-player {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-top: 15px;
-        }
-        .album-art-placeholder {
-            width: 100px;
-            height: 100px;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #888;
-            flex-shrink: 0;
-        }
-        .song-details h4 {
-            margin: 0 0 5px 0;
-            font-size: 18px;
-            font-weight: 500;
-        }
-        .song-details p {
-            margin: 0;
-            font-size: 14px;
-            color: #aaa;
-        }
-
-        .user-list {
-            list-style: none;
-            padding: 0;
-            margin: 15px 0 0 0;
-        }
-        .user-list li {
-            padding: 10px 15px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 8px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .avatar {
-            width: 24px;
-            height: 24px;
-            background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%);
-            border-radius: 50%;
-            flex-shrink: 0;
-        }
-
-        /* Floating Return Button */
-        #floating-return-btn {
-            position: fixed;
-            bottom: 40px;
-            right: 40px;
-            padding: 12px 24px;
-            border-radius: 30px;
-            display: none; 
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            font-weight: 500;
-            z-index: 100;
-            transition: transform 0.2s ease;
-        }
-        #floating-return-btn:hover {
-            transform: translateY(-3px);
-        }
-        .ping-dot {
-            width: 10px;
-            height: 10px;
-            background-color: #22c55e; 
-            border-radius: 50%;
-            box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7);
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        /* FIXED MODAL OVERLAY: Pure dark dimming, NO blur */
-        #custom-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.75); /* Just dims the background, no blur */
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 999;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        /* FIXED MODAL CONTENT: EXTREME blur and brighter base */
-        .modal-content {
-            border-radius: 20px;
-            padding: 35px;
-            text-align: center;
-            max-width: 350px;
-            background: rgba(255, 255, 255, 0.15); /* Brighter base */
-            backdrop-filter: blur(35px); /* Massive, obvious glass blur */
-            -webkit-backdrop-filter: blur(80px);
-            border: 1px solid rgba(255, 255, 255, 0.3); /* Stronger border line */
-            box-shadow: 0 20px 50px rgba(0,0,0,0.6);
-        }
-        
-        .modal-content h3 {
-            margin-top: 0;
-            font-size: 22px;
-            font-weight: 600;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 25px;
-        }
-        .modal-btn-cancel {
-            background: rgba(255, 255, 255, 0.1);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            transition: background 0.2s;
-        }
-        .modal-btn-cancel:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        .modal-btn-end {
-            background: rgba(255, 76, 76, 0.15);
-            color: #ff6b6b;
-            border: 1px solid rgba(255, 76, 76, 0.4);
-            padding: 10px 20px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        .modal-btn-end:hover {
-            background: #ff4c4c;
-            color: white;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* --- MOBILE RESPONSIVENESS --- */
-        @media (max-width: 768px) {
-            body { overflow-y: auto; } 
-            
-            nav {
-                flex-direction: column;
-                padding: 20px;
-                gap: 20px;
-            }
-            .logo { margin-right: 0; }
-            .nav-container {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .page { padding: 30px 20px; }
-            
-            .home-content h1 { font-size: 36px; }
-            .home-content p { font-size: 16px; }
-            .btn-group { flex-direction: column; gap: 15px; }
-            .btn-group .btn { width: 100%; padding: 15px; }
-
-            .lobby-header { flex-direction: column; align-items: flex-start; gap: 15px; }
-            .lobby-content h1 { margin-right: 0; font-size: 28px; }
-            .input-dark { width: 100% !important; } 
-
-            .room-header { flex-direction: column; align-items: flex-start; gap: 20px; }
-            .room-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
-            
-            .dashboard-grid { grid-template-columns: 1fr; }
-            
-            #floating-return-btn { bottom: 20px; right: 20px; }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -499,18 +142,24 @@
     </div>
 
     <div id="floating-return-btn" class="glass-effect" onclick="returnToRoom()">
-        <div class="ping-dot"></div>
-        Return to Room
+        <div class="ping-dot"></div> Return to Room
     </div>
 
     <nav>
-        <div class="logo">Syncro</div>
-        <div class="nav-container">
-            <div id="active-pill"></div>
-            <div class="nav-item active" onclick="navigateTo('home', this)">Home</div>
-            <div class="nav-item" onclick="navigateTo('lobby', this)">Lobby</div>
-            <div class="nav-item" onclick="navigateTo('explore', this)">Explore</div>
-            <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
+        <div class="nav-left">
+            <div class="logo">Syncro</div>
+            <div class="nav-container">
+                <div id="active-pill"></div>
+                <div class="nav-item active" onclick="navigateTo('home', this)">Home</div>
+                <div class="nav-item" onclick="navigateTo('lobby', this)">Lobby</div>
+                <div class="nav-item" onclick="navigateTo('explore', this)">Explore</div>
+                <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
+            </div>
+        </div>
+        <!-- Persistent Identity Top Right -->
+        <div class="user-profile">
+            <span id="display-username">Loading...</span>
+            <div class="nav-avatar"></div>
         </div>
     </nav>
 
@@ -519,8 +168,30 @@
         <p>Ready to sync up your music?</p>
         <div class="btn-group">
             <button class="btn" onclick="goToLobby()">Create new room</button>
-            <button class="btn">Join a room</button>
+            <button class="btn" onclick="goToExplore()">Join a room</button>
         </div>
+    </div>
+
+    <!-- NEW: Explore Page -->
+    <div id="explore" class="page explore-content">
+        <div class="pill-toggle-container glass-effect">
+            <div id="explore-type-pill" class="pill-bg"></div>
+            <div class="pill-btn active-pill" onclick="toggleExploreType('private', this)">Private rooms</div>
+            <div class="pill-btn" onclick="toggleExploreType('public', this)">Public rooms</div>
+        </div>
+
+        <h2>Join a private room</h2>
+        <div class="code-input-container">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 1)">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 2)">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 3)">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 4)">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 5)">
+            <input type="text" maxlength="1" class="code-box" onkeyup="handleCodeInput(this, 6)">
+        </div>
+        <p>6-digit code shared by room host</p>
+        
+        <button id="join-room-btn" disabled onclick="joinExistingRoom()">Join room</button>
     </div>
 
     <div id="lobby" class="page lobby-content">
@@ -528,21 +199,14 @@
             <h1>Create a room</h1>
             <input type="text" id="room-name-input" class="input-dark glass-effect" placeholder="Room name" style="width: 250px;">
         </div>
-        
         <div class="form-section">
             <h3>Room type</h3>
-            <div class="room-type-container glass-effect">
-                <div id="room-type-pill"></div>
-                <div class="room-btn active-room" onclick="selectRoomType('private', this)">Private room</div>
-                <div class="room-btn" onclick="selectRoomType('public', this)">Public room</div>
+            <div class="pill-toggle-container glass-effect" style="margin: 0;">
+                <div id="room-type-pill" class="pill-bg"></div>
+                <div class="pill-btn active-pill" onclick="toggleRoomType('private', this)">Private room</div>
+                <div class="pill-btn" onclick="toggleRoomType('public', this)">Public room</div>
             </div>
         </div>
-
-        <div class="form-section">
-            <h3>Invite friends</h3>
-            <input type="text" class="input-dark glass-effect" placeholder="Search username" style="width: 100%; max-width: 400px;">
-        </div>
-
         <button class="create-final-btn" onclick="launchLiveRoom()">Create Syncro room</button>
     </div>
 
@@ -554,169 +218,227 @@
                 <button class="end-room-btn" onclick="openModal()">End Room</button>
             </div>
         </div>
-
         <div class="dashboard-grid">
             <div class="glass-card glass-effect">
                 <h3>Now Playing</h3>
                 <div class="dummy-player">
                     <div class="album-art-placeholder">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
                     </div>
-                    <div class="song-details">
-                        <h4>Waiting for host...</h4>
-                        <p>Search for a song to begin syncing</p>
-                    </div>
+                    <div class="song-details"><h4>Waiting for host...</h4><p>Search for a song to begin syncing</p></div>
                 </div>
             </div>
-
             <div class="glass-card glass-effect">
-                <h3>Listeners (1)</h3>
+                <h3>Listeners</h3>
                 <ul class="user-list">
-                    <li><div class="avatar"></div> You (Host)</li>
-                    <li style="opacity: 0.5;">Waiting for friends to join...</li>
+                    <li><div class="avatar"></div> <span id="host-name-display">You (Host)</span></li>
                 </ul>
             </div>
         </div>
     </div>
 
     <script>
+        // --- 1. Identity & Initialization ---
         window.onload = function() {
-            const savedRoomCode = localStorage.getItem('syncro_room_code');
-            const savedRoomName = localStorage.getItem('syncro_room_name');
-
-            if (savedRoomCode) {
-                document.getElementById('display-room-code').innerText = savedRoomCode;
-                if (savedRoomName) {
-                    document.getElementById('display-room-title').innerText = savedRoomName;
-                }
-                const lobbyNav = document.querySelectorAll('.nav-item')[1];
-                navigateTo('active-room', lobbyNav);
-            } else {
-                const activeNav = document.querySelector('.nav-item.active');
-                updateNavPill(activeNav);
-            }
+            generateIdentity();
+            checkExistingRoomState();
+            
+            // Sync Nav Pill
+            const activeNav = document.querySelector('.nav-item.active');
+            updatePillPos('active-pill', activeNav);
         };
 
-        function updateNavPill(element) {
-            const pill = document.getElementById('active-pill');
-            if(element && pill) {
-                pill.style.width = element.offsetWidth + 'px';
-                pill.style.left = element.offsetLeft + 'px';
+        function generateIdentity() {
+            let username = localStorage.getItem('syncro_username');
+            if (!username) {
+                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
+                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
+                username = adjs[Math.floor(Math.random() * adjs.length)] + 
+                           nouns[Math.floor(Math.random() * nouns.length)] + 
+                           Math.floor(Math.random() * 99);
+                localStorage.setItem('syncro_username', username);
             }
+            document.getElementById('display-username').innerText = username;
+            document.getElementById('host-name-display').innerText = username + " (You)";
         }
 
-        window.addEventListener('resize', () => {
-            const activeNav = document.querySelector('.nav-item.active');
-            updateNavPill(activeNav);
-            
-            const activeRoom = document.querySelector('.room-btn.active-room');
-            if(document.getElementById('lobby').classList.contains('active-page')) {
-                updateRoomPill(activeRoom);
-            }
-        });
-
-        function navigateTo(pageId, navElement) {
-            const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
-            
-            const floatingBtn = document.getElementById('floating-return-btn');
-            if (isRoomActive && pageId !== 'active-room') {
-                floatingBtn.style.display = 'flex';
-            } else {
-                floatingBtn.style.display = 'none';
-            }
-
-            if (navElement) {
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                navElement.classList.add('active');
-                updateNavPill(navElement);
-            }
-
-            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
-            document.getElementById(pageId).classList.add('active-page');
-
-            if (pageId === 'lobby' || pageId === 'active-room') {
-                document.body.classList.add('lobby-active'); 
-                if(pageId === 'lobby') {
-                    setTimeout(() => {
-                        const activeRoom = document.querySelector('.room-btn.active-room');
-                        updateRoomPill(activeRoom);
-                    }, 50);
-                }
-            } else {
-                document.body.classList.remove('lobby-active'); 
-            }
-        }
-
-        function returnToRoom() {
-            const lobbyNav = document.querySelectorAll('.nav-item')[1]; 
-            navigateTo('active-room', lobbyNav);
-        }
-
-        function goToLobby() {
-            const lobbyNav = document.querySelectorAll('.nav-item')[1]; 
-            navigateTo('lobby', lobbyNav);
-        }
-
-        function updateRoomPill(element) {
-            const pill = document.getElementById('room-type-pill');
+        // --- 2. Navigation & UI Logic ---
+        function updatePillPos(pillId, element) {
+            const pill = document.getElementById(pillId);
             if (element && pill) {
                 pill.style.width = element.offsetWidth + 'px';
                 pill.style.left = element.offsetLeft + 'px';
             }
         }
 
-        function selectRoomType(type, element) {
-            document.querySelectorAll('.room-btn').forEach(el => el.classList.remove('active-room'));
-            element.classList.add('active-room');
-            updateRoomPill(element);
+        window.addEventListener('resize', () => {
+            updatePillPos('active-pill', document.querySelector('.nav-item.active'));
+            updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill'));
+            updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill'));
+        });
+
+        function navigateTo(pageId, navElement) {
+            const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
+            const floatingBtn = document.getElementById('floating-return-btn');
+            
+            floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
+
+            if (navElement) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+                updatePillPos('active-pill', navElement);
+            }
+
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
+            document.getElementById(pageId).classList.add('active-page');
+
+            if (pageId === 'lobby' || pageId === 'active-room' || pageId === 'explore') {
+                document.body.classList.add('lobby-active'); 
+                setTimeout(() => {
+                    if (pageId === 'lobby') updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill'));
+                    if (pageId === 'explore') updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill'));
+                }, 50);
+            } else {
+                document.body.classList.remove('lobby-active'); 
+            }
+        }
+
+        function toggleRoomType(type, element) {
+            document.querySelectorAll('#lobby .pill-btn').forEach(el => el.classList.remove('active-pill'));
+            element.classList.add('active-pill');
+            updatePillPos('room-type-pill', element);
+        }
+
+        function toggleExploreType(type, element) {
+            document.querySelectorAll('#explore .pill-btn').forEach(el => el.classList.remove('active-pill'));
+            element.classList.add('active-pill');
+            updatePillPos('explore-type-pill', element);
+        }
+
+        function goToLobby() { navigateTo('lobby', document.querySelectorAll('.nav-item')[1]); }
+        function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
+        function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
+
+        // --- 3. Explore & Code Input Logic ---
+        function handleCodeInput(element, index) {
+            // Auto advance
+            if (element.value.length === 1 && index < 6) {
+                document.querySelectorAll('.code-box')[index].focus();
+            }
+            // Allow backspace to go backwards
+            if (element.value.length === 0 && index > 1 && event.key === 'Backspace') {
+                document.querySelectorAll('.code-box')[index - 2].focus();
+            }
+            
+            validateRoomCode();
+        }
+
+        function validateRoomCode() {
+            let enteredCode = '';
+            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
+            
+            const btn = document.getElementById('join-room-btn');
+            // MOCK DATABASE CHECK: Read global rooms created by any tab
+            const globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
+            
+            if (enteredCode.length === 6 && globalRooms.includes(enteredCode)) {
+                btn.classList.add('valid');
+                btn.disabled = false;
+            } else {
+                btn.classList.remove('valid');
+                btn.disabled = true;
+            }
+        }
+
+        // --- 4. Room Creation & Local Storage State ---
+        function checkExistingRoomState() {
+            const savedCode = localStorage.getItem('syncro_room_code');
+            const savedName = localStorage.getItem('syncro_room_name');
+            if (savedCode) {
+                renderActiveRoom(savedCode, savedName);
+                navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+            }
         }
 
         function launchLiveRoom() {
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let roomCode = '';
-            for (let i = 0; i < 6; i++) {
-                roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
-            }
+            for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             
             const customName = document.getElementById('room-name-input').value;
 
+            // Set Local User State
             localStorage.setItem('syncro_room_code', roomCode);
-            if (customName.trim() !== '') {
-                localStorage.setItem('syncro_room_name', customName);
-            }
+            if (customName.trim() !== '') localStorage.setItem('syncro_room_name', customName);
 
-            document.getElementById('display-room-code').innerText = roomCode;
-            document.getElementById('display-room-title').innerText = customName.trim() !== '' ? customName : 'My Syncro Room';
+            // MOCK DATABASE: Push to global rooms list so Explore tab can find it
+            let globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
+            globalRooms.push(roomCode);
+            localStorage.setItem('syncro_global_rooms', JSON.stringify(globalRooms));
 
-            const lobbyNav = document.querySelectorAll('.nav-item')[1];
-            navigateTo('active-room', lobbyNav);
+            renderActiveRoom(roomCode, customName);
+            navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
         }
 
+        function joinExistingRoom() {
+            let enteredCode = '';
+            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
+            
+            localStorage.setItem('syncro_room_code', enteredCode);
+            localStorage.setItem('syncro_room_name', 'Joined Syncro Room');
+            
+            renderActiveRoom(enteredCode, 'Joined Syncro Room');
+            navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+        }
+
+        function renderActiveRoom(code, name) {
+            document.getElementById('display-room-code').innerText = code;
+            document.getElementById('display-room-title').innerText = (name && name.trim() !== '') ? name : 'My Syncro Room';
+        }
+
+        // --- 5. Cross-Tab Sync via Storage Events ---
+        window.addEventListener('storage', (event) => {
+            // If another tab creates/joins/leaves a room, update this tab instantly
+            if (event.key === 'syncro_room_code') {
+                if (event.newValue === null) {
+                    // Room ended in another tab
+                    document.getElementById('floating-return-btn').style.display = 'none';
+                    if (document.getElementById('active-room').classList.contains('active-page')) {
+                        navigateTo('home', document.querySelectorAll('.nav-item')[0]);
+                    }
+                } else {
+                    // Room joined/created in another tab
+                    checkExistingRoomState();
+                }
+            }
+        });
+
+        // --- 6. Modal Logic ---
         function openModal() {
             const modal = document.getElementById('custom-modal');
             modal.style.display = 'flex';
             setTimeout(() => modal.style.opacity = '1', 10);
         }
-
         function closeModal() {
             const modal = document.getElementById('custom-modal');
             modal.style.opacity = '0';
             setTimeout(() => modal.style.display = 'none', 300);
         }
-
         function confirmEndRoom() {
             closeModal();
+            const codeToRemove = localStorage.getItem('syncro_room_code');
             
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
             
-            document.getElementById('room-name-input').value = '';
-            document.getElementById('display-room-title').innerText = 'My Syncro Room';
-            
-            document.getElementById('floating-return-btn').style.display = 'none';
+            // Remove from global mock DB
+            let globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
+            globalRooms = globalRooms.filter(code => code !== codeToRemove);
+            localStorage.setItem('syncro_global_rooms', JSON.stringify(globalRooms));
 
-            const homeNav = document.querySelectorAll('.nav-item')[0];
-            navigateTo('home', homeNav);
+            document.getElementById('room-name-input').value = '';
+            document.getElementById('floating-return-btn').style.display = 'none';
+            navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
     </script>
 </body>
