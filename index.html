@@ -9,8 +9,14 @@
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); }
-        #bg-lobby-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -1; }
+        
+        /* Background Layers */
+        #bg-lobby-layer, #bg-explore-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -1; }
+        #bg-lobby-layer { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
+        #bg-explore-layer { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } /* Dark Purple */
         body.lobby-active #bg-lobby-layer { opacity: 1; }
+        body.explore-active #bg-explore-layer { opacity: 1; }
+
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
         nav { display: flex; align-items: center; padding: 20px 40px; justify-content: space-between; }
@@ -81,7 +87,6 @@
         
         #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 12px 24px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; z-index: 100; transition: transform 0.2s ease; }
         .ping-dot { width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
 
         #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
         .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
@@ -91,9 +96,15 @@
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* Toast Notification System */
+        #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
+        .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
-        /* Fixed Mobile Layout */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        
         @media (max-width: 768px) {
             nav { flex-direction: column; padding: 20px; gap: 15px; }
             .nav-container { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 5px; flex-wrap: nowrap; }
@@ -101,12 +112,18 @@
             .dashboard-grid { grid-template-columns: 1fr; }
             .code-input-container { flex-wrap: nowrap; gap: 6px; }
             .code-box { width: 40px; height: 50px; font-size: 20px; }
+            #toast-container { top: 20px; left: 20px; right: 20px; align-items: center; }
         }
     </style>
 </head>
 <body>
 
+    <!-- Dynamic Backgrounds -->
     <div id="bg-lobby-layer"></div>
+    <div id="bg-explore-layer"></div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container"></div>
 
     <div id="custom-modal">
         <div class="modal-content">
@@ -206,9 +223,7 @@
             </div>
             <div class="glass-card glass-effect">
                 <h3>Listeners</h3>
-                <ul class="user-list" id="live-user-list">
-                    <!-- Dynamic Users injected here -->
-                </ul>
+                <ul class="user-list" id="live-user-list"></ul>
             </div>
         </div>
     </div>
@@ -231,19 +246,35 @@
             if (!currentUsername) {
                 const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
                 const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
-                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + 
-                           nouns[Math.floor(Math.random() * nouns.length)] + 
-                           Math.floor(Math.random() * 99);
+                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
                 localStorage.setItem('syncro_username', currentUsername);
             }
             document.getElementById('display-username').innerText = currentUsername;
         }
 
-        // --- NEW: Socket Listeners for Host Logic ---
+        // --- Toast System ---
+        function triggerToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'glass-effect toast-msg';
+            toast.style.animation = 'slideInRight 0.4s forwards';
+            toast.innerHTML = `<div class="ping-dot" style="animation: none;"></div> ${message}`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutRight 0.4s forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        socket.on('toast_message', (msg) => {
+            triggerToast(msg);
+        });
+
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
-            // Update UI based on Host or Guest status
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
             document.getElementById('modal-title').innerText = isCurrentUserHost ? 'End Session?' : 'Leave Room?';
             document.getElementById('modal-desc').innerText = isCurrentUserHost 
@@ -265,20 +296,16 @@
             });
         });
 
-        // Broadcasted to guests when the Host clicks End Room
         socket.on('room_ended', () => {
             if (!isCurrentUserHost) {
-                // Modify modal to be an alert instead of a choice
                 document.getElementById('modal-title').innerText = 'Room Ended';
                 document.getElementById('modal-desc').innerText = 'The host has closed this session.';
                 document.querySelector('.modal-btn-cancel').style.display = 'none';
                 document.getElementById('modal-confirm-btn').innerText = 'Okay';
                 
-                // Override click to just clear state
                 document.getElementById('modal-confirm-btn').onclick = () => {
                     closeModal();
                     forceClearRoomState();
-                    // Reset modal behavior for next time
                     document.querySelector('.modal-btn-cancel').style.display = 'inline-block';
                     document.getElementById('modal-confirm-btn').onclick = confirmEndRoom;
                 };
@@ -315,14 +342,14 @@
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
 
-            if (pageId === 'lobby' || pageId === 'active-room' || pageId === 'explore') {
+            document.body.classList.remove('lobby-active', 'explore-active');
+            
+            if (pageId === 'lobby' || pageId === 'active-room') {
                 document.body.classList.add('lobby-active'); 
-                setTimeout(() => {
-                    if (pageId === 'lobby') updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill'));
-                    if (pageId === 'explore') updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill'));
-                }, 50);
-            } else {
-                document.body.classList.remove('lobby-active'); 
+                if (pageId === 'lobby') setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50);
+            } else if (pageId === 'explore') {
+                document.body.classList.add('explore-active');
+                setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50);
             }
         }
 
@@ -373,22 +400,27 @@
                         btn.classList.remove('valid');
                         btn.disabled = true;
                     }
-                } catch (error) {
-                    console.error("Failed to verify room:", error);
-                }
+                } catch (error) { console.error("Failed to verify room:", error); }
             } else {
                 btn.classList.remove('valid');
                 btn.disabled = true;
             }
         }
 
+        // Modified check to verify room with server callback
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
             const savedName = localStorage.getItem('syncro_room_name');
             if (savedCode) {
-                socket.emit('join_room', { roomCode: savedCode, username: currentUsername });
-                renderActiveRoom(savedCode, savedName);
-                navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                socket.emit('join_room', { roomCode: savedCode, username: currentUsername }, (response) => {
+                    if (response && response.success) {
+                        renderActiveRoom(savedCode, savedName);
+                        navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                    } else {
+                        // Room doesn't exist anymore, silently clean up
+                        forceClearRoomState();
+                    }
+                });
             }
         }
 
@@ -396,10 +428,9 @@
             const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
             let roomCode = '';
             for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
-            
             const customName = document.getElementById('room-name-input').value;
 
-            socket.emit('join_room', { roomCode: roomCode, username: currentUsername });
+            socket.emit('create_room', { roomCode: roomCode, username: currentUsername });
 
             localStorage.setItem('syncro_room_code', roomCode);
             if (customName.trim() !== '') localStorage.setItem('syncro_room_name', customName);
@@ -412,13 +443,14 @@
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
             
-            socket.emit('join_room', { roomCode: enteredCode, username: currentUsername });
-            
-            localStorage.setItem('syncro_room_code', enteredCode);
-            localStorage.setItem('syncro_room_name', 'Joined Syncro Room');
-            
-            renderActiveRoom(enteredCode, 'Joined Syncro Room');
-            navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+            socket.emit('join_room', { roomCode: enteredCode, username: currentUsername }, (response) => {
+                if (response && response.success) {
+                    localStorage.setItem('syncro_room_code', enteredCode);
+                    localStorage.setItem('syncro_room_name', 'Joined Syncro Room');
+                    renderActiveRoom(enteredCode, 'Joined Syncro Room');
+                    navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                }
+            });
         }
 
         function renderActiveRoom(code, name) {
@@ -439,7 +471,6 @@
 
         function confirmEndRoom() {
             closeModal();
-            // Explicitly tell the server this user is leaving/ending the room
             socket.emit('leave_room');
             forceClearRoomState();
         }
@@ -447,7 +478,6 @@
         function forceClearRoomState() {
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
-            
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
             document.getElementById('floating-return-btn').style.display = 'none';
