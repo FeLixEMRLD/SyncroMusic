@@ -6,6 +6,9 @@
     <title>Syncro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     
+    <!-- NEW: Socket.io Client Library -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
     <style>
         /* Base Styling & Background */
         body {
@@ -51,7 +54,7 @@
         .btn { background-color: white; color: black; border: none; padding: 12px 24px; border-radius: 25px; font-size: 15px; font-weight: 500; cursor: pointer; transition: transform 0.2s; font-family: 'Inter', sans-serif; }
         .btn:hover { transform: scale(1.05); }
 
-        /* Explore Page (NEW) */
+        /* Explore Page */
         .explore-content { text-align: center; max-width: 600px; margin: 0 auto; margin-top: 5vh; }
         .explore-content h2 { font-size: 24px; font-weight: 500; margin: 40px 0 20px 0; }
         .explore-content p { color: #aaa; font-size: 14px; margin-bottom: 40px; }
@@ -156,7 +159,6 @@
                 <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
             </div>
         </div>
-        <!-- Persistent Identity Top Right -->
         <div class="user-profile">
             <span id="display-username">Loading...</span>
             <div class="nav-avatar"></div>
@@ -172,7 +174,6 @@
         </div>
     </div>
 
-    <!-- NEW: Explore Page -->
     <div id="explore" class="page explore-content">
         <div class="pill-toggle-container glass-effect">
             <div id="explore-type-pill" class="pill-bg"></div>
@@ -230,37 +231,52 @@
             </div>
             <div class="glass-card glass-effect">
                 <h3>Listeners</h3>
-                <ul class="user-list">
-                    <li><div class="avatar"></div> <span id="host-name-display">You (Host)</span></li>
+                <ul class="user-list" id="live-user-list">
+                    <!-- Dynamic Users will be injected here -->
                 </ul>
             </div>
         </div>
     </div>
 
     <script>
+        // --- NEW: CONNECT TO RENDER BACKEND ---
+        const socket = io('https://syncroserver-rfy8.onrender.com');
+        let currentUsername = '';
+
         // --- 1. Identity & Initialization ---
         window.onload = function() {
             generateIdentity();
             checkExistingRoomState();
             
-            // Sync Nav Pill
             const activeNav = document.querySelector('.nav-item.active');
             updatePillPos('active-pill', activeNav);
         };
 
         function generateIdentity() {
-            let username = localStorage.getItem('syncro_username');
-            if (!username) {
+            currentUsername = localStorage.getItem('syncro_username');
+            if (!currentUsername) {
                 const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
                 const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
-                username = adjs[Math.floor(Math.random() * adjs.length)] + 
+                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + 
                            nouns[Math.floor(Math.random() * nouns.length)] + 
                            Math.floor(Math.random() * 99);
-                localStorage.setItem('syncro_username', username);
+                localStorage.setItem('syncro_username', currentUsername);
             }
-            document.getElementById('display-username').innerText = username;
-            document.getElementById('host-name-display').innerText = username + " (You)";
+            document.getElementById('display-username').innerText = currentUsername;
         }
+
+        // --- NEW: Socket Listeners ---
+        socket.on('room_updated', (usersArray) => {
+            const listEl = document.getElementById('live-user-list');
+            listEl.innerHTML = ''; // Clear current list
+            
+            usersArray.forEach(user => {
+                const li = document.createElement('li');
+                const displayName = user === currentUsername ? `${user} (You)` : user;
+                li.innerHTML = `<div class="avatar"></div> <span>${displayName}</span>`;
+                listEl.appendChild(li);
+            });
+        });
 
         // --- 2. Navigation & UI Logic ---
         function updatePillPos(pillId, element) {
@@ -321,24 +337,18 @@
 
         // --- 3. Explore & Code Input Logic ---
         function handleCodeInput(element, index) {
-            // Auto advance
             if (element.value.length === 1 && index < 6) {
                 document.querySelectorAll('.code-box')[index].focus();
             }
-            // Allow backspace to go backwards
             if (element.value.length === 0 && index > 1 && event.key === 'Backspace') {
                 document.querySelectorAll('.code-box')[index - 2].focus();
             }
             
-            validateRoomCode();
-        }
-
-        function validateRoomCode() {
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
             
             const btn = document.getElementById('join-room-btn');
-            // MOCK DATABASE CHECK: Read global rooms created by any tab
+            // MOCK DATABASE CHECK (Will move to server later)
             const globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
             
             if (enteredCode.length === 6 && globalRooms.includes(enteredCode)) {
@@ -350,11 +360,13 @@
             }
         }
 
-        // --- 4. Room Creation & Local Storage State ---
+        // --- 4. Room Creation & Joining (NOW USES BACKEND) ---
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
             const savedName = localStorage.getItem('syncro_room_name');
             if (savedCode) {
+                // Reconnect socket on refresh
+                socket.emit('join_room', { roomCode: savedCode, username: currentUsername });
                 renderActiveRoom(savedCode, savedName);
                 navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
             }
@@ -367,11 +379,12 @@
             
             const customName = document.getElementById('room-name-input').value;
 
-            // Set Local User State
+            // Notify Server
+            socket.emit('join_room', { roomCode: roomCode, username: currentUsername });
+
             localStorage.setItem('syncro_room_code', roomCode);
             if (customName.trim() !== '') localStorage.setItem('syncro_room_name', customName);
 
-            // MOCK DATABASE: Push to global rooms list so Explore tab can find it
             let globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
             globalRooms.push(roomCode);
             localStorage.setItem('syncro_global_rooms', JSON.stringify(globalRooms));
@@ -383,6 +396,9 @@
         function joinExistingRoom() {
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
+            
+            // Notify Server
+            socket.emit('join_room', { roomCode: enteredCode, username: currentUsername });
             
             localStorage.setItem('syncro_room_code', enteredCode);
             localStorage.setItem('syncro_room_name', 'Joined Syncro Room');
@@ -398,16 +414,13 @@
 
         // --- 5. Cross-Tab Sync via Storage Events ---
         window.addEventListener('storage', (event) => {
-            // If another tab creates/joins/leaves a room, update this tab instantly
             if (event.key === 'syncro_room_code') {
                 if (event.newValue === null) {
-                    // Room ended in another tab
                     document.getElementById('floating-return-btn').style.display = 'none';
                     if (document.getElementById('active-room').classList.contains('active-page')) {
                         navigateTo('home', document.querySelectorAll('.nav-item')[0]);
                     }
                 } else {
-                    // Room joined/created in another tab
                     checkExistingRoomState();
                 }
             }
@@ -431,7 +444,6 @@
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
             
-            // Remove from global mock DB
             let globalRooms = JSON.parse(localStorage.getItem('syncro_global_rooms') || '[]');
             globalRooms = globalRooms.filter(code => code !== codeToRemove);
             localStorage.setItem('syncro_global_rooms', JSON.stringify(globalRooms));
