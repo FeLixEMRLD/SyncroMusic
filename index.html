@@ -8,13 +8,29 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     
     <style>
-        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); }
+        body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
         
-        #bg-lobby-layer, #bg-explore-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -1; }
-        #bg-lobby-layer { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
-        #bg-explore-layer { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } 
-        body.lobby-active #bg-lobby-layer { opacity: 1; }
-        body.explore-active #bg-explore-layer { opacity: 1; }
+        /* Dynamic Background Layers */
+        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out, background 0.6s ease-in-out; z-index: -1; }
+        
+        /* Specific States */
+        #bg-home { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); opacity: 1; }
+        #bg-lobby-create { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
+        #bg-explore { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); }
+        #bg-active-room { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); } /* Overwritten dynamically */
+
+        /* State Classes */
+        body.lobby-create-active #bg-home, body.explore-active #bg-home, body.active-room-active #bg-home { opacity: 0; }
+        body.lobby-create-active #bg-lobby-create { opacity: 1; }
+        body.explore-active #bg-explore { opacity: 1; }
+        body.active-room-active #bg-active-room { opacity: 1; }
+
+        /* The Custom Gradients Array */
+        .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } /* Deep Teal/Gold */
+        .grad-1 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #1e1140 100%) !important; } /* Midnight Magenta */
+        .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } /* Emerald */
+        .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } /* Crimson/Orange */
+        .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } /* Slate/Cyan */
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
@@ -33,6 +49,7 @@
         .page.active-page { display: block; }
         .glass-effect { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
 
+        /* General UI Elements */
         .home-content { text-align: center; margin-top: 10vh; }
         .home-content h1 { font-size: 46px; font-weight: 600; margin-bottom: 8px; }
         .home-content p { font-size: 18px; margin-bottom: 35px; color: #e0e0e0; font-weight: 300; }
@@ -65,11 +82,28 @@
         .form-section h3 { font-size: 18px; font-weight: 400; margin-bottom: 10px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
+        /* Active Room UI */
         .active-room-content { max-width: 900px; margin: 0 auto; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
-        .room-actions { display: flex; align-items: center; gap: 12px; }
-        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; line-height: 1; }
+        .room-actions { display: flex; align-items: center; gap: 12px; position: relative; }
+        
+        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; }
+        
+        /* Gradient Editor Button */
+        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.2s; }
+        .gradient-btn:hover { transform: scale(1.1); }
+
+        /* HyperOS Style Gradient Popup */
+        #gradient-popup {
+            position: absolute; top: 50px; right: 110px; padding: 12px; border-radius: 16px; display: none; gap: 10px;
+            background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px);
+            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 50;
+            animation: fadeIn 0.2s ease-out;
+        }
+        .grad-option { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        .grad-option:hover { transform: scale(1.1); border-color: white; }
+
         .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; line-height: 1; transition: all 0.2s; }
         .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
         
@@ -84,8 +118,10 @@
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .avatar { width: 24px; height: 24px; background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%); border-radius: 50%; flex-shrink: 0; }
         
-        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 12px 24px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; z-index: 100; transition: transform 0.2s ease; }
-        .ping-dot { width: 10px; height: 10px; background-color: #22c55e; border-radius: 50%; box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); animation: pulse 2s infinite; }
+        /* Revamped Fluid Return Button */
+        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 10px 24px 10px 14px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; font-size: 14px; z-index: 100; transition: transform 0.2s ease, box-shadow 0.2s; }
+        #floating-return-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
 
         #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
         .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
@@ -99,7 +135,6 @@
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); } 100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); } }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
         
@@ -111,13 +146,18 @@
             .code-input-container { flex-wrap: nowrap; gap: 6px; }
             .code-box { width: 40px; height: 50px; font-size: 20px; }
             #toast-container { top: 20px; left: 20px; right: 20px; align-items: center; }
+            #gradient-popup { right: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="bg-lobby-layer"></div>
-    <div id="bg-explore-layer"></div>
+    <!-- Background Engine -->
+    <div id="bg-home" class="bg-layer"></div>
+    <div id="bg-lobby-create" class="bg-layer"></div>
+    <div id="bg-explore" class="bg-layer"></div>
+    <div id="bg-active-room" class="bg-layer grad-0"></div>
+
     <div id="toast-container"></div>
 
     <div id="custom-modal">
@@ -131,8 +171,9 @@
         </div>
     </div>
 
-    <div id="floating-return-btn" class="glass-effect" onclick="returnToRoom()">
-        <div class="ping-dot"></div> Return to Room
+    <!-- Fluid Return Button -->
+    <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
+        <div id="fluid-indicator-circle" class="fluid-indicator grad-0"></div> Return to room
     </div>
 
     <nav>
@@ -141,7 +182,8 @@
             <div class="nav-container">
                 <div id="active-pill"></div>
                 <div class="nav-item active" onclick="navigateTo('home', this)">Home</div>
-                <div class="nav-item" onclick="navigateTo('lobby', this)">Lobby</div>
+                <!-- Logic overrides to Active Room if hosting -->
+                <div class="nav-item" onclick="goToLobby(this)">Lobby</div>
                 <div class="nav-item" onclick="navigateTo('explore', this)">Explore</div>
                 <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
             </div>
@@ -202,7 +244,19 @@
         <div class="room-header">
             <h2 id="display-room-title">My Syncro Room</h2>
             <div class="room-actions">
-                <div class="room-code-badge glass-effect">Code: <span id="display-room-code" style="margin-left: 6px;">------</span></div>
+                <div class="room-code-badge glass-effect">
+                    <div id="active-gradient-icon" class="gradient-btn grad-0" onclick="toggleGradientPopup()"></div>
+                    <span id="display-room-code">------</span>
+                </div>
+                <!-- HyperOS Gradient Picker -->
+                <div id="gradient-popup">
+                    <div class="grad-option grad-0" onclick="selectGradient(0)"></div>
+                    <div class="grad-option grad-1" onclick="selectGradient(1)"></div>
+                    <div class="grad-option grad-2" onclick="selectGradient(2)"></div>
+                    <div class="grad-option grad-3" onclick="selectGradient(3)"></div>
+                    <div class="grad-option grad-4" onclick="selectGradient(4)"></div>
+                </div>
+
                 <button class="end-room-btn" onclick="openEndLeaveModal()"><span id="header-end-btn-text">End Room</span></button>
             </div>
         </div>
@@ -230,11 +284,21 @@
         let isCurrentUserHost = false;
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
+        let currentRoomCode = '';
 
         window.onload = function() {
             generateIdentity();
             checkExistingRoomState();
             updatePillPos('active-pill', document.querySelector('.nav-item.active'));
+            
+            // Close gradient popup if clicked outside
+            document.addEventListener('click', (e) => {
+                const popup = document.getElementById('gradient-popup');
+                const btn = document.getElementById('active-gradient-icon');
+                if (popup.style.display === 'flex' && e.target !== popup && e.target !== btn && !popup.contains(e.target)) {
+                    popup.style.display = 'none';
+                }
+            });
         };
 
         function generateIdentity() {
@@ -253,7 +317,10 @@
             const toast = document.createElement('div');
             toast.className = 'glass-effect toast-msg';
             toast.style.animation = 'slideInRight 0.4s forwards';
-            toast.innerHTML = `<div class="ping-dot" style="animation: none;"></div> ${message}`;
+            
+            const activeGradClass = document.getElementById('bg-active-room').className.replace('bg-layer ', '');
+            toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
+            
             container.appendChild(toast);
             setTimeout(() => {
                 toast.style.animation = 'fadeOutRight 0.4s forwards';
@@ -263,7 +330,7 @@
 
         socket.on('toast_message', (msg) => triggerToast(msg));
 
-        // --- NEW: Update UI with Dynamic Room Names ---
+        // Syncs the UI and Gradient data
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
@@ -275,6 +342,8 @@
                 titleEl.innerText = `${data.hostName}'s Syncro Room`;
                 localStorage.setItem('syncro_room_name', `${data.hostName}'s Syncro Room`);
             }
+            
+            applyGradientTheme(data.gradientIndex || 0);
             
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
 
@@ -288,6 +357,11 @@
                 li.innerHTML = `<div class="avatar"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
             });
+        });
+
+        // Real-time Gradient broadcast listener
+        socket.on('gradient_updated', (index) => {
+            applyGradientTheme(index);
         });
 
         socket.on('room_ended', () => {
@@ -307,6 +381,7 @@
             }
         });
 
+        // --- Navigation Logic ---
         function updatePillPos(pillId, element) {
             const pill = document.getElementById(pillId);
             if (element && pill) {
@@ -324,6 +399,8 @@
         function navigateTo(pageId, navElement) {
             const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
             const floatingBtn = document.getElementById('floating-return-btn');
+            
+            // Show fluid return button if in another tab while room is active
             floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
 
             if (navElement) {
@@ -335,16 +412,31 @@
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
 
-            document.body.classList.remove('lobby-active', 'explore-active');
+            document.body.className = ''; // Reset body classes
             
-            if (pageId === 'lobby' || pageId === 'active-room') {
-                document.body.classList.add('lobby-active'); 
-                if (pageId === 'lobby') setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50);
+            if (pageId === 'lobby') {
+                document.body.classList.add('lobby-create-active'); 
+                setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50);
             } else if (pageId === 'explore') {
                 document.body.classList.add('explore-active');
                 setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50);
+            } else if (pageId === 'active-room') {
+                document.body.classList.add('active-room-active');
             }
         }
+
+        // LOBBY OVERRIDE LOGIC: Jump to active room if it exists
+        function goToLobby(navElement = null) { 
+            const lobbyNav = navElement || document.querySelectorAll('.nav-item')[1];
+            if (localStorage.getItem('syncro_room_code')) {
+                navigateTo('active-room', lobbyNav);
+            } else {
+                navigateTo('lobby', lobbyNav);
+            }
+        }
+        
+        function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
+        function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
 
         function toggleRoomType(type, element) {
             document.querySelectorAll('#lobby .pill-btn').forEach(el => el.classList.remove('active-pill'));
@@ -357,12 +449,9 @@
             updatePillPos('explore-type-pill', element);
         }
 
-        function goToLobby() { navigateTo('lobby', document.querySelectorAll('.nav-item')[1]); }
-        function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
-        function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
-
+        // --- Code Input Fixes ---
         function handleInput(element, index) {
-            element.value = element.value.toUpperCase();
+            element.value = element.value.trim().substring(0, 1).toUpperCase(); // Prevent space/multi-char bugs
             if (element.value.length === 1 && index < 5) document.querySelectorAll('.code-box')[index + 1].focus();
             validateRoomCode();
         }
@@ -374,7 +463,7 @@
 
         async function validateRoomCode() {
             let enteredCode = '';
-            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
+            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
             const btn = document.getElementById('join-room-btn');
             
             if (enteredCode.length === 6) {
@@ -389,15 +478,17 @@
             }
         }
 
+        // --- Room Operations ---
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
             const savedName = localStorage.getItem('syncro_room_name');
             if (savedCode) {
+                currentRoomCode = savedCode;
                 socket.emit('join_room', { roomCode: savedCode, username: currentUsername }, (response) => {
                     if (response && response.success) {
                         document.getElementById('display-room-code').innerText = savedCode;
                         document.getElementById('display-room-title').innerText = savedName;
-                        navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                        goToLobby(); // Will automatically route to active room
                     } else {
                         forceClearRoomState();
                     }
@@ -410,23 +501,26 @@
             let roomCode = '';
             for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             const customName = document.getElementById('room-name-input').value;
+            
+            // Generate a random starting gradient
+            const randomGrad = Math.floor(Math.random() * 5);
 
-            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, customRoomName: customName });
+            currentRoomCode = roomCode;
+            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, customRoomName: customName, gradientIndex: randomGrad });
 
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
-            navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+            goToLobby();
         }
 
-        // --- NEW: Intercepting Join Requests to check for active rooms ---
         function initiateJoinRoom() {
             let enteredCode = '';
-            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.toUpperCase());
+            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
             
-            const currentRoom = localStorage.getItem('syncro_room_code');
-            if (currentRoom) {
-                if (currentRoom === enteredCode) {
-                    navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+            const existingRoom = localStorage.getItem('syncro_room_code');
+            if (existingRoom) {
+                if (existingRoom === enteredCode) {
+                    goToLobby();
                     return;
                 }
                 openSwitchRoomModal(enteredCode);
@@ -438,14 +532,40 @@
         function proceedToJoinRoom(code) {
             socket.emit('join_room', { roomCode: code, username: currentUsername }, (response) => {
                 if (response && response.success) {
+                    currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
-                    navigateTo('active-room', document.querySelectorAll('.nav-item')[1]);
+                    goToLobby();
                 }
             });
         }
 
-        // --- MODAL LOGIC ---
+        // --- Gradient Customization Logic ---
+        function toggleGradientPopup() {
+            const popup = document.getElementById('gradient-popup');
+            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function selectGradient(index) {
+            document.getElementById('gradient-popup').style.display = 'none';
+            // Inform server to update everyone
+            socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: index });
+        }
+
+        function applyGradientTheme(index) {
+            const gradClass = `grad-${index}`;
+            
+            // Update Active Room Background
+            document.getElementById('bg-active-room').className = `bg-layer ${gradClass}`;
+            
+            // Update the Icon button next to code
+            document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
+            
+            // Update the Fluid Return Button icon
+            document.getElementById('fluid-indicator-circle').className = `fluid-indicator ${gradClass}`;
+        }
+
+        // --- Modals ---
         function openModal() {
             const modal = document.getElementById('custom-modal');
             modal.style.display = 'flex';
@@ -483,13 +603,14 @@
             socket.emit('leave_room');
             
             if (modalActionContext === 'switch') {
-                setTimeout(() => { proceedToJoinRoom(pendingSwitchCode); }, 200);
+                setTimeout(() => proceedToJoinRoom(pendingSwitchCode), 200);
             } else {
                 forceClearRoomState();
             }
         }
 
         function forceClearRoomState() {
+            currentRoomCode = '';
             localStorage.removeItem('syncro_room_code');
             localStorage.removeItem('syncro_room_name');
             document.getElementById('live-user-list').innerHTML = '';
