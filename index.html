@@ -6,6 +6,7 @@
     <title>Syncro</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23c49a02%22/><text x=%2250%22 y=%2272%22 font-size=%2265%22 font-family=%22Inter, sans-serif%22 font-weight=%22800%22 fill=%22%23fff%22 text-anchor=%22middle%22>S</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
     
@@ -16,16 +17,26 @@
         #bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
         .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.8s ease-in-out; opacity: 0; }
         
-        .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } /* Classic Gold */
-        .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } /* Deep Purple */
-        .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } /* Emerald */
-        .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } /* Crimson */
-        .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } /* Ocean */
-        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } /* Magenta */
-        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } /* Carbon */
-        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } /* Olive */
-        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } /* Midnight Blue */
-        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } /* Rust */
+        .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } 
+        .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } 
+        .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
+        .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
+        .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
+        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } 
+        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } 
+        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } 
+        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } 
+        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } 
+
+        #bg-home { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); opacity: 1; }
+        #bg-lobby-create { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
+        #bg-explore { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } 
+        #bg-active-room { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); } 
+
+        body.lobby-create-active #bg-home, body.explore-active #bg-home, body.active-room-active #bg-home { opacity: 0; }
+        body.lobby-create-active #bg-lobby-create { opacity: 1; }
+        body.explore-active #bg-explore { opacity: 1; }
+        body.active-room-active #bg-active-room { opacity: 1; }
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
@@ -131,6 +142,10 @@
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
+        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 10px 24px 10px 14px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; font-size: 14px; z-index: 100; transition: transform 0.2s ease, box-shadow 0.2s; }
+        #floating-return-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
@@ -165,6 +180,10 @@
                 <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmModalAction()">End Room</button>
             </div>
         </div>
+    </div>
+
+    <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
+        <div id="fluid-indicator-circle" class="fluid-indicator grad-0"></div> Return to room
     </div>
 
     <nav>
@@ -236,7 +255,6 @@
                     <div id="active-gradient-icon" class="gradient-btn grad-0" onclick="toggleGradientPopup()"></div>
                     <span id="display-room-code">------</span>
                 </div>
-                <!-- 10 Gradients List -->
                 <div id="gradient-popup">
                     <div class="grad-option grad-0" onclick="selectGradient(0)"></div>
                     <div class="grad-option grad-1" onclick="selectGradient(1)"></div>
@@ -274,7 +292,6 @@
                     </button>
                 </div>
 
-                <!-- NEW SEARCH UI -->
                 <div id="host-controls" class="search-container" style="display: none;">
                     <div style="display: flex; gap: 10px;">
                         <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search for a song or paste link..." style="width: 100%; box-sizing: border-box;" onkeypress="if(event.key === 'Enter') searchSong()">
@@ -285,7 +302,7 @@
             </div>
 
             <!-- INVISIBLE PLAYER ENGINE -->
-            <!-- Size is 200px but positioned offscreen so browsers don't block autoplay -->
+            <!-- Rendered 200px offscreen so mobile browsers don't block autoplay -->
             <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
@@ -306,7 +323,6 @@
         let currentRoomCode = '';
         let currentActiveSongId = null;
 
-        // Player & Sync Variables
         let ytPlayer;
         let isPlayerReady = false;
         let isDraggingSlider = false;
@@ -322,7 +338,6 @@
             checkExistingRoomState();
             updatePillPos('active-pill', document.querySelector('.nav-item.active'));
             
-            // Hide popups when clicking outside
             document.addEventListener('click', (e) => {
                 const gradPopup = document.getElementById('gradient-popup');
                 const gradBtn = document.getElementById('active-gradient-icon');
@@ -342,21 +357,17 @@
             const gradClass = `grad-${index}`;
             const container = document.getElementById('bg-container');
             
-            // Create a new layer
             const newLayer = document.createElement('div');
             newLayer.className = `bg-layer ${gradClass}`;
             container.appendChild(newLayer);
             
-            // Fade it in smoothly
             setTimeout(() => { newLayer.style.opacity = '1'; }, 50);
             
-            // Remove old layers after transition completes
             setTimeout(() => {
                 const layers = container.getElementsByClassName('bg-layer');
                 while (layers.length > 1) container.removeChild(layers[0]);
             }, 800);
 
-            // Update UI icons instantly
             document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
             document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`;
         }
@@ -391,7 +402,6 @@
 
             const isPlaying = (event.data === YT.PlayerState.PLAYING);
             
-            // Force Play Button UI to respond instantly
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
             
@@ -406,7 +416,6 @@
             }
         }
 
-        // --- CUSTOM UI CONTROLS ---
         function startUIUpdates() {
             clearInterval(uiInterval);
             uiInterval = setInterval(() => {
@@ -442,7 +451,6 @@
 
         function toggleHostPlay() {
             if (!isPlayerReady) return;
-            // Optimistic UI Update for Snappy Feel
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
@@ -451,12 +459,11 @@
             else ytPlayer.playVideo();
         }
 
-        // --- PIPED SEARCH API & LOADING ---
+        // --- PIPED SEARCH API ---
         async function searchSong() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (query === '') return;
 
-            // Direct URL Paste check
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = query.match(regExp);
             if (match && match[2].length === 11) {
@@ -470,12 +477,11 @@
             resultsContainer.style.display = 'flex';
 
             try {
-                // Fetching from Piped API (Free YouTube search)
                 const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
                 const data = await res.json();
                 
                 resultsContainer.innerHTML = '';
-                const items = data.items.slice(0, 5); // Take top 5
+                const items = data.items.slice(0, 5); 
                 
                 if (items.length === 0) {
                     resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found. Try pasting a link instead.</div>';
@@ -483,19 +489,12 @@
                 }
 
                 items.forEach(item => {
-                    // Extract ID from URL (e.g. /watch?v=12345)
                     const vIdMatch = item.url.match(/\?v=([^&]+)/);
                     if (vIdMatch) {
                         const vidId = vIdMatch[1];
                         const el = document.createElement('div');
                         el.className = 'search-item';
-                        el.innerHTML = `
-                            <img src="${item.thumbnail}" class="search-thumb">
-                            <div class="search-info">
-                                <h5>${item.title}</h5>
-                                <p>${item.uploaderName}</p>
-                            </div>
-                        `;
+                        el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.uploaderName}</p></div>`;
                         el.onclick = () => {
                             executeHostLoad(vidId);
                             resultsContainer.style.display = 'none';
@@ -544,7 +543,6 @@
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
-                // Allow a tiny bit of drift. If off by more than 1.5s, force snap.
                 if (Math.abs(hostTime - myTime) > 1.5) ytPlayer.seekTo(hostTime);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
@@ -583,10 +581,9 @@
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
-                // Faster 400ms heartbeat for tighter sync
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                        const actualVid = ytPlayer.getVideoData()?.video_id;
+                        const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
                         if (actualVid && currentActiveSongId && actualVid !== currentActiveSongId) {
                             socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
                         } else {
@@ -648,19 +645,75 @@
             }
         });
 
-        // --- CORE NAVIGATION & MODALS ---
+        function generateIdentity() {
+            currentUsername = localStorage.getItem('syncro_username');
+            if (!currentUsername) {
+                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
+                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
+                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
+                localStorage.setItem('syncro_username', currentUsername);
+            }
+            document.getElementById('display-username').innerText = currentUsername;
+        }
+
+        function triggerToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'glass-effect toast-msg';
+            toast.style.animation = 'slideInRight 0.4s forwards';
+            
+            // Get the current active gradient to style the toast dot
+            const bgContainer = document.getElementById('bg-container');
+            const activeLayers = bgContainer.getElementsByClassName('bg-layer');
+            const activeGradClass = activeLayers.length > 0 ? activeLayers[activeLayers.length - 1].className.replace('bg-layer ', '') : 'grad-0';
+            
+            toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutRight 0.4s forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        function updatePillPos(pillId, element) {
+            const pill = document.getElementById(pillId);
+            if (element && pill) {
+                pill.style.width = element.offsetWidth + 'px';
+                pill.style.left = element.offsetLeft + 'px';
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            updatePillPos('active-pill', document.querySelector('.nav-item.active'));
+            updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill'));
+            updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill'));
+        });
+
         function navigateTo(pageId, navElement) {
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            if (navElement) navElement.classList.add('active');
-            updatePillPos('active-pill', navElement);
+            const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
+            const floatingBtn = document.getElementById('floating-return-btn');
+            floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
+
+            if (navElement) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navElement.classList.add('active');
+                updatePillPos('active-pill', navElement);
+            }
 
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
+
             document.body.className = ''; 
             
-            if (pageId === 'lobby') { document.body.classList.add('lobby-create-active'); setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50); }
-            else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
-            else if (pageId === 'active-room') { document.body.classList.add('active-room-active'); }
+            if (pageId === 'lobby') {
+                document.body.classList.add('lobby-create-active'); 
+                setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50);
+            } else if (pageId === 'explore') {
+                document.body.classList.add('explore-active');
+                setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50);
+            } else if (pageId === 'active-room') {
+                document.body.classList.add('active-room-active');
+            }
         }
 
         function goToLobby(navElement = null) { 
@@ -670,6 +723,46 @@
         }
         
         function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
+        function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
+
+        function toggleRoomType(type, element) {
+            document.querySelectorAll('#lobby .pill-btn').forEach(el => el.classList.remove('active-pill'));
+            element.classList.add('active-pill');
+            updatePillPos('room-type-pill', element);
+        }
+        function toggleExploreType(type, element) {
+            document.querySelectorAll('#explore .pill-btn').forEach(el => el.classList.remove('active-pill'));
+            element.classList.add('active-pill');
+            updatePillPos('explore-type-pill', element);
+        }
+
+        function handleInput(element, index) {
+            element.value = element.value.trim().substring(0, 1).toUpperCase(); 
+            if (element.value.length === 1 && index < 5) document.querySelectorAll('.code-box')[index + 1].focus();
+            validateRoomCode();
+        }
+        function handleBackspace(event, index) {
+            if (event.key === 'Backspace' && document.querySelectorAll('.code-box')[index].value === '' && index > 0) {
+                document.querySelectorAll('.code-box')[index - 1].focus();
+            }
+        }
+
+        async function validateRoomCode() {
+            let enteredCode = '';
+            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
+            const btn = document.getElementById('join-room-btn');
+            
+            if (enteredCode.length === 6) {
+                try {
+                    const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
+                    const data = await response.json();
+                    if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
+                    else { btn.classList.remove('valid'); btn.disabled = true; }
+                } catch (error) { console.error("Failed to verify room:", error); }
+            } else {
+                btn.classList.remove('valid'); btn.disabled = true;
+            }
+        }
 
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
@@ -791,6 +884,7 @@
             localStorage.removeItem('syncro_room_name');
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
+            document.getElementById('floating-return-btn').style.display = 'none';
             applyGradientTheme(0);
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
