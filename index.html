@@ -120,7 +120,8 @@
         .play-pause-btn:hover { transform: scale(1.05); }
 
         /* SEARCH UI RESTRUCTURED */
-        .search-container { position: relative; width: 100%; margin-top: 10px; display: flex; gap: 10px; }
+        #host-controls { display: none; padding: 20px; position: relative; z-index: 50; } /* Z-INDEX FIX */
+        .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
         .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .search-item:hover { background: rgba(255,255,255,0.1); }
@@ -280,12 +281,11 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <!-- HOST SEARCH UI (Moved outside the player) -->
-                <div id="host-controls" class="glass-card glass-effect" style="display: none; padding: 20px;">
+                <!-- HOST SEARCH UI (Elevated Z-Index) -->
+                <div id="host-controls" class="glass-card glass-effect">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
-                    <div class="search-container" style="margin-top: 0;">
-                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" onkeydown="if(event.key === 'Enter') searchSong()">
-                        <button class="btn" id="search-btn" style="padding: 10px 20px;" onclick="searchSong()">Search</button>
+                    <div class="search-container">
+                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" onkeydown="if(event.key === 'Enter') { if(searchTimeout) clearTimeout(searchTimeout); searchSong(); }">
                     </div>
                     <div id="search-results" class="search-results"></div>
                 </div>
@@ -312,8 +312,6 @@
                 </div>
             </div>
 
-            <!-- INVISIBLE PLAYER ENGINE -->
-            <!-- 200px offscreen prevents browser background throttling -->
             <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
@@ -339,6 +337,7 @@
         let isDraggingSlider = false;
         let syncInterval;
         let uiInterval;
+        let searchTimeout = null;
         
         let pendingVideo = null;
         let pendingTime = 0;
@@ -356,8 +355,7 @@
 
                 const searchPopup = document.getElementById('search-results');
                 const searchInput = document.getElementById('yt-search-input');
-                const searchBtn = document.getElementById('search-btn');
-                if (searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && e.target !== searchBtn && !searchPopup.contains(e.target)) {
+                if (searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
                     searchPopup.style.display = 'none';
                 }
             });
@@ -372,7 +370,6 @@
             newLayer.className = `room-bg-layer ${gradClass}`;
             container.appendChild(newLayer);
             
-            // Trigger reflow then fade in
             void newLayer.offsetWidth; 
             newLayer.style.opacity = '1';
             
@@ -471,22 +468,40 @@
             else ytPlayer.playVideo();
         }
 
-        // --- PIPED SEARCH API w/ FALLBACK LOGIC ---
+        // --- LIVE SEARCH (DEBOUNCE LOGIC) ---
+        function handleSearchInput() {
+            const query = document.getElementById('yt-search-input').value.trim();
+            if (searchTimeout) clearTimeout(searchTimeout);
+            
+            if (query === '') {
+                document.getElementById('search-results').style.display = 'none';
+                return;
+            }
+
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = query.match(regExp);
+            if (match && match[2].length === 11) {
+                executeHostLoad(match[2]);
+                document.getElementById('yt-search-input').value = '';
+                document.getElementById('search-results').style.display = 'none';
+                return;
+            }
+
+            // Trigger search 500ms after the host stops typing
+            searchTimeout = setTimeout(() => { searchSong(); }, 500);
+        }
+
         async function fetchWithFallback(query) {
-            // Array of public Piped instances to bypass downtime
             const instances = [
                 'https://pipedapi.kavin.rocks',
                 'https://pipedapi.adminforge.de',
                 'https://piped-api.lunar.icu'
             ];
-            
             for (let url of instances) {
                 try {
                     const res = await fetch(`${url}/search?q=${encodeURIComponent(query)}&filter=music_songs`);
                     if (res.ok) return await res.json();
-                } catch(e) {
-                    console.log(`Search instance failed: ${url}`);
-                }
+                } catch(e) { console.log(`Search instance failed: ${url}`); }
             }
             throw new Error("All search instances failed");
         }
@@ -495,21 +510,12 @@
             const query = document.getElementById('yt-search-input').value.trim();
             if (query === '') return;
 
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = query.match(regExp);
-            if (match && match[2].length === 11) {
-                executeHostLoad(match[2]);
-                document.getElementById('yt-search-input').value = '';
-                return;
-            }
-
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching...</div>';
             resultsContainer.style.display = 'flex';
 
             try {
                 const data = await fetchWithFallback(query);
-                
                 resultsContainer.innerHTML = '';
                 const items = data.items.slice(0, 5); 
                 
@@ -603,7 +609,7 @@
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
-            document.getElementById('host-controls').style.display = isCurrentUserHost ? 'flex' : 'none';
+            document.getElementById('host-controls').style.display = isCurrentUserHost ? 'block' : 'none';
             document.getElementById('host-play-btn').style.display = isCurrentUserHost ? 'flex' : 'none';
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
             
@@ -840,15 +846,6 @@
             document.getElementById('album-art-svg').style.display = 'block';
             currentActiveSongId = null;
             if (isPlayerReady) ytPlayer.stopVideo();
-        }
-
-        function toggleGradientPopup() {
-            const popup = document.getElementById('gradient-popup');
-            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
-        }
-        function selectGradient(index) {
-            document.getElementById('gradient-popup').style.display = 'none';
-            socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: index });
         }
 
         function openModal() {
