@@ -25,15 +25,16 @@ app.get('/check-room/:code', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
-    // Create Room - Now saves the Custom Room Name
+    // Create Room - Now includes Gradient Index
     socket.on('create_room', (data) => {
-        const { roomCode, username, customRoomName } = data;
+        const { roomCode, username, customRoomName, gradientIndex } = data;
         socket.join(roomCode);
         
         activeRooms[roomCode] = { 
             hostId: socket.id, 
             hostName: username, 
             customRoomName: customRoomName || '', 
+            gradientIndex: gradientIndex || 0,
             sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = username;
@@ -44,11 +45,12 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('room_updated', {
             hostName: activeRooms[roomCode].hostName,
             customRoomName: activeRooms[roomCode].customRoomName,
+            gradientIndex: activeRooms[roomCode].gradientIndex,
             users: [username]
         });
     });
 
-    // Join Room - Now sends the Custom Room Name back to the guest
+    // Join Room
     socket.on('join_room', (data, callback) => {
         const { roomCode, username } = data;
         
@@ -66,6 +68,7 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('room_updated', {
             hostName: activeRooms[roomCode].hostName,
             customRoomName: activeRooms[roomCode].customRoomName,
+            gradientIndex: activeRooms[roomCode].gradientIndex,
             users: uniqueUsers
         });
         
@@ -74,13 +77,17 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: true });
     });
 
-    socket.on('leave_room', () => {
-        handleUserExit(socket);
+    // NEW: Real-time Gradient Sync
+    socket.on('change_gradient', (data) => {
+        const { roomCode, gradientIndex } = data;
+        if (activeRooms[roomCode]) {
+            activeRooms[roomCode].gradientIndex = gradientIndex;
+            io.to(roomCode).emit('gradient_updated', gradientIndex);
+        }
     });
 
-    socket.on('disconnect', () => {
-        handleUserExit(socket);
-    });
+    socket.on('leave_room', () => handleUserExit(socket));
+    socket.on('disconnect', () => handleUserExit(socket));
 
     function handleUserExit(sock) {
         if (sock.roomCode && activeRooms[sock.roomCode]) {
@@ -98,6 +105,7 @@ io.on('connection', (socket) => {
                 io.to(sock.roomCode).emit('room_updated', {
                     hostName: room.hostName,
                     customRoomName: room.customRoomName,
+                    gradientIndex: room.gradientIndex,
                     users: uniqueUsers
                 });
                 
@@ -113,6 +121,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-    console.log(`Syncro Backend Server running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`Syncro Backend Server running on port ${PORT}`));
