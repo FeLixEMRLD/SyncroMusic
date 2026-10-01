@@ -25,7 +25,6 @@ app.get('/check-room/:code', (req, res) => {
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
-    // Create Room - Now includes Gradient Index
     socket.on('create_room', (data) => {
         const { roomCode, username, customRoomName, gradientIndex } = data;
         socket.join(roomCode);
@@ -35,6 +34,7 @@ io.on('connection', (socket) => {
             hostName: username, 
             customRoomName: customRoomName || '', 
             gradientIndex: gradientIndex || 0,
+            currentVideo: null, // NEW: Store current video ID
             sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = username;
@@ -46,11 +46,11 @@ io.on('connection', (socket) => {
             hostName: activeRooms[roomCode].hostName,
             customRoomName: activeRooms[roomCode].customRoomName,
             gradientIndex: activeRooms[roomCode].gradientIndex,
+            currentVideo: activeRooms[roomCode].currentVideo,
             users: [username]
         });
     });
 
-    // Join Room
     socket.on('join_room', (data, callback) => {
         const { roomCode, username } = data;
         
@@ -69,6 +69,7 @@ io.on('connection', (socket) => {
             hostName: activeRooms[roomCode].hostName,
             customRoomName: activeRooms[roomCode].customRoomName,
             gradientIndex: activeRooms[roomCode].gradientIndex,
+            currentVideo: activeRooms[roomCode].currentVideo, // Send late joiners the song
             users: uniqueUsers
         });
         
@@ -77,12 +78,28 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: true });
     });
 
-    // NEW: Real-time Gradient Sync
     socket.on('change_gradient', (data) => {
         const { roomCode, gradientIndex } = data;
         if (activeRooms[roomCode]) {
             activeRooms[roomCode].gradientIndex = gradientIndex;
             io.to(roomCode).emit('gradient_updated', gradientIndex);
+        }
+    });
+
+    // --- NEW: MEDIA SYNC LISTENERS ---
+    socket.on('load_song', (data) => {
+        const { roomCode, videoId } = data;
+        if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
+            activeRooms[roomCode].currentVideo = videoId;
+            io.to(roomCode).emit('song_loaded', videoId);
+        }
+    });
+
+    socket.on('sync_time', (data) => {
+        const { roomCode, time, state } = data;
+        if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
+            // Send time syncs to everyone in the room EXCEPT the host
+            socket.to(roomCode).emit('sync_update', { time, state });
         }
     });
 
@@ -106,6 +123,7 @@ io.on('connection', (socket) => {
                     hostName: room.hostName,
                     customRoomName: room.customRoomName,
                     gradientIndex: room.gradientIndex,
+                    currentVideo: room.currentVideo,
                     users: uniqueUsers
                 });
                 
