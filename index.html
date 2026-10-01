@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Syncro</title>
-    <!-- NEW: Sleek Tab Icon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23c49a02%22/><text x=%2250%22 y=%2272%22 font-size=%2265%22 font-family=%22Inter, sans-serif%22 font-weight=%22800%22 fill=%22%23fff%22 text-anchor=%22middle%22>S</text></svg>">
-    
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
@@ -14,22 +12,20 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
         
-        .bg-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out, background 0.6s ease-in-out; z-index: -1; }
-        #bg-home { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); opacity: 1; }
-        #bg-lobby-create { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
-        #bg-explore { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%); } 
-        #bg-active-room { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); } 
-
-        body.lobby-create-active #bg-home, body.explore-active #bg-home, body.active-room-active #bg-home { opacity: 0; }
-        body.lobby-create-active #bg-lobby-create { opacity: 1; }
-        body.explore-active #bg-explore { opacity: 1; }
-        body.active-room-active #bg-active-room { opacity: 1; }
-
-        .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } 
-        .grad-1 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #1e1140 100%) !important; } 
-        .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
-        .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
-        .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
+        /* Smooth Background Engine */
+        #bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.8s ease-in-out; opacity: 0; }
+        
+        .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } /* Classic Gold */
+        .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } /* Deep Purple */
+        .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } /* Emerald */
+        .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } /* Crimson */
+        .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } /* Ocean */
+        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } /* Magenta */
+        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } /* Carbon */
+        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } /* Olive */
+        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } /* Midnight Blue */
+        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } /* Rust */
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
@@ -61,7 +57,6 @@
         .code-input-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
         .code-box { width: 50px; height: 60px; font-size: 24px; text-align: center; font-family: 'Inter', sans-serif; font-weight: 600; color: white; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 12px; outline: none; transition: border 0.2s; text-transform: uppercase; }
         .code-box:focus { border-color: white; background: rgba(255, 255, 255, 0.1); }
-        
         #join-room-btn { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 12px 40px; border-radius: 25px; font-size: 16px; font-weight: 500; cursor: not-allowed; transition: all 0.3s ease; }
         #join-room-btn.valid { background: white; color: black; cursor: pointer; }
         #join-room-btn.valid:hover { transform: scale(1.05); }
@@ -88,8 +83,9 @@
         .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; }
         .gradient-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.2s; }
         .gradient-btn:hover { transform: scale(1.1); }
-        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 12px; border-radius: 16px; display: none; gap: 10px; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 50; animation: fadeIn 0.2s ease-out; }
-        .grad-option { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
+        
+        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 12px; border-radius: 16px; display: none; gap: 10px; flex-wrap: wrap; width: 160px; justify-content: center; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 50; animation: fadeIn 0.2s ease-out; }
+        .grad-option { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
         .grad-option:hover { transform: scale(1.1); border-color: white; }
 
         .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; line-height: 1; transition: all 0.2s; }
@@ -105,34 +101,25 @@
         .song-details h4 { margin: 0 0 5px 0; font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .song-details p { margin: 0; font-size: 13px; color: #aaa; }
         
-        /* NEW: Clickable/Scrubbable Progress Slider */
-        .progress-slider {
-            -webkit-appearance: none;
-            width: 100%; height: 4px; background: rgba(255,255,255,0.2);
-            border-radius: 2px; outline: none; margin-top: 12px;
-            transition: background 0.1s; cursor: pointer;
-        }
-        .progress-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; appearance: none;
-            width: 12px; height: 12px; border-radius: 50%;
-            background: white; cursor: pointer;
-        }
-        .progress-slider::-moz-range-thumb {
-            width: 12px; height: 12px; border-radius: 50%;
-            background: white; cursor: pointer; border: none;
-        }
+        .progress-slider { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; margin-top: 12px; transition: background 0.1s; cursor: pointer; }
+        .progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; }
         
-        .play-pause-btn { width: 45px; height: 45px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
+        .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
+
+        /* SEARCH UI */
+        .search-container { position: relative; width: 100%; margin-top: 25px; }
+        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.9); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .search-item:hover { background: rgba(255,255,255,0.1); }
+        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .avatar { width: 24px; height: 24px; background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%); border-radius: 50%; flex-shrink: 0; }
         
-        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 10px 24px 10px 14px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; font-size: 14px; z-index: 100; transition: transform 0.2s ease, box-shadow 0.2s; }
-        #floating-return-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-        .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
-
         #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
         .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .modal-content h3 { margin-top: 0; font-size: 22px; font-weight: 600; }
@@ -162,26 +149,22 @@
 </head>
 <body>
 
-    <div id="bg-home" class="bg-layer"></div>
-    <div id="bg-lobby-create" class="bg-layer"></div>
-    <div id="bg-explore" class="bg-layer"></div>
-    <div id="bg-active-room" class="bg-layer grad-0"></div>
+    <!-- Dynamic Background Engine -->
+    <div id="bg-container">
+        <div id="base-bg" class="bg-layer grad-0" style="opacity: 1;"></div>
+    </div>
 
     <div id="toast-container"></div>
 
     <div id="custom-modal">
         <div class="modal-content">
             <h3 id="modal-title">End Session?</h3>
-            <p id="modal-desc" style="font-size: 14px; color: #ddd; font-weight: 300;">Are you sure you want to close this room? Everyone will be disconnected.</p>
+            <p id="modal-desc" style="font-size: 14px; color: #ddd; font-weight: 300;">Are you sure you want to close this room?</p>
             <div class="modal-actions">
                 <button class="modal-btn-cancel" onclick="closeModal()">Cancel</button>
                 <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmModalAction()">End Room</button>
             </div>
         </div>
-    </div>
-
-    <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
-        <div id="fluid-indicator-circle" class="fluid-indicator grad-0"></div> Return to room
     </div>
 
     <nav>
@@ -216,7 +199,6 @@
             <div class="pill-btn active-pill" onclick="toggleExploreType('private', this)">Private rooms</div>
             <div class="pill-btn" onclick="toggleExploreType('public', this)">Public rooms</div>
         </div>
-
         <h2>Join a private room</h2>
         <div class="code-input-container">
             <input type="text" maxlength="1" class="code-box" oninput="handleInput(this, 0)" onkeydown="handleBackspace(event, 0)">
@@ -254,12 +236,18 @@
                     <div id="active-gradient-icon" class="gradient-btn grad-0" onclick="toggleGradientPopup()"></div>
                     <span id="display-room-code">------</span>
                 </div>
+                <!-- 10 Gradients List -->
                 <div id="gradient-popup">
                     <div class="grad-option grad-0" onclick="selectGradient(0)"></div>
                     <div class="grad-option grad-1" onclick="selectGradient(1)"></div>
                     <div class="grad-option grad-2" onclick="selectGradient(2)"></div>
                     <div class="grad-option grad-3" onclick="selectGradient(3)"></div>
                     <div class="grad-option grad-4" onclick="selectGradient(4)"></div>
+                    <div class="grad-option grad-5" onclick="selectGradient(5)"></div>
+                    <div class="grad-option grad-6" onclick="selectGradient(6)"></div>
+                    <div class="grad-option grad-7" onclick="selectGradient(7)"></div>
+                    <div class="grad-option grad-8" onclick="selectGradient(8)"></div>
+                    <div class="grad-option grad-9" onclick="selectGradient(9)"></div>
                 </div>
                 <button class="end-room-btn" onclick="openEndLeaveModal()"><span id="header-end-btn-text">End Room</span></button>
             </div>
@@ -277,26 +265,28 @@
                     <div class="song-details">
                         <h4 id="ui-song-title">Waiting for host...</h4>
                         <p id="ui-song-status">Search for a song to begin syncing</p>
-                        <!-- Interactive Progress Slider -->
                         <input type="range" id="ui-progress-slider" min="0" max="100" value="0" class="progress-slider" oninput="hostScrubbing()" onchange="hostSeekTo(this.value)">
                     </div>
                     
                     <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
-                        <svg id="icon-play" style="display:block; margin-left: 3px;" width="18" height="18" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                        <svg id="icon-pause" style="display:none;" width="18" height="18" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                        <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
                     </button>
                 </div>
 
-                <div id="host-controls" style="margin-top: 25px; display: none; gap: 10px; flex-direction: column;">
+                <!-- NEW SEARCH UI -->
+                <div id="host-controls" class="search-container" style="display: none;">
                     <div style="display: flex; gap: 10px;">
-                        <input type="text" id="yt-video-input" class="input-dark glass-effect" placeholder="Paste YouTube Link or Search ID" style="width: 100%; box-sizing: border-box;">
-                        <button class="btn" style="padding: 10px 20px;" onclick="hostLoadSong()">Load</button>
+                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search for a song or paste link..." style="width: 100%; box-sizing: border-box;" onkeypress="if(event.key === 'Enter') searchSong()">
+                        <button class="btn" id="search-btn" style="padding: 10px 20px;" onclick="searchSong()">Search</button>
                     </div>
+                    <div id="search-results" class="search-results"></div>
                 </div>
             </div>
 
-            <!-- INVISIBLE ENGINE -->
-            <div id="youtube-player" style="position: absolute; left: -9999px; width: 1px; height: 1px;"></div>
+            <!-- INVISIBLE PLAYER ENGINE -->
+            <!-- Size is 200px but positioned offscreen so browsers don't block autoplay -->
+            <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
                 <h3>Listeners</h3>
@@ -314,7 +304,9 @@
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
         let currentRoomCode = '';
+        let currentActiveSongId = null;
 
+        // Player & Sync Variables
         let ytPlayer;
         let isPlayerReady = false;
         let isDraggingSlider = false;
@@ -330,19 +322,49 @@
             checkExistingRoomState();
             updatePillPos('active-pill', document.querySelector('.nav-item.active'));
             
+            // Hide popups when clicking outside
             document.addEventListener('click', (e) => {
-                const popup = document.getElementById('gradient-popup');
-                const btn = document.getElementById('active-gradient-icon');
-                if (popup.style.display === 'flex' && e.target !== popup && e.target !== btn && !popup.contains(e.target)) {
-                    popup.style.display = 'none';
+                const gradPopup = document.getElementById('gradient-popup');
+                const gradBtn = document.getElementById('active-gradient-icon');
+                if (gradPopup.style.display === 'flex' && e.target !== gradPopup && e.target !== gradBtn && !gradPopup.contains(e.target)) gradPopup.style.display = 'none';
+
+                const searchPopup = document.getElementById('search-results');
+                const searchInput = document.getElementById('yt-search-input');
+                const searchBtn = document.getElementById('search-btn');
+                if (searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && e.target !== searchBtn && !searchPopup.contains(e.target)) {
+                    searchPopup.style.display = 'none';
                 }
             });
         };
 
+        // --- BUTTERY BACKGROUND ENGINE ---
+        function applyGradientTheme(index) {
+            const gradClass = `grad-${index}`;
+            const container = document.getElementById('bg-container');
+            
+            // Create a new layer
+            const newLayer = document.createElement('div');
+            newLayer.className = `bg-layer ${gradClass}`;
+            container.appendChild(newLayer);
+            
+            // Fade it in smoothly
+            setTimeout(() => { newLayer.style.opacity = '1'; }, 50);
+            
+            // Remove old layers after transition completes
+            setTimeout(() => {
+                const layers = container.getElementsByClassName('bg-layer');
+                while (layers.length > 1) container.removeChild(layers[0]);
+            }, 800);
+
+            // Update UI icons instantly
+            document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
+            document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`;
+        }
+
         // --- YOUTUBE IFRAME AUDIO ENGINE ---
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('youtube-player', {
-                height: '1', width: '1', videoId: '', 
+                height: '200', width: '200', videoId: '', 
                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
                 events: {
                     'onReady': () => { 
@@ -355,31 +377,32 @@
         }
 
         function onPlayerStateChange(event) {
-            const isPlaying = (event.data === YT.PlayerState.PLAYING);
+            const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
+            
+            // AD & BUFFERING DETECTOR
+            const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
+            if (isPlayingAd) {
+                document.getElementById('ui-song-status').innerText = "Playing Ad / Buffering...";
+                if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
+                return;
+            }
+
+            const isPlaying = (event.data === YT.PlayerState.PLAYING);
+            
+            // Force Play Button UI to respond instantly
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
             
             if (ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
                 document.getElementById('ui-song-title').innerText = ytPlayer.getVideoData().title;
-                
-                // Advanced Ad & Buffering Detection
-                if (isBuffering) {
-                    document.getElementById('ui-song-status').innerText = "Buffering / Ad playing...";
-                } else {
-                    document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : "Paused";
-                }
+                document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : (isBuffering ? "Buffering..." : "Paused");
             }
 
             if (isCurrentUserHost) {
-                // If host hits an ad or buffers, broadcast state 3 so guests wait
                 const broadcastState = isBuffering ? 3 : event.data;
-                socket.emit('sync_time', { 
-                    roomCode: currentRoomCode, 
-                    time: ytPlayer.getCurrentTime(), 
-                    state: broadcastState 
-                });
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: broadcastState });
             }
         }
 
@@ -413,25 +436,82 @@
                 const seekTime = (value / 100) * duration;
                 ytPlayer.seekTo(seekTime, true);
                 
-                socket.emit('sync_time', { 
-                    roomCode: currentRoomCode, 
-                    time: seekTime, 
-                    state: ytPlayer.getPlayerState() 
-                });
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: ytPlayer.getPlayerState() });
             }
         }
 
         function toggleHostPlay() {
             if (!isPlayerReady) return;
-            if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+            // Optimistic UI Update for Snappy Feel
+            const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
+            document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
+            document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
+
+            if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
 
-        // --- URL PARSER & LOADING ---
-        function extractVideoID(url) {
+        // --- PIPED SEARCH API & LOADING ---
+        async function searchSong() {
+            const query = document.getElementById('yt-search-input').value.trim();
+            if (query === '') return;
+
+            // Direct URL Paste check
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : url; 
+            const match = query.match(regExp);
+            if (match && match[2].length === 11) {
+                executeHostLoad(match[2]);
+                document.getElementById('yt-search-input').value = '';
+                return;
+            }
+
+            const resultsContainer = document.getElementById('search-results');
+            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching...</div>';
+            resultsContainer.style.display = 'flex';
+
+            try {
+                // Fetching from Piped API (Free YouTube search)
+                const res = await fetch(`https://pipedapi.kavin.rocks/search?q=${encodeURIComponent(query)}&filter=music_songs`);
+                const data = await res.json();
+                
+                resultsContainer.innerHTML = '';
+                const items = data.items.slice(0, 5); // Take top 5
+                
+                if (items.length === 0) {
+                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found. Try pasting a link instead.</div>';
+                    return;
+                }
+
+                items.forEach(item => {
+                    // Extract ID from URL (e.g. /watch?v=12345)
+                    const vIdMatch = item.url.match(/\?v=([^&]+)/);
+                    if (vIdMatch) {
+                        const vidId = vIdMatch[1];
+                        const el = document.createElement('div');
+                        el.className = 'search-item';
+                        el.innerHTML = `
+                            <img src="${item.thumbnail}" class="search-thumb">
+                            <div class="search-info">
+                                <h5>${item.title}</h5>
+                                <p>${item.uploaderName}</p>
+                            </div>
+                        `;
+                        el.onclick = () => {
+                            executeHostLoad(vidId);
+                            resultsContainer.style.display = 'none';
+                            document.getElementById('yt-search-input').value = '';
+                        };
+                        resultsContainer.appendChild(el);
+                    }
+                });
+            } catch (err) {
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Please paste a YouTube link directly.</div>';
+            }
+        }
+
+        function executeHostLoad(videoId) {
+            currentActiveSongId = videoId;
+            socket.emit('load_song', { roomCode: currentRoomCode, videoId: videoId });
         }
 
         function updateThumbnail(videoId) {
@@ -441,16 +521,8 @@
             document.getElementById('album-art-svg').style.display = 'none';
         }
 
-        function hostLoadSong() {
-            let inputStr = document.getElementById('yt-video-input').value.trim();
-            if (inputStr !== '') {
-                const videoId = extractVideoID(inputStr);
-                socket.emit('load_song', { roomCode: currentRoomCode, videoId: videoId });
-                document.getElementById('yt-video-input').value = '';
-            }
-        }
-
         socket.on('song_loaded', (videoId) => {
+            currentActiveSongId = videoId;
             if (isPlayerReady) {
                 ytPlayer.loadVideoById(videoId);
                 updateThumbnail(videoId);
@@ -463,9 +535,8 @@
         // --- SYNC RECEIVER ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
-                // If host is buffering, pause guests
-                if (data.state === 3) {
-                    document.getElementById('ui-song-status').innerText = "Host Buffering...";
+                if (data.state === 'AD' || data.state === 3) {
+                    document.getElementById('ui-song-status').innerText = "Host is loading / watching an ad...";
                     if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
                     return;
                 }
@@ -473,7 +544,8 @@
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
-                if (Math.abs(hostTime - myTime) > 1.0) ytPlayer.seekTo(hostTime);
+                // Allow a tiny bit of drift. If off by more than 1.5s, force snap.
+                if (Math.abs(hostTime - myTime) > 1.5) ytPlayer.seekTo(hostTime);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
                 else if (data.state === YT.PlayerState.PAUSED && ytPlayer.getPlayerState() !== YT.PlayerState.PAUSED) ytPlayer.pauseVideo();
@@ -483,12 +555,13 @@
         function applyPendingVideo() {
             if (!pendingVideo) return;
             const currentYtVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-            
+            currentActiveSongId = pendingVideo;
+
             if (currentYtVid !== pendingVideo) {
                 ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo);
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 1.0) ytPlayer.seekTo(pendingTime);
+                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 1.5) ytPlayer.seekTo(pendingTime);
             }
             
             if (pendingState) ytPlayer.playVideo();
@@ -502,24 +575,25 @@
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
-            document.getElementById('host-controls').style.display = isCurrentUserHost ? 'flex' : 'none';
+            document.getElementById('host-controls').style.display = isCurrentUserHost ? 'block' : 'none';
             document.getElementById('host-play-btn').style.display = isCurrentUserHost ? 'flex' : 'none';
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
             
-            // Lock guest progress slider
             document.getElementById('ui-progress-slider').style.pointerEvents = isCurrentUserHost ? 'auto' : 'none';
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
+                // Faster 400ms heartbeat for tighter sync
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                        socket.emit('sync_time', { 
-                            roomCode: currentRoomCode, 
-                            time: ytPlayer.getCurrentTime(), 
-                            state: YT.PlayerState.PLAYING 
-                        });
+                        const actualVid = ytPlayer.getVideoData()?.video_id;
+                        if (actualVid && currentActiveSongId && actualVid !== currentActiveSongId) {
+                            socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
+                        } else {
+                            socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: YT.PlayerState.PLAYING });
+                        }
                     }
-                }, 1000);
+                }, 400);
             } else {
                 clearInterval(syncInterval);
             }
@@ -574,70 +648,19 @@
             }
         });
 
-        // --- UTILS & CORE SYSTEM ---
-        function generateIdentity() {
-            currentUsername = localStorage.getItem('syncro_username');
-            if (!currentUsername) {
-                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
-                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
-                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
-                localStorage.setItem('syncro_username', currentUsername);
-            }
-            document.getElementById('display-username').innerText = currentUsername;
-        }
-
-        function triggerToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'glass-effect toast-msg';
-            toast.style.animation = 'slideInRight 0.4s forwards';
-            const activeGradClass = document.getElementById('bg-active-room').className.replace('bg-layer ', '');
-            toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOutRight 0.4s forwards';
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
-
-        function updatePillPos(pillId, element) {
-            const pill = document.getElementById(pillId);
-            if (element && pill) {
-                pill.style.width = element.offsetWidth + 'px';
-                pill.style.left = element.offsetLeft + 'px';
-            }
-        }
-
-        window.addEventListener('resize', () => {
-            updatePillPos('active-pill', document.querySelector('.nav-item.active'));
-            updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill'));
-            updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill'));
-        });
-
+        // --- CORE NAVIGATION & MODALS ---
         function navigateTo(pageId, navElement) {
-            const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
-            const floatingBtn = document.getElementById('floating-return-btn');
-            floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
-
-            if (navElement) {
-                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-                navElement.classList.add('active');
-                updatePillPos('active-pill', navElement);
-            }
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            if (navElement) navElement.classList.add('active');
+            updatePillPos('active-pill', navElement);
 
             document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
             document.getElementById(pageId).classList.add('active-page');
             document.body.className = ''; 
             
-            if (pageId === 'lobby') {
-                document.body.classList.add('lobby-create-active'); 
-                setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50);
-            } else if (pageId === 'explore') {
-                document.body.classList.add('explore-active');
-                setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50);
-            } else if (pageId === 'active-room') {
-                document.body.classList.add('active-room-active');
-            }
+            if (pageId === 'lobby') { document.body.classList.add('lobby-create-active'); setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50); }
+            else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
+            else if (pageId === 'active-room') { document.body.classList.add('active-room-active'); }
         }
 
         function goToLobby(navElement = null) { 
@@ -647,46 +670,6 @@
         }
         
         function goToExplore() { navigateTo('explore', document.querySelectorAll('.nav-item')[2]); }
-        function returnToRoom() { navigateTo('active-room', document.querySelectorAll('.nav-item')[1]); }
-
-        function toggleRoomType(type, element) {
-            document.querySelectorAll('#lobby .pill-btn').forEach(el => el.classList.remove('active-pill'));
-            element.classList.add('active-pill');
-            updatePillPos('room-type-pill', element);
-        }
-        function toggleExploreType(type, element) {
-            document.querySelectorAll('#explore .pill-btn').forEach(el => el.classList.remove('active-pill'));
-            element.classList.add('active-pill');
-            updatePillPos('explore-type-pill', element);
-        }
-
-        function handleInput(element, index) {
-            element.value = element.value.trim().substring(0, 1).toUpperCase(); 
-            if (element.value.length === 1 && index < 5) document.querySelectorAll('.code-box')[index + 1].focus();
-            validateRoomCode();
-        }
-        function handleBackspace(event, index) {
-            if (event.key === 'Backspace' && document.querySelectorAll('.code-box')[index].value === '' && index > 0) {
-                document.querySelectorAll('.code-box')[index - 1].focus();
-            }
-        }
-
-        async function validateRoomCode() {
-            let enteredCode = '';
-            document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
-            const btn = document.getElementById('join-room-btn');
-            
-            if (enteredCode.length === 6) {
-                try {
-                    const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
-                    const data = await response.json();
-                    if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
-                    else { btn.classList.remove('valid'); btn.disabled = true; }
-                } catch (error) { console.error("Failed to verify room:", error); }
-            } else {
-                btn.classList.remove('valid'); btn.disabled = true;
-            }
-        }
 
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
@@ -700,6 +683,8 @@
                         goToLobby(); 
                     } else forceClearRoomState();
                 });
+            } else {
+                navigateTo('home', document.querySelectorAll('.nav-item')[0]);
             }
         }
 
@@ -708,7 +693,7 @@
             let roomCode = '';
             for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             const customName = document.getElementById('room-name-input').value;
-            const randomGrad = Math.floor(Math.random() * 5);
+            const randomGrad = Math.floor(Math.random() * 10);
 
             currentRoomCode = roomCode;
             socket.emit('create_room', { roomCode: roomCode, username: currentUsername, customRoomName: customName, gradientIndex: randomGrad });
@@ -716,12 +701,7 @@
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
             
-            document.getElementById('ui-song-title').innerText = 'Waiting for host...';
-            document.getElementById('ui-song-status').innerText = 'Search for a song to begin syncing';
-            document.getElementById('ui-progress-slider').value = 0;
-            document.getElementById('ui-progress-slider').style.background = `linear-gradient(to right, white 0%, rgba(255,255,255,0.2) 0%)`;
-            if (isPlayerReady) ytPlayer.stopVideo();
-            
+            resetPlayerUI();
             goToLobby();
         }
 
@@ -741,34 +721,30 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
-                    
-                    document.getElementById('ui-song-title').innerText = 'Waiting for host...';
-                    document.getElementById('ui-song-status').innerText = 'Syncing state...';
-                    document.getElementById('ui-progress-slider').value = 0;
-                    document.getElementById('ui-progress-slider').style.background = `linear-gradient(to right, white 0%, rgba(255,255,255,0.2) 0%)`;
-                    if (isPlayerReady) ytPlayer.stopVideo();
-                    
+                    resetPlayerUI();
                     goToLobby();
                 }
             });
+        }
+
+        function resetPlayerUI() {
+            document.getElementById('ui-song-title').innerText = 'Waiting for host...';
+            document.getElementById('ui-song-status').innerText = 'Search for a song to begin syncing';
+            document.getElementById('ui-progress-slider').value = 0;
+            document.getElementById('ui-progress-slider').style.background = `linear-gradient(to right, white 0%, rgba(255,255,255,0.2) 0%)`;
+            document.getElementById('album-art-image').style.display = 'none';
+            document.getElementById('album-art-svg').style.display = 'block';
+            currentActiveSongId = null;
+            if (isPlayerReady) ytPlayer.stopVideo();
         }
 
         function toggleGradientPopup() {
             const popup = document.getElementById('gradient-popup');
             popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
         }
-
         function selectGradient(index) {
             document.getElementById('gradient-popup').style.display = 'none';
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: index });
-        }
-
-        function applyGradientTheme(index) {
-            const gradClass = `grad-${index}`;
-            document.getElementById('bg-active-room').className = `bg-layer ${gradClass}`;
-            document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
-            document.getElementById('fluid-indicator-circle').className = `fluid-indicator ${gradClass}`;
-            document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`;
         }
 
         function openModal() {
@@ -815,13 +791,7 @@
             localStorage.removeItem('syncro_room_name');
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
-            document.getElementById('floating-return-btn').style.display = 'none';
-            document.getElementById('album-art-image').style.display = 'none';
-            document.getElementById('album-art-svg').style.display = 'block';
-            document.getElementById('ui-song-title').innerText = 'Waiting for host...';
-            document.getElementById('ui-song-status').innerText = 'Search for a song to begin syncing';
-            document.getElementById('ui-progress-slider').value = 0;
-            document.getElementById('ui-progress-slider').style.background = `linear-gradient(to right, white 0%, rgba(255,255,255,0.2) 0%)`;
+            applyGradientTheme(0);
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
     </script>
