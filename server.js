@@ -12,7 +12,7 @@ const io = new Server(server, {
 });
 
 const activeRooms = {}; 
-const roomTimeouts = {}; // NEW: Holds rooms open during a refresh
+const roomTimeouts = {}; 
 
 app.get('/check-room/:code', (req, res) => {
     const code = req.params.code.toUpperCase();
@@ -25,54 +25,36 @@ io.on('connection', (socket) => {
 
     socket.on('create_room', (data) => {
         const { roomCode, username, customRoomName, gradientIndex } = data;
-        
-        // Clear any deletion timeout if recreating fast
         if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         
         socket.join(roomCode);
-        
         activeRooms[roomCode] = { 
-            hostId: socket.id, 
-            hostName: username, 
-            customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 0,
-            currentVideo: null, 
-            currentTimestamp: 0, 
-            isPlaying: false,    
-            sockets: {} 
+            hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
+            gradientIndex: gradientIndex || 0, currentVideo: null, currentTimestamp: 0, 
+            isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = username;
-        
-        socket.username = username;
-        socket.roomCode = roomCode;
+        socket.username = username; socket.roomCode = roomCode;
 
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
     });
 
     socket.on('join_room', (data, callback) => {
         const { roomCode, username } = data;
-        
         if (!activeRooms[roomCode]) {
             if (callback) callback({ success: false });
             return;
         }
 
-        // Cancel destruction if someone joins/reconnects
         if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
-
         socket.join(roomCode);
         activeRooms[roomCode].sockets[socket.id] = username;
-        socket.username = username;
-        socket.roomCode = roomCode;
+        socket.username = username; socket.roomCode = roomCode;
 
-        // If the returning user is the host, reassign their hostId
-        if (activeRooms[roomCode].hostName === username) {
-            activeRooms[roomCode].hostId = socket.id;
-        }
+        if (activeRooms[roomCode].hostName === username) activeRooms[roomCode].hostId = socket.id;
 
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
         socket.to(roomCode).emit('toast_message', `${username} joined the room`);
-        
         if (callback) callback({ success: true });
     });
 
@@ -98,7 +80,8 @@ io.on('connection', (socket) => {
         const { roomCode, time, state } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 1);
+            // Track playing state, but ignore 'AD' state so we don't permanently pause the server
+            if (state !== 'AD') activeRooms[roomCode].isPlaying = (state === 1);
             socket.to(roomCode).emit('sync_update', { time, state });
         }
     });
@@ -117,7 +100,6 @@ io.on('connection', (socket) => {
             const uniqueUsers = [...new Set(Object.values(room.sockets))];
 
             if (uniqueUsers.length === 0) {
-                // If room is empty (e.g. Host refreshed), wait 5 seconds before destroying it
                 roomTimeouts[sock.roomCode] = setTimeout(() => {
                     if (activeRooms[sock.roomCode] && Object.keys(activeRooms[sock.roomCode].sockets).length === 0) {
                         delete activeRooms[sock.roomCode];
@@ -134,12 +116,9 @@ io.on('connection', (socket) => {
     function generateRoomData(code) {
         const room = activeRooms[code];
         return {
-            hostName: room.hostName,
-            customRoomName: room.customRoomName,
-            gradientIndex: room.gradientIndex,
-            currentVideo: room.currentVideo,
-            currentTimestamp: room.currentTimestamp,
-            isPlaying: room.isPlaying,
+            hostName: room.hostName, customRoomName: room.customRoomName,
+            gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
+            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying,
             users: [...new Set(Object.values(room.sockets))]
         };
     }
