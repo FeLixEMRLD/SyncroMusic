@@ -12,14 +12,12 @@ const io = new Server(server, {
 });
 
 const activeRooms = {}; 
+const roomTimeouts = {}; // NEW: Holds rooms open during a refresh
 
 app.get('/check-room/:code', (req, res) => {
     const code = req.params.code.toUpperCase();
-    if (activeRooms[code]) {
-        res.json({ valid: true });
-    } else {
-        res.json({ valid: false });
-    }
+    if (activeRooms[code]) res.json({ valid: true });
+    else res.json({ valid: false });
 });
 
 io.on('connection', (socket) => {
@@ -27,6 +25,10 @@ io.on('connection', (socket) => {
 
     socket.on('create_room', (data) => {
         const { roomCode, username, customRoomName, gradientIndex } = data;
+        
+        // Clear any deletion timeout if recreating fast
+        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
+        
         socket.join(roomCode);
         
         activeRooms[roomCode] = { 
@@ -35,8 +37,8 @@ io.on('connection', (socket) => {
             customRoomName: customRoomName || '', 
             gradientIndex: gradientIndex || 0,
             currentVideo: null, 
-            currentTimestamp: 0, // NEW: Track time for reloads
-            isPlaying: false,    // NEW: Track state for reloads
+            currentTimestamp: 0, 
+            isPlaying: false,    
             sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = username;
@@ -44,15 +46,7 @@ io.on('connection', (socket) => {
         socket.username = username;
         socket.roomCode = roomCode;
 
-        io.to(roomCode).emit('room_updated', {
-            hostName: activeRooms[roomCode].hostName,
-            customRoomName: activeRooms[roomCode].customRoomName,
-            gradientIndex: activeRooms[roomCode].gradientIndex,
-            currentVideo: activeRooms[roomCode].currentVideo,
-            currentTimestamp: activeRooms[roomCode].currentTimestamp,
-            isPlaying: activeRooms[roomCode].isPlaying,
-            users: [username]
-        });
+        io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
     });
 
     socket.on('join_room', (data, callback) => {
@@ -63,25 +57,22 @@ io.on('connection', (socket) => {
             return;
         }
 
+        // Cancel destruction if someone joins/reconnects
+        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
+
         socket.join(roomCode);
         activeRooms[roomCode].sockets[socket.id] = username;
         socket.username = username;
         socket.roomCode = roomCode;
 
-        const uniqueUsers = [...new Set(Object.values(activeRooms[roomCode].sockets))];
-        
-        // When joining, instantly send the exact song, time, and play state
-        io.to(roomCode).emit('room_updated', {
-            hostName: activeRooms[roomCode].hostName,
-            customRoomName: activeRooms[roomCode].customRoomName,
-            gradientIndex: activeRooms[roomCode].gradientIndex,
-            currentVideo: activeRooms[roomCode].currentVideo,
-            currentTimestamp: activeRooms[roomCode].currentTimestamp,
-            isPlaying: activeRooms[roomCode].isPlaying,
-            users: uniqueUsers
-        });
-        
+        // If the returning user is the host, reassign their hostId
+        if (activeRooms[roomCode].hostName === username) {
+            activeRooms[roomCode].hostId = socket.id;
+        }
+
+        io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
         socket.to(roomCode).emit('toast_message', `${username} joined the room`);
+        
         if (callback) callback({ success: true });
     });
 
@@ -93,7 +84,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // --- MEDIA SYNC EVENTS ---
     socket.on('load_song', (data) => {
         const { roomCode, videoId } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
@@ -107,10 +97,8 @@ io.on('connection', (socket) => {
     socket.on('sync_time', (data) => {
         const { roomCode, time, state } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
-            // Server memorizes the host's exact time
             activeRooms[roomCode].currentTimestamp = time;
             activeRooms[roomCode].isPlaying = (state === 1);
-            
             socket.to(roomCode).emit('sync_update', { time, state });
         }
     });
@@ -121,30 +109,39 @@ io.on('connection', (socket) => {
     function handleUserExit(sock) {
         if (sock.roomCode && activeRooms[sock.roomCode]) {
             const room = activeRooms[sock.roomCode];
-            if (room.hostId === sock.id) {
-                io.to(sock.roomCode).emit('room_ended');
-                delete activeRooms[sock.roomCode];
+            const exitingUser = sock.username;
+            
+            delete room.sockets[sock.id];
+            sock.leave(sock.roomCode);
+
+            const uniqueUsers = [...new Set(Object.values(room.sockets))];
+
+            if (uniqueUsers.length === 0) {
+                // If room is empty (e.g. Host refreshed), wait 5 seconds before destroying it
+                roomTimeouts[sock.roomCode] = setTimeout(() => {
+                    if (activeRooms[sock.roomCode] && Object.keys(activeRooms[sock.roomCode].sockets).length === 0) {
+                        delete activeRooms[sock.roomCode];
+                    }
+                }, 5000);
             } else {
-                const exitingUser = sock.username;
-                delete room.sockets[sock.id];
-                sock.leave(sock.roomCode);
-                
-                const uniqueUsers = [...new Set(Object.values(room.sockets))];
-                io.to(sock.roomCode).emit('room_updated', {
-                    hostName: room.hostName,
-                    customRoomName: room.customRoomName,
-                    gradientIndex: room.gradientIndex,
-                    currentVideo: room.currentVideo,
-                    currentTimestamp: room.currentTimestamp,
-                    isPlaying: room.isPlaying,
-                    users: uniqueUsers
-                });
-                
+                io.to(sock.roomCode).emit('room_updated', generateRoomData(sock.roomCode));
                 io.to(sock.roomCode).emit('toast_message', `${exitingUser} left the room`);
-                if (Object.keys(room.sockets).length === 0) delete activeRooms[sock.roomCode];
             }
             sock.roomCode = null; 
         }
+    }
+
+    function generateRoomData(code) {
+        const room = activeRooms[code];
+        return {
+            hostName: room.hostName,
+            customRoomName: room.customRoomName,
+            gradientIndex: room.gradientIndex,
+            currentVideo: room.currentVideo,
+            currentTimestamp: room.currentTimestamp,
+            isPlaying: room.isPlaying,
+            users: [...new Set(Object.values(room.sockets))]
+        };
     }
 });
 
