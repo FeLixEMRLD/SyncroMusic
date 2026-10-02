@@ -30,7 +30,12 @@
         .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
         .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
         .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
-        .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); } 
+        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } 
+        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } 
+        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } 
+        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } 
+        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } 
+        .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); }
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
@@ -42,6 +47,7 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
+        /* SLEEK PROFILE UI */
         .user-profile-container { position: relative; display: inline-block; z-index: 200; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; padding: 4px 6px 4px 14px; border-radius: 25px; transition: transform 0.2s ease, background 0.2s; color: white; cursor: pointer; background: transparent; }
         .user-profile:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
@@ -66,7 +72,7 @@
         .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
         .color-swatch:hover, .color-swatch.selected { transform: scale(1.1); border-color: white; }
 
-        .page { display: none; padding: 40px 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
+        .page { display: none; padding: 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
         .page.active-page { display: block; }
         .glass-effect { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
 
@@ -99,7 +105,7 @@
         .form-section { margin-bottom: 25px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
-        .active-room-content { max-width: 950px; margin: 0 auto; }
+        .active-room-content { max-width: 900px; margin: 0 auto; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
         .room-actions { display: flex; align-items: center; gap: 12px; position: relative; z-index: 100;}
@@ -125,8 +131,9 @@
         .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
         
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
-        .glass-card { border-radius: 16px; padding: 25px; }
+        .glass-card { border-radius: 16px; padding: 25px; position: relative; }
         
+        /* MOBILE OPTIMIZED PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
         .song-details { flex-grow: 1; overflow: hidden; }
@@ -136,12 +143,15 @@
         .progress-slider { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; margin-top: 12px; transition: background 0.1s; cursor: pointer; }
         .progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.5);}
         
+        .controls-wrapper { display: flex; align-items: center; gap: 15px; }
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        .skip-ad-btn { display: none; background: #e74c3c; color: white; border: none; border-radius: 12px; padding: 4px 10px; font-size: 11px; cursor: pointer; margin-top: 6px; font-weight: 600; transition: transform 0.2s; }
-        .skip-ad-btn:hover { transform: scale(1.05); }
+        /* HOST AD KILLER BUTTON */
+        .skip-ad-btn { display: none; background: rgba(231, 76, 60, 0.2); color: #ff6b6b; border: 1px solid rgba(231, 76, 60, 0.5); border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+        .skip-ad-btn:hover { background: rgba(231, 76, 60, 0.4); transform: scale(1.05); }
 
+        /* FLOATING SEARCH OVERLAY */
         #host-controls { display: none; margin-bottom: 20px; z-index: 50; position: relative; }
         .search-container { position: relative; width: 100%; }
         
@@ -178,9 +188,6 @@
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
         .modal-btn-end { background: rgba(255, 76, 76, 0.2); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
-        /* THE CRITICAL MOBILE AUDIO OVERLAY */
-        #mobile-audio-unlock { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 99999; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
@@ -189,18 +196,31 @@
         .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-        @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
         
+        /* EXTREME MOBILE OPTIMIZATIONS */
         @media (max-width: 768px) {
             nav { flex-direction: column; padding: 20px; gap: 15px; }
             .nav-container { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 5px; flex-wrap: nowrap; }
             .user-profile { justify-content: center; width: 100%; }
-            .dashboard-grid { grid-template-columns: 1fr; }
+            .dashboard-grid { grid-template-columns: 1fr; gap: 15px; }
             .code-input-container { flex-wrap: nowrap; gap: 6px; }
             .code-box { width: 40px; height: 50px; font-size: 20px; }
             #toast-container { top: 20px; left: 20px; right: 20px; align-items: center; }
             #gradient-popup { right: 20px; }
+            .active-room-content { padding: 20px; }
+            
+            /* Stacking the player for Mobile Readability */
+            .custom-player { flex-direction: column; text-align: center; padding: 15px 0; }
+            .album-art-placeholder { width: 140px; height: 140px; margin: 0 auto; }
+            .song-details { width: 100%; display: flex; flex-direction: column; align-items: center; }
+            .song-details h4 { font-size: 20px; white-space: normal; }
+            .song-details p { font-size: 14px; }
+            .controls-wrapper { margin-top: 15px; justify-content: center; }
+            
+            .btn { font-size: 16px; padding: 14px 28px; width: 100%; box-sizing: border-box; }
+            .btn-group { flex-direction: column; width: 100%; padding: 0 20px; box-sizing: border-box;}
+            .explore-content h2 { font-size: 22px; }
+            .room-header h2 { font-size: 22px; }
         }
     </style>
 </head>
@@ -225,13 +245,6 @@
                 <button class="modal-btn-end" id="modal-confirm-btn" onclick="confirmModalAction()">End Room</button>
             </div>
         </div>
-    </div>
-    
-    <!-- THE ONE-TIME MOBILE AUDIO UNLOCKER -->
-    <div id="mobile-audio-unlock">
-        <h2 style="margin-bottom: 10px; font-weight: 500;">Ready to Sync</h2>
-        <p style="color: #aaa; margin-bottom: 25px; font-size: 14px; max-width: 80%;">Your browser requires you to tap to unlock the audio channel.</p>
-        <button class="btn" style="padding: 15px 35px; font-size: 16px; background: white; color: black; border-radius: 30px;" onclick="unlockMobileAudio()">Tap to Tune In</button>
     </div>
 
     <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
@@ -340,7 +353,7 @@
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
                 <div id="host-controls">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
+                    <h3 style="margin: 0 0 10px 5px; font-size: 18px;">Queue Song</h3>
                     <div class="search-container">
                         <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
                         <div id="search-results" class="search-results"></div>
@@ -357,20 +370,22 @@
                         <div class="song-details">
                             <h4 id="ui-song-title">Waiting for host...</h4>
                             <p id="ui-song-status">Search for a song to begin syncing</p>
-                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="skipAd()">Skip Ad >></button>
                             <input type="range" id="ui-progress-slider" min="0" max="100" value="0" class="progress-slider" oninput="hostScrubbing()" onchange="hostSeekTo(this.value)">
                         </div>
                         
-                        <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
-                            <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-                            <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
-                        </button>
+                        <div class="controls-wrapper">
+                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="skipAd()">Force Sync / Skip Ad</button>
+                            <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
+                                <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- OFF-SCREEN PLAYER -->
-            <div id="youtube-player" style="position: fixed; bottom: 0; right: 0; width: 50px; height: 50px; opacity: 0.01; pointer-events: none; z-index: -5;"></div>
+            <!-- INVISIBLE PLAYER ENGINE -->
+            <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
                 <h3 style="margin-top: 0;">Listeners</h3>
@@ -405,8 +420,6 @@
         let pendingVideo = null;
         let pendingTime = 0;
         let pendingState = false;
-        
-        let hasUnlockedAudio = false; // THE MOBILE AUTOPLAY FIX
 
         let isProfileMenuOpen = false;
 
@@ -511,6 +524,7 @@
             document.getElementById('nav-avatar').classList.remove('hide');
         }
 
+        // --- UPGRADED DYNAMIC BACKGROUND ENGINE ---
         function extractAndApplyDynamicGradient(videoId) {
             const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
             const img = new Image();
@@ -519,17 +533,45 @@
             
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d', { willReadFrequently: true });
                 canvas.width = img.width; canvas.height = img.height;
                 ctx.drawImage(img, 0, 0, img.width, img.height);
                 
                 try {
-                    const left = ctx.getImageData(Math.floor(img.width * 0.2), Math.floor(img.height * 0.5), 1, 1).data;
-                    const right = ctx.getImageData(Math.floor(img.width * 0.8), Math.floor(img.height * 0.5), 1, 1).data;
-                    const darken = 0.5;
-                    const c1 = `rgb(${left[0]*darken},${left[1]*darken},${left[2]*darken})`;
-                    const c2 = `rgb(${right[0]*darken},${right[1]*darken},${right[2]*darken})`;
-                    injectDynamicGradient(`linear-gradient(135deg, ${c1} 0%, #000 50%, ${c2} 100%)`);
+                    let maxColorfulness = -1;
+                    let c1 = [20, 20, 20];
+                    let pixels = [];
+                    
+                    // Sample a grid across the image
+                    for (let x = img.width * 0.1; x < img.width * 0.9; x += img.width * 0.2) {
+                        for (let y = img.height * 0.1; y < img.height * 0.9; y += img.height * 0.2) {
+                            const data = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
+                            pixels.push(data);
+                            const c = Math.max(data[0], data[1], data[2]) - Math.min(data[0], data[1], data[2]);
+                            if (c > maxColorfulness) {
+                                maxColorfulness = c;
+                                c1 = data;
+                            }
+                        }
+                    }
+                    
+                    // Find the second color with the highest RGB distance from the first
+                    let maxDist = -1;
+                    let c2 = [20, 20, 20];
+                    for (let p of pixels) {
+                        const dist = Math.abs(p[0] - c1[0]) + Math.abs(p[1] - c1[1]) + Math.abs(p[2] - c1[2]);
+                        if (dist > maxDist) {
+                            maxDist = dist;
+                            c2 = p;
+                        }
+                    }
+
+                    // A lighter darken factor to keep the colors vibrant but text readable
+                    const darken = 0.65; 
+                    const r1 = Math.floor(c1[0] * darken), g1 = Math.floor(c1[1] * darken), b1 = Math.floor(c1[2] * darken);
+                    const r2 = Math.floor(c2[0] * darken), g2 = Math.floor(c2[1] * darken), b2 = Math.floor(c2[2] * darken);
+                    
+                    injectDynamicGradient(`linear-gradient(135deg, rgb(${r1},${g1},${b1}) 0%, #050505 50%, rgb(${r2},${g2},${b2}) 100%)`);
                 } catch(e) {
                     injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
                 }
@@ -607,9 +649,10 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
+        // --- YOUTUBE IFRAME AUDIO ENGINE ---
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('youtube-player', {
-                height: '50', width: '50', videoId: '', 
+                height: '200', width: '200', videoId: '', 
                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
                 events: {
                     'onReady': () => { 
@@ -622,11 +665,15 @@
         }
 
         function onPlayerStateChange(event) {
-            if (!isCurrentUserHost && event.data === YT.PlayerState.ENDED) {
-                ytPlayer.pauseVideo();
+            const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
+            
+            // THE K-POP AUTOPLAY BUG FIX
+            // If YouTube tries to navigate to a random recommended video, snap it back instantly.
+            if (!isCurrentUserHost && currentActiveSongId && actualVideoId && actualVideoId !== currentActiveSongId) {
+                ytPlayer.loadVideoById({videoId: currentActiveSongId, startSeconds: ytPlayer.getCurrentTime()});
+                return;
             }
 
-            const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
@@ -636,7 +683,7 @@
                     document.getElementById('skip-ad-btn').style.display = 'inline-block';
                     socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
                 } else {
-                    ytPlayer.pauseVideo(); 
+                    ytPlayer.pauseVideo(); // Guests MUST wait out their ad.
                 }
                 return;
             } else {
@@ -706,6 +753,7 @@
             else ytPlayer.playVideo();
         }
 
+        // --- FLUID SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -784,28 +832,27 @@
             }
         });
 
-        // --- RELAXED GUEST SYNC PROTOCOL (SOLVES 3 MINUTE LATENCY BUG) ---
+        // --- AGGRESSIVE SYNC RECEIVER ---
         socket.on('sync_update', (data) => {
-            if (!isCurrentUserHost && isPlayerReady && hasUnlockedAudio) {
+            if (!isCurrentUserHost && isPlayerReady) {
                 const actualVid = ytPlayer.getVideoData()?.video_id;
                 const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
-                const isGuestBuffering = (ytPlayer.getPlayerState() === YT.PlayerState.BUFFERING);
                 
+                if (isGuestInAd) return;
+
                 isHostInAd = (data.state === 'AD' || data.state === 3);
                 
                 if (isHostInAd) {
                     document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
-                    if (!isGuestInAd && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+                    if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
                     return; 
                 }
-
-                if (isGuestInAd) return;
 
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
-                // CRITICAL FIX: Relaxed the sync tolerance from 0.4s to 2.0s to prevent infinite seek-looping
-                if (!isGuestBuffering && Math.abs(hostTime - myTime) > 2.0) {
+                // Tightened sync down to 0.4s to completely eliminate the delay
+                if (Math.abs(hostTime - myTime) > 0.4) {
                     ytPlayer.seekTo(hostTime, true);
                 }
                 
@@ -816,16 +863,6 @@
 
         function applyPendingVideo() {
             if (!pendingVideo) return;
-            
-            // MOBILE AUTOPLAY FIX: Forces guests to tap before browser permits audio
-            if (!isCurrentUserHost && !hasUnlockedAudio) {
-                document.getElementById('mobile-audio-unlock').style.display = 'flex';
-                ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
-                ytPlayer.pauseVideo();
-                updateThumbnail(pendingVideo);
-                return;
-            }
-
             const currentYtVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
             currentActiveSongId = pendingVideo;
 
@@ -833,7 +870,7 @@
                 ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo);
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 2.0) ytPlayer.seekTo(pendingTime);
+                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
             }
             
             if (pendingState) ytPlayer.playVideo();
@@ -843,18 +880,9 @@
             pendingVideo = null;
         }
 
-        // --- MOBILE AUDIO UNLOCKER ---
-        function unlockMobileAudio() {
-            hasUnlockedAudio = true;
-            document.getElementById('mobile-audio-unlock').style.display = 'none';
-            if (ytPlayer && ytPlayer.playVideo) ytPlayer.playVideo();
-            
-            if (pendingVideo) applyPendingVideo();
-        }
-
+        // --- SOCKET UI LOGIC ---
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
-            if (isCurrentUserHost) hasUnlockedAudio = true; // Host unlocks by creating/interacting
             
             document.getElementById('host-controls').style.display = isCurrentUserHost ? 'block' : 'none';
             document.getElementById('host-play-btn').style.display = isCurrentUserHost ? 'flex' : 'none';
@@ -1053,7 +1081,6 @@
             document.getElementById('display-room-code').innerText = roomCode;
             
             if (isPlayerReady) ytPlayer.playVideo();
-            
             resetPlayerUI();
             goToLobby();
         }
@@ -1074,6 +1101,7 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
+                    if (isPlayerReady) ytPlayer.playVideo();
                     resetPlayerUI();
                     goToLobby();
                 }
@@ -1132,7 +1160,6 @@
             clearInterval(uiInterval);
             if (isPlayerReady) ytPlayer.stopVideo();
             currentRoomCode = '';
-            hasUnlockedAudio = false;
             localStorage.removeItem('syncro_room_code');
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
