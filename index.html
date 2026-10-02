@@ -78,8 +78,8 @@
         .lobby-content { text-align: left; max-width: 650px; margin: 0 auto; }
         .lobby-header { display: flex; align-items: center; margin-bottom: 30px; }
         .lobby-content h1 { font-size: 32px; font-weight: 600; margin-right: 20px; }
-        .input-dark { border-radius: 12px; color: white; font-size: 15px; outline: none; padding: 12px 16px; font-family: 'Inter', sans-serif; transition: background 0.3s ease; box-sizing: border-box; }
-        .input-dark:focus { background: rgba(255, 255, 255, 0.1); }
+        .input-dark { border-radius: 12px; color: white; font-size: 15px; outline: none; padding: 12px 16px; font-family: 'Inter', sans-serif; transition: background 0.3s ease; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.1); }
+        .input-dark:focus { background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.3); }
         .form-section { margin-bottom: 25px; }
         .form-section h3 { font-size: 18px; font-weight: 400; margin-bottom: 10px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
@@ -103,8 +103,9 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
+        /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
-        .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; }
+        .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
         .song-details { flex-grow: 1; overflow: hidden; }
         .song-details h4 { margin: 0 0 5px 0; font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .song-details p { margin: 0; font-size: 13px; color: #aaa; }
@@ -115,14 +116,30 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
+        /* SEARCH UI RESTRUCTURED & ANIMATED */
         #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
-        .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
-        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .search-item:hover { background: rgba(255,255,255,0.1); }
-        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
+        .search-container { position: relative; width: 100%; margin-top: 0; }
+        
+        .search-results { 
+            position: absolute; top: 110%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; 
+            background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; 
+            display: flex; flex-direction: column; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
+            transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+            pointer-events: none;
+        }
+        .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
+        
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .search-item:hover { background: rgba(255,255,255,0.15); }
+        .search-item:last-child { border-bottom: none; }
+        .search-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; }
+        .search-info { display: flex; flex-direction: column; overflow: hidden; }
+        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .search-info p { margin: 3px 0 0 0; font-size: 12px; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
@@ -161,12 +178,10 @@
 </head>
 <body class="home-active">
 
-    <!-- STATIC BASE PAGES BACKGROUND -->
     <div id="bg-home" class="page-bg"></div>
     <div id="bg-lobby-create" class="page-bg"></div>
     <div id="bg-explore" class="page-bg"></div>
 
-    <!-- DYNAMIC ROOM THEME BACKGROUND -->
     <div id="room-bg-container">
         <div id="active-room-base-layer" class="room-bg-layer grad-0" style="opacity: 1;"></div>
     </div>
@@ -276,16 +291,14 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <!-- HOST SEARCH UI USING OUR NEW BACKEND API -->
-                <div id="host-controls" class="glass-card glass-effect" style="display: none; padding: 20px;">
+                <div id="host-controls" class="glass-card glass-effect">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
                     <div class="search-container">
-                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" onkeydown="if(event.key === 'Enter') { if(searchTimeout) clearTimeout(searchTimeout); searchSong(); }">
+                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
+                        <div id="search-results" class="search-results"></div>
                     </div>
-                    <div id="search-results" class="search-results"></div>
                 </div>
 
-                <!-- NOW PLAYING UI -->
                 <div class="glass-card glass-effect">
                     <h3 style="margin-top: 0;">Now Playing</h3>
                     <div class="custom-player">
@@ -307,8 +320,9 @@
                 </div>
             </div>
 
-            <!-- INVISIBLE PLAYER ENGINE -->
-            <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
+            <!-- THE ANTI-THROTTLE ENGINE FIX -->
+            <!-- Placed exactly behind everything in the viewport to trick the browser -->
+            <div id="youtube-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -5; opacity: 0.001; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
                 <h3 style="margin-top: 0;">Listeners</h3>
@@ -334,6 +348,7 @@
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
+        let isHostInAd = false; // NEW: Strict Lock
         
         let pendingVideo = null;
         let pendingTime = 0;
@@ -351,37 +366,32 @@
 
                 const searchPopup = document.getElementById('search-results');
                 const searchInput = document.getElementById('yt-search-input');
-                if (searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
-                    searchPopup.style.display = 'none';
+                if (searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
+                    searchPopup.classList.remove('open');
                 }
             });
         };
 
-        // --- BUTTERY BACKGROUND ENGINE ---
         function applyGradientTheme(index) {
             const gradClass = `grad-${index}`;
             const container = document.getElementById('room-bg-container');
-            
             const newLayer = document.createElement('div');
             newLayer.className = `room-bg-layer ${gradClass}`;
             container.appendChild(newLayer);
-            
             void newLayer.offsetWidth; 
             newLayer.style.opacity = '1';
-            
             setTimeout(() => {
                 const layers = container.getElementsByClassName('room-bg-layer');
                 while (layers.length > 1) container.removeChild(layers[0]);
             }, 800);
-
             document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
             document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`;
         }
 
-        // --- YOUTUBE IFRAME AUDIO ENGINE ---
+        // --- YOUTUBE AUDIO ENGINE ---
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('youtube-player', {
-                height: '200', width: '200', videoId: '', 
+                height: '100%', width: '100%', videoId: '', 
                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
                 events: {
                     'onReady': () => { 
@@ -395,8 +405,6 @@
 
         function onPlayerStateChange(event) {
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-            
-            // STRICT AD & BUFFERING DETECTOR
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
@@ -407,7 +415,6 @@
             }
 
             const isPlaying = (event.data === YT.PlayerState.PLAYING);
-            
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
             
@@ -450,7 +457,6 @@
                 const duration = ytPlayer.getDuration();
                 const seekTime = (value / 100) * duration;
                 ytPlayer.seekTo(seekTime, true);
-                
                 socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: ytPlayer.getPlayerState() });
             }
         }
@@ -460,18 +466,19 @@
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
-
             if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
 
-        // --- NEW SERVER-SIDE SECURE SEARCH API ---
+        // --- NEW FLUID SEARCH SYSTEM ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
             
+            const resultsContainer = document.getElementById('search-results');
+            
             if (query === '') {
-                document.getElementById('search-results').style.display = 'none';
+                resultsContainer.classList.remove('open');
                 return;
             }
 
@@ -480,11 +487,10 @@
             if (match && match[2].length === 11) {
                 executeHostLoad(match[2]);
                 document.getElementById('yt-search-input').value = '';
-                document.getElementById('search-results').style.display = 'none';
+                resultsContainer.classList.remove('open');
                 return;
             }
 
-            // Fire API search exactly 500ms after the host stops typing
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
         }
 
@@ -493,11 +499,10 @@
             if (query === '') return;
 
             const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching server...</div>';
-            resultsContainer.style.display = 'flex';
+            resultsContainer.innerHTML = '<div class="loading-spinner"></div>';
+            resultsContainer.classList.add('open');
 
             try {
-                // Now fetching securely from your own Render server to avoid all CORS limits!
                 const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 
@@ -515,7 +520,7 @@
                     el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.author}</p></div>`;
                     el.onclick = () => {
                         executeHostLoad(item.id);
-                        resultsContainer.style.display = 'none';
+                        resultsContainer.classList.remove('open');
                         document.getElementById('yt-search-input').value = '';
                     };
                     resultsContainer.appendChild(el);
@@ -548,29 +553,26 @@
             }
         });
 
-        // --- GUEST SYNC WAITING PROTOCOL ---
+        // --- STRICT AD LOCK RECEIVER ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
                 
                 const actualVid = ytPlayer.getVideoData()?.video_id;
                 const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
-
-                // If the guest is actively watching an ad, just let them finish it without seeking
                 if (isGuestInAd) return;
 
-                // If the guest finished their ad, but the HOST is still buffering or watching an ad
-                if (data.state === 'AD' || data.state === 3) {
+                isHostInAd = (data.state === 'AD' || data.state === 3);
+                
+                if (isHostInAd) {
                     document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
                     if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
-                    return;
+                    return; // STRICT LOCK. We do not process timestamps while host is in ad.
                 }
 
-                // If both are clear, enforce exact sync latency
+                // Tight 0.4s sync tolerance
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
-                
-                // Tightened sync to a 0.5s tolerance
-                if (Math.abs(hostTime - myTime) > 0.5) ytPlayer.seekTo(hostTime, true);
+                if (Math.abs(hostTime - myTime) > 0.4) ytPlayer.seekTo(hostTime, true);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
                 else if (data.state === YT.PlayerState.PAUSED && ytPlayer.getPlayerState() !== YT.PlayerState.PAUSED) ytPlayer.pauseVideo();
@@ -583,10 +585,11 @@
             currentActiveSongId = pendingVideo;
 
             if (currentYtVid !== pendingVideo) {
+                // Instantly force load video and time
                 ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo);
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.5) ytPlayer.seekTo(pendingTime);
+                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
             }
             
             if (pendingState) ytPlayer.playVideo();
@@ -596,20 +599,17 @@
             pendingVideo = null;
         }
 
-        // --- SOCKET UI LOGIC ---
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
             document.getElementById('host-controls').style.display = isCurrentUserHost ? 'block' : 'none';
             document.getElementById('host-play-btn').style.display = isCurrentUserHost ? 'flex' : 'none';
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
-            
             document.getElementById('ui-progress-slider').style.pointerEvents = isCurrentUserHost ? 'auto' : 'none';
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
-                
-                // Increased Heartbeat speed to 300ms
+                // Ultra-fast 200ms Heartbeat
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                         const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
@@ -619,7 +619,7 @@
                             socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: YT.PlayerState.PLAYING });
                         }
                     }
-                }, 300);
+                }, 200);
             } else {
                 clearInterval(syncInterval);
             }
@@ -663,7 +663,6 @@
                 document.getElementById('modal-desc').innerText = 'The host has closed this session.';
                 document.querySelector('.modal-btn-cancel').style.display = 'none';
                 document.getElementById('modal-confirm-btn').innerText = 'Okay';
-                
                 document.getElementById('modal-confirm-btn').onclick = () => {
                     closeModal();
                     forceClearRoomState();
@@ -690,11 +689,9 @@
             const toast = document.createElement('div');
             toast.className = 'glass-effect toast-msg';
             toast.style.animation = 'slideInRight 0.4s forwards';
-            
             const bgContainer = document.getElementById('room-bg-container');
             const activeLayers = bgContainer.getElementsByClassName('room-bg-layer');
             const activeGradClass = activeLayers.length > 0 ? activeLayers[activeLayers.length - 1].className.replace('room-bg-layer ', '') : 'grad-0';
-            
             toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
             container.appendChild(toast);
             setTimeout(() => {
@@ -761,7 +758,6 @@
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
             const btn = document.getElementById('join-room-btn');
-            
             if (enteredCode.length === 6) {
                 try {
                     const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
@@ -769,9 +765,7 @@
                     if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
                     else { btn.classList.remove('valid'); btn.disabled = true; }
                 } catch (error) { console.error("Failed to verify room:", error); }
-            } else {
-                btn.classList.remove('valid'); btn.disabled = true;
-            }
+            } else { btn.classList.remove('valid'); btn.disabled = true; }
         }
 
         function checkExistingRoomState() {
@@ -804,6 +798,9 @@
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
             
+            // To unlock Audio context on Safari/Chrome, emit play immediately upon click
+            if (isPlayerReady) ytPlayer.playVideo();
+            
             resetPlayerUI();
             goToLobby();
         }
@@ -824,6 +821,10 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
+                    
+                    // Unlock Audio Context
+                    if (isPlayerReady) ytPlayer.playVideo();
+                    
                     resetPlayerUI();
                     goToLobby();
                 }
