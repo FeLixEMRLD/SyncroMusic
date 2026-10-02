@@ -30,7 +30,12 @@
         .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
         .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
         .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
-        .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); } 
+        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } 
+        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } 
+        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } 
+        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } 
+        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } 
+        .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); }
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
@@ -42,7 +47,7 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* HOVER GLOW PROFILE UI */
+        /* GLOWING PROFILE EDITOR UI */
         .user-profile-container { position: relative; display: inline-block; cursor: pointer; z-index: 100; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 6px 14px 6px 10px; border-radius: 25px; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); }
         .user-profile:hover { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); transform: scale(1.03); background: rgba(255,255,255,0.15); }
@@ -99,7 +104,7 @@
         .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer;}
         .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
         
-        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
+        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
         .grad-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; font-weight: 500; color: #eee; }
         .grad-list-item:hover { background: rgba(255,255,255,0.1); color: white; }
         .grad-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
@@ -124,7 +129,7 @@
 
         #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
         .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
-        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
+        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
         .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .search-item:hover { background: rgba(255,255,255,0.1); }
@@ -136,7 +141,7 @@
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .user-list-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background-color: #c49a02; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.2);}
 
-        /* CHAT SIDEBAR */
+        /* SIDEBAR CHAT UI */
         .chat-toggle-btn { position: fixed; left: 0; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px 10px; border-radius: 0 12px 12px 0; cursor: pointer; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); border-left: none; transition: left 0.3s; display: none; }
         .chat-toggle-btn.active-room { display: flex; align-items: center; justify-content: center; }
         .chat-notif-dot { position: absolute; top: -5px; right: -5px; background: #ff4c4c; color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; }
@@ -156,7 +161,7 @@
         .chat-input { flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 10px 15px; color: white; outline: none; font-family: 'Inter'; }
         
         #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; }
-        .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
+        .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .modal-content h3 { margin-top: 0; font-size: 22px; font-weight: 600; }
         .modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
         .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none; }
@@ -225,9 +230,7 @@
             Room Chat
             <svg onclick="toggleChat()" style="cursor:pointer;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </div>
-        <div class="chat-messages" id="chat-messages">
-            <!-- Messages inject here -->
-        </div>
+        <div class="chat-messages" id="chat-messages"></div>
         <div class="chat-input-area">
             <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendChat()">
             <button class="btn" style="padding: 10px; border-radius: 50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;" onclick="sendChat()">
@@ -249,7 +252,6 @@
         
         <!-- GLOWING PROFILE EDITOR UI -->
         <div class="user-profile-container">
-            <!-- Click triggers dropdown -->
             <div class="user-profile" onclick="toggleProfileMenu()">
                 <span id="display-username">Loading...</span>
                 <div id="nav-avatar" class="nav-avatar"></div>
@@ -340,7 +342,7 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <div id="host-controls" class="glass-card glass-effect">
+                <div id="host-controls" class="glass-card glass-effect" style="display: none;">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
                     <div class="search-container">
                         <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
@@ -390,7 +392,7 @@
         let pendingSwitchCode = '';
         let currentRoomCode = '';
         let currentActiveSongId = null;
-        let currentGradientSetting = 0;
+        let currentGradientSetting = 0; 
 
         let ytPlayer;
         let isPlayerReady = false;
@@ -415,7 +417,6 @@
                 updatePillPos('active-pill', document.querySelector('.nav-item.active'));
                 
                 document.addEventListener('click', (e) => {
-                    // Profile Menu Click-Away
                     const profilePopup = document.getElementById('profile-dropdown');
                     const profileContainer = document.querySelector('.user-profile-container');
                     if (isProfileMenuOpen && profilePopup && profileContainer && !profileContainer.contains(e.target)) {
@@ -423,23 +424,19 @@
                         profilePopup.style.display = 'none';
                     }
 
-                    // Gradient Menu Click-Away
                     const gradPopup = document.getElementById('gradient-popup');
                     const gradBtn = document.querySelector('.room-code-badge');
                     if (gradPopup && gradPopup.style.display === 'flex' && e.target !== gradPopup && e.target !== gradBtn && !gradPopup.contains(e.target) && !gradBtn.contains(e.target)) {
                         gradPopup.style.display = 'none';
                     }
 
-                    // Search Menu Click-Away
                     const searchPopup = document.getElementById('search-results');
                     const searchInput = document.getElementById('yt-search-input');
                     if (searchPopup && searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
                         searchPopup.classList.remove('open');
                     }
                 });
-            } catch (err) {
-                console.error("Initialization error:", err);
-            }
+            } catch (err) { console.error("Init error:", err); }
         };
 
         // --- PROFILE SYSTEM ---
@@ -740,7 +737,6 @@
             else ytPlayer.playVideo();
         }
 
-        // --- FLUID SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -908,7 +904,7 @@
             const listEl = document.getElementById('live-user-list');
             listEl.innerHTML = ''; 
             data.users.forEach(user => {
-                // Safeguard against legacy backend formats during live updates
+                // Safeguard parsing object
                 const userName = typeof user === 'object' ? user.name : user;
                 const userPfp = typeof user === 'object' ? user.pfp : '#c49a02';
 
@@ -946,7 +942,24 @@
             }
         });
 
-        // --- NAVIGATION & MODALS ---
+        function triggerToast(message) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = 'glass-effect toast-msg';
+            toast.style.animation = 'slideInRight 0.4s forwards';
+            
+            const bgContainer = document.getElementById('room-bg-container');
+            const activeLayers = bgContainer.getElementsByClassName('room-bg-layer');
+            const activeGradClass = activeLayers.length > 0 ? activeLayers[activeLayers.length - 1].className.replace('room-bg-layer ', '') : 'grad-0';
+            
+            toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'fadeOutRight 0.4s forwards';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
         function updatePillPos(pillId, element) {
             if (!element) return;
             const pill = document.getElementById(pillId);
