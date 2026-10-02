@@ -12,7 +12,6 @@
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
         
-        /* RESTORED STATIC BACKGROUND ENGINE */
         .page-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.6s ease-in-out; z-index: -2; }
         #bg-home { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%); }
         #bg-lobby-create { background: linear-gradient(135deg, #050505 0%, #0a0a0a 40%, #c49a02 100%); }
@@ -22,12 +21,10 @@
         body.lobby-create-active #bg-lobby-create { opacity: 1; }
         body.explore-active #bg-explore { opacity: 1; }
 
-        /* DYNAMIC ROOM BACKGROUND ENGINE */
         #room-bg-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; opacity: 0; transition: opacity 0.6s ease-in-out; }
         body.active-room-active #room-bg-container { opacity: 1; }
         .room-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.8s ease-in-out; opacity: 0; }
         
-        /* The 10 Gradients */
         .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } 
         .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } 
         .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
@@ -106,7 +103,6 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
-        /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; }
         .song-details { flex-grow: 1; overflow: hidden; }
@@ -119,8 +115,7 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* SEARCH UI RESTRUCTURED */
-        #host-controls { display: none; padding: 20px; position: relative; z-index: 50; } /* Z-INDEX FIX */
+        #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
         .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
         .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -281,8 +276,8 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <!-- HOST SEARCH UI (Elevated Z-Index) -->
-                <div id="host-controls" class="glass-card glass-effect">
+                <!-- HOST SEARCH UI USING OUR NEW BACKEND API -->
+                <div id="host-controls" class="glass-card glass-effect" style="display: none; padding: 20px;">
                     <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
                     <div class="search-container">
                         <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" onkeydown="if(event.key === 'Enter') { if(searchTimeout) clearTimeout(searchTimeout); searchSong(); }">
@@ -312,6 +307,7 @@
                 </div>
             </div>
 
+            <!-- INVISIBLE PLAYER ENGINE -->
             <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
@@ -400,6 +396,7 @@
         function onPlayerStateChange(event) {
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
             
+            // STRICT AD & BUFFERING DETECTOR
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
@@ -468,7 +465,7 @@
             else ytPlayer.playVideo();
         }
 
-        // --- LIVE SEARCH (DEBOUNCE LOGIC) ---
+        // --- NEW SERVER-SIDE SECURE SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -487,23 +484,8 @@
                 return;
             }
 
-            // Trigger search 500ms after the host stops typing
+            // Fire API search exactly 500ms after the host stops typing
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
-        }
-
-        async function fetchWithFallback(query) {
-            const instances = [
-                'https://pipedapi.kavin.rocks',
-                'https://pipedapi.adminforge.de',
-                'https://piped-api.lunar.icu'
-            ];
-            for (let url of instances) {
-                try {
-                    const res = await fetch(`${url}/search?q=${encodeURIComponent(query)}&filter=music_songs`);
-                    if (res.ok) return await res.json();
-                } catch(e) { console.log(`Search instance failed: ${url}`); }
-            }
-            throw new Error("All search instances failed");
         }
 
         async function searchSong() {
@@ -511,36 +493,35 @@
             if (query === '') return;
 
             const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching...</div>';
+            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching server...</div>';
             resultsContainer.style.display = 'flex';
 
             try {
-                const data = await fetchWithFallback(query);
-                resultsContainer.innerHTML = '';
-                const items = data.items.slice(0, 5); 
+                // Now fetching securely from your own Render server to avoid all CORS limits!
+                const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
                 
-                if (items.length === 0) {
-                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found. Try pasting a link instead.</div>';
+                resultsContainer.innerHTML = '';
+                const items = data.items;
+                
+                if (!items || items.length === 0) {
+                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found.</div>';
                     return;
                 }
 
                 items.forEach(item => {
-                    const vIdMatch = item.url.match(/\?v=([^&]+)/);
-                    if (vIdMatch) {
-                        const vidId = vIdMatch[1];
-                        const el = document.createElement('div');
-                        el.className = 'search-item';
-                        el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.uploaderName}</p></div>`;
-                        el.onclick = () => {
-                            executeHostLoad(vidId);
-                            resultsContainer.style.display = 'none';
-                            document.getElementById('yt-search-input').value = '';
-                        };
-                        resultsContainer.appendChild(el);
-                    }
+                    const el = document.createElement('div');
+                    el.className = 'search-item';
+                    el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.author}</p></div>`;
+                    el.onclick = () => {
+                        executeHostLoad(item.id);
+                        resultsContainer.style.display = 'none';
+                        document.getElementById('yt-search-input').value = '';
+                    };
+                    resultsContainer.appendChild(el);
                 });
             } catch (err) {
-                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search network failed. Please paste a YouTube link directly.</div>';
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Server search failed. Please try again.</div>';
             }
         }
 
@@ -567,19 +548,29 @@
             }
         });
 
-        // --- SYNC RECEIVER ---
+        // --- GUEST SYNC WAITING PROTOCOL ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
+                
+                const actualVid = ytPlayer.getVideoData()?.video_id;
+                const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
+
+                // If the guest is actively watching an ad, just let them finish it without seeking
+                if (isGuestInAd) return;
+
+                // If the guest finished their ad, but the HOST is still buffering or watching an ad
                 if (data.state === 'AD' || data.state === 3) {
-                    document.getElementById('ui-song-status').innerText = "Host is loading / watching an ad...";
+                    document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
                     if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
                     return;
                 }
 
+                // If both are clear, enforce exact sync latency
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
-                if (Math.abs(hostTime - myTime) > 1.5) ytPlayer.seekTo(hostTime);
+                // Tightened sync to a 0.5s tolerance
+                if (Math.abs(hostTime - myTime) > 0.5) ytPlayer.seekTo(hostTime, true);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
                 else if (data.state === YT.PlayerState.PAUSED && ytPlayer.getPlayerState() !== YT.PlayerState.PAUSED) ytPlayer.pauseVideo();
@@ -595,7 +586,7 @@
                 ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo);
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 1.5) ytPlayer.seekTo(pendingTime);
+                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.5) ytPlayer.seekTo(pendingTime);
             }
             
             if (pendingState) ytPlayer.playVideo();
@@ -617,6 +608,8 @@
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
+                
+                // Increased Heartbeat speed to 300ms
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                         const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
@@ -626,7 +619,7 @@
                             socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: YT.PlayerState.PLAYING });
                         }
                     }
-                }, 400);
+                }, 300);
             } else {
                 clearInterval(syncInterval);
             }
@@ -846,6 +839,15 @@
             document.getElementById('album-art-svg').style.display = 'block';
             currentActiveSongId = null;
             if (isPlayerReady) ytPlayer.stopVideo();
+        }
+
+        function toggleGradientPopup() {
+            const popup = document.getElementById('gradient-popup');
+            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+        }
+        function selectGradient(index) {
+            document.getElementById('gradient-popup').style.display = 'none';
+            socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: index });
         }
 
         function openModal() {
