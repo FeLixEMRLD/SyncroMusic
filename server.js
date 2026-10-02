@@ -13,6 +13,7 @@ const io = new Server(server, {
 });
 
 const activeRooms = {}; 
+const roomTimeouts = {}; 
 const searchCache = new Map(); 
 
 app.get('/search', async (req, res) => {
@@ -47,8 +48,9 @@ io.on('connection', (socket) => {
 
     socket.on('create_room', (data) => {
         const { roomCode, username, pfp, customRoomName, gradientIndex } = data;
-        socket.join(roomCode);
+        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         
+        socket.join(roomCode);
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
             gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTimestamp: 0, 
@@ -67,6 +69,7 @@ io.on('connection', (socket) => {
             return;
         }
 
+        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         socket.join(roomCode);
         activeRooms[roomCode].sockets[socket.id] = { username, pfp };
         socket.username = username; socket.roomCode = roomCode;
@@ -78,7 +81,7 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: true });
     });
 
-    // Profile Update Handler
+    // RESTORED: Profile Updates
     socket.on('update_profile', (data) => {
         const { username, pfp } = data;
         socket.username = username;
@@ -91,7 +94,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // Chat Handler
+    // RESTORED: Chat Messaging
     socket.on('chat_message', (data) => {
         const { roomCode, text, pfp } = data;
         io.to(roomCode).emit('chat_message', { username: socket.username, text, pfp });
@@ -132,19 +135,25 @@ io.on('connection', (socket) => {
             const room = activeRooms[sock.roomCode];
             const exitingUser = sock.username;
             
-            // STRICT HOST KILL: If host closes tab, room dies instantly.
+            // STRICT HOST KILL
             if (room.hostId === sock.id) {
                 io.to(sock.roomCode).emit('room_ended');
                 delete activeRooms[sock.roomCode];
             } else {
                 delete room.sockets[sock.id];
                 sock.leave(sock.roomCode);
-                
-                io.to(sock.roomCode).emit('room_updated', generateRoomData(sock.roomCode));
-                io.to(sock.roomCode).emit('toast_message', `${exitingUser} left the room`);
-                
-                if (Object.keys(room.sockets).length === 0) {
-                    delete activeRooms[sock.roomCode];
+
+                const uniqueUsers = [...new Set(Object.values(room.sockets).map(u => u.username))];
+
+                if (uniqueUsers.length === 0) {
+                    roomTimeouts[sock.roomCode] = setTimeout(() => {
+                        if (activeRooms[sock.roomCode] && Object.keys(activeRooms[sock.roomCode].sockets).length === 0) {
+                            delete activeRooms[sock.roomCode];
+                        }
+                    }, 5000);
+                } else {
+                    io.to(sock.roomCode).emit('room_updated', generateRoomData(sock.roomCode));
+                    io.to(sock.roomCode).emit('toast_message', `${exitingUser} left the room`);
                 }
             }
             sock.roomCode = null; 
@@ -153,11 +162,11 @@ io.on('connection', (socket) => {
 
     function generateRoomData(code) {
         const room = activeRooms[code];
+        // RESTORED: Passing PFP back to the frontend correctly
         const userArray = Object.values(room.sockets).map(s => ({
             name: s.username, pfp: s.pfp
         }));
         
-        // Remove duplicates by name
         const uniqueUsers = Array.from(new Map(userArray.map(item => [item.name, item])).values());
 
         return {
