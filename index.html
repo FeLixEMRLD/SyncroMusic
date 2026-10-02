@@ -47,14 +47,25 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* SLEEK WHITE PILL PROFILE UI */
-        .user-profile-container { position: relative; display: inline-block; z-index: 100; }
-        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; padding: 4px 14px 4px 10px; border-radius: 25px; transition: transform 0.2s ease; background: white; color: black; cursor: pointer; }
-        .user-profile:hover { transform: scale(1.03); }
-        .user-profile.disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-        .nav-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; }
+        /* SLEEK PROFILE UI - User on Left, PFP on Right */
+        .user-profile-container { position: relative; display: inline-block; z-index: 200; }
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; padding: 4px 6px 4px 14px; border-radius: 25px; transition: transform 0.2s ease, background 0.2s; color: white; cursor: pointer; background: transparent; }
+        .user-profile:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
+        .user-profile.disabled { opacity: 0.6; cursor: not-allowed; transform: none; background: transparent; }
         
-        .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 220px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
+        .nav-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; }
+        .nav-avatar.hide { transform: scale(0.5); opacity: 0; pointer-events: none; }
+        
+        /* MORPHING PROFILE MENU */
+        .profile-dropdown { 
+            position: absolute; top: 100%; right: 0; width: 220px;
+            background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; 
+            padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
+            transform-origin: top right; transform: scale(0.6); opacity: 0; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+        }
+        .profile-dropdown.open { transform: scale(1); opacity: 1; pointer-events: auto; }
+        
         .profile-dropdown label { font-size: 12px; color: #aaa; margin-bottom: -5px; }
         .profile-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; outline: none; font-family: 'Inter'; }
         
@@ -98,13 +109,23 @@
         .active-room-content { max-width: 900px; margin: 0 auto; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
-        .room-actions { display: flex; align-items: center; gap: 12px; position: relative; }
+        .room-actions { display: flex; align-items: center; gap: 12px; position: relative; z-index: 100;}
         
-        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer;}
-        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.2s; }
-        .gradient-btn:hover { transform: scale(1.1); }
+        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer; position: relative;}
         
-        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
+        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s; }
+        .gradient-btn.hide { transform: scale(0.5); opacity: 0; pointer-events: none; }
+        
+        /* MORPHING GRADIENT MENU */
+        #gradient-popup { 
+            position: absolute; top: 0; left: 0; width: 180px;
+            background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); 
+            border-radius: 16px; padding: 10px; display: flex; flex-direction: column; gap: 5px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); 
+            transform-origin: top left; transform: scale(0.5); opacity: 0; pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease; 
+        }
+        #gradient-popup.open { transform: scale(1); opacity: 1; pointer-events: auto; }
         .grad-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; font-weight: 500; color: #eee; }
         .grad-list-item:hover { background: rgba(255,255,255,0.1); color: white; }
         .grad-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
@@ -115,19 +136,6 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
-        /* UNIFIED MORPHING SEARCH UI */
-        #host-controls { display: none; margin-bottom: 20px; }
-        .unified-search-wrapper { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease; }
-        .search-input-area { display: flex; padding: 15px 20px; align-items: center; gap: 10px; }
-        .search-input-area input { flex-grow: 1; background: transparent; border: none; color: white; font-size: 15px; outline: none; font-family: 'Inter', sans-serif; }
-        .search-results { max-height: 0; overflow-y: auto; transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; }
-        .search-results.open { max-height: 350px; border-top: 1px solid rgba(255,255,255,0.05); }
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; transition: background 0.2s; }
-        .search-item:hover { background: rgba(255,255,255,0.1); }
-        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
-
         /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
@@ -143,6 +151,31 @@
 
         .skip-ad-btn { display: none; background: #e74c3c; color: white; border: none; border-radius: 12px; padding: 4px 10px; font-size: 11px; cursor: pointer; margin-top: 6px; font-weight: 600; transition: transform 0.2s; }
         .skip-ad-btn:hover { transform: scale(1.05); }
+
+        /* FLOATING SEARCH OVERLAY */
+        #host-controls { display: none; margin-bottom: 20px; z-index: 50; position: relative; }
+        .search-container { position: relative; width: 100%; }
+        
+        .search-results { 
+            position: absolute; top: calc(100% + 10px); left: 0; width: 100%; max-height: 300px; overflow-y: auto; 
+            background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; 
+            display: flex; flex-direction: column; z-index: 1000; box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
+            transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
+            pointer-events: none;
+        }
+        .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
+        
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .search-item:hover { background: rgba(255,255,255,0.15); }
+        .search-item:last-child { border-bottom: none; }
+        .search-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; }
+        .search-info { display: flex; flex-direction: column; overflow: hidden; }
+        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .search-info p { margin: 3px 0 0 0; font-size: 12px; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        
+        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 20px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
@@ -217,11 +250,11 @@
             </div>
         </div>
         
-        <!-- SLEEK WHITE PILL PROFILE UI -->
+        <!-- SLEEK MORPHING PROFILE UI -->
         <div class="user-profile-container">
             <div class="user-profile" id="user-profile-btn" onclick="toggleProfileMenu()">
-                <div id="nav-avatar" class="nav-avatar"></div>
                 <span id="display-username">Loading...</span>
+                <div id="nav-avatar" class="nav-avatar"></div>
             </div>
             <div id="profile-dropdown" class="profile-dropdown">
                 <label>Username</label>
@@ -234,7 +267,7 @@
                     <div class="color-swatch" style="background: #f1c40f" onclick="selectProfileColor('#f1c40f', this)"></div>
                     <div class="color-swatch" style="background: #9b59b6" onclick="selectProfileColor('#9b59b6', this)"></div>
                 </div>
-                <button class="btn" style="width:100%; margin-top:5px; background: black; color: white;" onclick="saveProfile()">Save</button>
+                <button class="btn" style="width:100%; margin-top:5px; background: white; color: black;" onclick="saveProfile()">Save Profile</button>
             </div>
         </div>
     </nav>
@@ -290,15 +323,16 @@
                 <div class="room-code-badge glass-effect" onclick="toggleGradientPopup(event)">
                     <div id="active-gradient-icon" class="gradient-btn grad-0"></div>
                     <span id="display-room-code">------</span>
-                </div>
-                
-                <div id="gradient-popup">
-                    <div class="grad-list-item" onclick="selectGradient('dynamic')"><div class="grad-preview grad-dynamic"></div> Dynamic</div>
-                    <div class="grad-list-item" onclick="selectGradient(0)"><div class="grad-preview grad-0"></div> Classic Gold</div>
-                    <div class="grad-list-item" onclick="selectGradient(1)"><div class="grad-preview grad-1"></div> Deep Purple</div>
-                    <div class="grad-list-item" onclick="selectGradient(2)"><div class="grad-preview grad-2"></div> Emerald City</div>
-                    <div class="grad-list-item" onclick="selectGradient(3)"><div class="grad-preview grad-3"></div> Crimson Dusk</div>
-                    <div class="grad-list-item" onclick="selectGradient(4)"><div class="grad-preview grad-4"></div> Ocean Abyss</div>
+                    
+                    <!-- MORPHING GRADIENT MENU -->
+                    <div id="gradient-popup">
+                        <div class="grad-list-item" onclick="selectGradient('dynamic')"><div class="grad-preview grad-dynamic"></div> Dynamic</div>
+                        <div class="grad-list-item" onclick="selectGradient(0)"><div class="grad-preview grad-0"></div> Classic Gold</div>
+                        <div class="grad-list-item" onclick="selectGradient(1)"><div class="grad-preview grad-1"></div> Deep Purple</div>
+                        <div class="grad-list-item" onclick="selectGradient(2)"><div class="grad-preview grad-2"></div> Emerald City</div>
+                        <div class="grad-list-item" onclick="selectGradient(3)"><div class="grad-preview grad-3"></div> Crimson Dusk</div>
+                        <div class="grad-list-item" onclick="selectGradient(4)"><div class="grad-preview grad-4"></div> Ocean Abyss</div>
+                    </div>
                 </div>
                 
                 <button class="end-room-btn" onclick="openEndLeaveModal()"><span id="header-end-btn-text">End Room</span></button>
@@ -308,14 +342,11 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <!-- UNIFIED MORPHING SEARCH UI -->
+                <!-- FLOATING OVERLAY SEARCH UI -->
                 <div id="host-controls">
-                    <h3 style="margin: 0 0 10px 5px; font-size: 18px;">Queue Song</h3>
-                    <div class="unified-search-wrapper">
-                        <div class="search-input-area">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input type="text" id="yt-search-input" placeholder="Search for a song or paste link..." oninput="handleSearchInput()" autocomplete="off">
-                        </div>
+                    <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
+                    <div class="search-container">
+                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
                         <div id="search-results" class="search-results"></div>
                     </div>
                 </div>
@@ -342,8 +373,6 @@
                 </div>
             </div>
 
-            <!-- INVISIBLE PLAYER ENGINE -->
-            <!-- 200px offscreen prevents browser background throttling -->
             <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
@@ -389,19 +418,21 @@
                 updatePillPos('active-pill', document.querySelector('.nav-item.active'));
                 
                 document.addEventListener('click', (e) => {
+                    // Profile Overlay dismiss
                     const profilePopup = document.getElementById('profile-dropdown');
                     const profileContainer = document.querySelector('.user-profile-container');
                     if (isProfileMenuOpen && profilePopup && profileContainer && !profileContainer.contains(e.target)) {
-                        isProfileMenuOpen = false;
-                        profilePopup.style.display = 'none';
+                        toggleProfileMenu();
                     }
 
+                    // Gradient Overlay dismiss
                     const gradPopup = document.getElementById('gradient-popup');
                     const gradBtn = document.querySelector('.room-code-badge');
-                    if (gradPopup && gradPopup.style.display === 'flex' && e.target !== gradPopup && e.target !== gradBtn && !gradPopup.contains(e.target) && !gradBtn.contains(e.target)) {
-                        gradPopup.style.display = 'none';
+                    if (gradPopup && gradPopup.classList.contains('open') && e.target !== gradPopup && !gradBtn.contains(e.target)) {
+                        toggleGradientPopup();
                     }
 
+                    // Search Overlay dismiss
                     const searchPopup = document.getElementById('search-results');
                     const searchInput = document.getElementById('yt-search-input');
                     if (searchPopup && searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
@@ -441,14 +472,18 @@
             }
 
             const menu = document.getElementById('profile-dropdown');
+            const avatar = document.getElementById('nav-avatar');
             isProfileMenuOpen = !isProfileMenuOpen;
+            
             if (isProfileMenuOpen) {
-                menu.style.display = 'flex';
+                menu.classList.add('open');
+                avatar.classList.add('hide');
                 document.getElementById('edit-username').value = currentUsername;
                 tempProfileColor = currentProfileColor;
                 updateSwatchSelection();
             } else {
-                menu.style.display = 'none';
+                menu.classList.remove('open');
+                avatar.classList.remove('hide');
             }
         }
 
@@ -477,7 +512,8 @@
             applyProfileUI();
             
             isProfileMenuOpen = false;
-            document.getElementById('profile-dropdown').style.display = 'none';
+            document.getElementById('profile-dropdown').classList.remove('open');
+            document.getElementById('nav-avatar').classList.remove('hide');
         }
 
         // --- DYNAMIC BACKGROUND ENGINE ---
@@ -560,11 +596,20 @@
         function toggleGradientPopup(e) {
             if (e) e.stopPropagation();
             const popup = document.getElementById('gradient-popup');
-            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+            const btn = document.getElementById('active-gradient-icon');
+            
+            if (popup.classList.contains('open')) {
+                popup.classList.remove('open');
+                btn.classList.remove('hide');
+            } else {
+                popup.classList.add('open');
+                btn.classList.add('hide');
+            }
         }
         
         function selectGradient(setting) {
-            document.getElementById('gradient-popup').style.display = 'none';
+            document.getElementById('gradient-popup').classList.remove('open');
+            document.getElementById('active-gradient-icon').classList.remove('hide');
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
@@ -584,11 +629,6 @@
         }
 
         function onPlayerStateChange(event) {
-            // Force pause guests if they wander into the next recommended song
-            if (!isCurrentUserHost && event.data === YT.PlayerState.ENDED) {
-                ytPlayer.pauseVideo();
-            }
-
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
@@ -599,8 +639,7 @@
                     document.getElementById('skip-ad-btn').style.display = 'inline-block';
                     socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
                 } else {
-                    // Strict block for non-host early ad wanderers
-                    ytPlayer.pauseVideo(); 
+                    ytPlayer.pauseVideo(); // Guests STOP completely during their own ad
                 }
                 return;
             } else {
@@ -665,7 +704,6 @@
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
-
             if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
@@ -694,7 +732,7 @@
             if (query === '') return;
 
             const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching server...</div>';
+            resultsContainer.innerHTML = '<div class="loading-spinner"></div>';
             resultsContainer.classList.add('open');
 
             try {
@@ -749,7 +787,6 @@
             }
         });
 
-        // --- GUEST STRICT SYNC RECEIVER ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
                 const actualVid = ytPlayer.getVideoData()?.video_id;
@@ -763,12 +800,11 @@
                     return; 
                 }
 
-                if (isGuestInAd) return; // Wait for guest ad to finish
+                if (isGuestInAd) return;
 
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
-                // Tightened sync to a 0.4s tolerance
                 if (Math.abs(hostTime - myTime) > 0.4) ytPlayer.seekTo(hostTime, true);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
@@ -806,7 +842,6 @@
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
-                // Ultra-fast 200ms Heartbeat
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                         const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
@@ -996,9 +1031,6 @@
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
             
-            // Un-throttle hack
-            if (isPlayerReady) ytPlayer.playVideo();
-            
             resetPlayerUI();
             goToLobby();
         }
@@ -1019,9 +1051,6 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
-                    
-                    if (isPlayerReady) ytPlayer.playVideo();
-
                     resetPlayerUI();
                     goToLobby();
                 }
