@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const ytSearch = require('yt-search'); // NEW: Unbreakable Server-Side Search Engine
 
 const app = express();
 app.use(cors()); 
@@ -13,6 +14,25 @@ const io = new Server(server, {
 
 const activeRooms = {}; 
 const roomTimeouts = {}; 
+
+// NEW: Internal Search API. Never goes offline.
+app.get('/search', async (req, res) => {
+    const query = req.query.q;
+    if (!query) return res.json({ items: [] });
+    try {
+        const results = await ytSearch(query);
+        const videos = results.videos.slice(0, 5).map(v => ({
+            id: v.videoId,
+            title: v.title,
+            thumbnail: v.thumbnail,
+            author: v.author.name
+        }));
+        res.json({ items: videos });
+    } catch (e) {
+        console.error("Search Engine Error:", e);
+        res.status(500).json({ error: 'Search failed' });
+    }
+});
 
 app.get('/check-room/:code', (req, res) => {
     const code = req.params.code.toUpperCase();
@@ -80,7 +100,6 @@ io.on('connection', (socket) => {
         const { roomCode, time, state } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            // Track playing state, but ignore 'AD' state so we don't permanently pause the server
             if (state !== 'AD') activeRooms[roomCode].isPlaying = (state === 1);
             socket.to(roomCode).emit('sync_update', { time, state });
         }
