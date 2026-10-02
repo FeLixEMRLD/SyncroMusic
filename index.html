@@ -25,20 +25,20 @@
         body.active-room-active #room-bg-container { opacity: 1; }
         .room-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.8s ease-in-out; opacity: 0; }
         
+        /* Static Gradients */
         .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } 
         .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } 
         .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
         .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
         .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
-        .grad-5 { background: linear-gradient(135deg, #2b091f 0%, #000000 40%, #4a0d33 100%) !important; } 
-        .grad-6 { background: linear-gradient(135deg, #1a1a1a 0%, #000000 50%, #333333 100%) !important; } 
-        .grad-7 { background: linear-gradient(135deg, #1f1c07 0%, #000000 40%, #59500b 100%) !important; } 
-        .grad-8 { background: linear-gradient(135deg, #070e1f 0%, #000000 40%, #171145 100%) !important; } 
-        .grad-9 { background: linear-gradient(135deg, #381504 0%, #000000 40%, #5e2809 100%) !important; } 
+        
+        /* Dynamic Thumbnail Gradient class (applied via JS style overrides) */
+        .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); } 
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
-        nav { display: flex; align-items: center; padding: 20px 40px; justify-content: space-between; }
+        /* HEADER & NAVIGATION */
+        nav { display: flex; align-items: center; padding: 20px 40px; justify-content: space-between; z-index: 10; position: relative;}
         .nav-left { display: flex; align-items: center; }
         .logo { font-size: 22px; font-weight: 800; margin-right: 40px; }
         .nav-container { display: flex; position: relative; gap: 10px; }
@@ -46,13 +46,28 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; }
-        .nav-avatar { width: 28px; height: 28px; background: white; border-radius: 50%; flex-shrink: 0; }
+        /* USER PROFILE EDITOR */
+        .user-profile-container { position: relative; display: inline-block; cursor: pointer; }
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 5px 10px; border-radius: 20px; transition: background 0.2s; }
+        .user-profile:hover { background: rgba(255,255,255,0.1); }
+        .nav-avatar { width: 32px; height: 32px; background-color: #c49a02; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.2); }
+        
+        .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 250px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
+        .profile-dropdown label { font-size: 12px; color: #aaa; margin-bottom: -5px; }
+        .profile-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; outline: none; font-family: 'Inter'; }
+        .profile-actions { display: flex; gap: 10px; align-items: center; }
+        .color-picker { width: 35px; height: 35px; padding: 0; border: none; border-radius: 8px; cursor: pointer; background: transparent; }
+        .color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; }
+        .file-upload-label { flex-grow: 1; background: rgba(255,255,255,0.1); text-align: center; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
+        .file-upload-label:hover { background: rgba(255,255,255,0.2); }
+        input[type="file"] { display: none; }
 
+        /* PAGES & GLASS EFFECTS */
         .page { display: none; padding: 40px 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
         .page.active-page { display: block; }
         .glass-effect { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
 
+        /* GENERAL UI */
         .home-content { text-align: center; margin-top: 10vh; }
         .home-content h1 { font-size: 46px; font-weight: 600; margin-bottom: 8px; }
         .home-content p { font-size: 18px; margin-bottom: 35px; color: #e0e0e0; font-weight: 300; }
@@ -68,7 +83,6 @@
         .code-box:focus { border-color: white; background: rgba(255, 255, 255, 0.1); }
         #join-room-btn { background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(255,255,255,0.2); padding: 12px 40px; border-radius: 25px; font-size: 16px; font-weight: 500; cursor: not-allowed; transition: all 0.3s ease; }
         #join-room-btn.valid { background: white; color: black; cursor: pointer; }
-        #join-room-btn.valid:hover { transform: scale(1.05); }
 
         .pill-toggle-container { display: flex; position: relative; border-radius: 20px; width: fit-content; padding: 4px; margin: 0 auto; background: rgba(255, 255, 255, 0.08); }
         .pill-btn { padding: 8px 24px; font-size: 14px; cursor: pointer; z-index: 1; transition: color 0.3s ease; color: #e0e0e0; border-radius: 16px; white-space: nowrap; }
@@ -81,23 +95,24 @@
         .input-dark { border-radius: 12px; color: white; font-size: 15px; outline: none; padding: 12px 16px; font-family: 'Inter', sans-serif; transition: background 0.3s ease; box-sizing: border-box; border: 1px solid rgba(255,255,255,0.1); }
         .input-dark:focus { background: rgba(255, 255, 255, 0.1); border-color: rgba(255,255,255,0.3); }
         .form-section { margin-bottom: 25px; }
-        .form-section h3 { font-size: 18px; font-weight: 400; margin-bottom: 10px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
-        .active-room-content { max-width: 900px; margin: 0 auto; }
+        /* ACTIVE ROOM & LIST GRADIENT POPUP */
+        .active-room-content { max-width: 950px; margin: 0 auto; padding-left: 80px; transition: padding-left 0.3s; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
         .room-actions { display: flex; align-items: center; gap: 12px; position: relative; }
         
-        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; }
-        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.2s; }
-        .gradient-btn:hover { transform: scale(1.1); }
+        .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer;}
+        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
         
-        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 12px; border-radius: 16px; display: none; gap: 10px; flex-wrap: wrap; width: 160px; justify-content: center; background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 50; animation: fadeIn 0.2s ease-out; }
-        .grad-option { width: 25px; height: 25px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: all 0.2s; }
-        .grad-option:hover { transform: scale(1.1); border-color: white; }
+        /* Redesigned List Popup for Gradients */
+        #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
+        .grad-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; font-weight: 500; color: #eee; }
+        .grad-list-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .grad-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
 
-        .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; line-height: 1; transition: all 0.2s; }
+        .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; transition: all 0.2s; }
         .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
         
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
@@ -111,55 +126,56 @@
         .song-details p { margin: 0; font-size: 13px; color: #aaa; }
         
         .progress-slider { -webkit-appearance: none; width: 100%; height: 4px; background: rgba(255,255,255,0.2); border-radius: 2px; outline: none; margin-top: 12px; transition: background 0.1s; cursor: pointer; }
-        .progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; }
+        .progress-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 12px; height: 12px; border-radius: 50%; background: white; cursor: pointer; box-shadow: 0 0 5px rgba(0,0,0,0.5);}
         
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* SEARCH UI RESTRUCTURED & ANIMATED */
+        /* SEARCH UI */
         #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
-        .search-container { position: relative; width: 100%; margin-top: 0; }
-        
-        .search-results { 
-            position: absolute; top: 110%; left: 0; width: 100%; max-height: 300px; overflow-y: auto; 
-            background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
-            border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; 
-            display: flex; flex-direction: column; z-index: 100; box-shadow: 0 15px 40px rgba(0,0,0,0.7); 
-            transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s;
-            pointer-events: none;
-        }
+        .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
+        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
         .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
-        
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .search-item:hover { background: rgba(255,255,255,0.15); }
-        .search-item:last-child { border-bottom: none; }
-        .search-thumb { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; }
-        .search-info { display: flex; flex-direction: column; overflow: hidden; }
-        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .search-info p { margin: 3px 0 0 0; font-size: 12px; color: #999; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        .loading-spinner { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid white; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 20px auto; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .search-item:hover { background: rgba(255,255,255,0.1); }
+        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 24px; height: 24px; background: linear-gradient(135deg, #c49a02 0%, #f1c40f 100%); border-radius: 50%; flex-shrink: 0; }
+        .user-list-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background-color: #c49a02; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.2);}
+
+        /* SIDEBAR CHAT */
+        .chat-toggle-btn { position: fixed; left: 0; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px 10px; border-radius: 0 12px 12px 0; cursor: pointer; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); border-left: none; transition: left 0.3s; display: none; }
+        .chat-toggle-btn.active-room { display: flex; align-items: center; justify-content: center; }
+        .chat-notif-dot { position: absolute; top: -5px; right: -5px; background: #ff4c4c; color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; }
         
-        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
+        .chat-sidebar { position: fixed; left: -320px; top: 0; width: 320px; height: 100vh; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(30px); border-right: 1px solid rgba(255,255,255,0.1); z-index: 999; transition: left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+        .chat-sidebar.open { left: 0; }
+        .chat-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
+        .chat-msg-wrapper { display: flex; gap: 10px; }
+        .chat-msg-content { display: flex; flex-direction: column; }
+        .chat-msg-name { font-size: 12px; color: #aaa; margin-bottom: 3px; }
+        .chat-msg-bubble { background: rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 0 12px 12px 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; max-width: 230px;}
+        .chat-msg-wrapper.self { flex-direction: row-reverse; }
+        .chat-msg-wrapper.self .chat-msg-content { align-items: flex-end; }
+        .chat-msg-wrapper.self .chat-msg-bubble { background: rgba(255,255,255,0.2); border-radius: 12px 0 12px 12px; }
+        .chat-input-area { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px; }
+        .chat-input { flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 10px 15px; color: white; outline: none; font-family: 'Inter'; }
+        
+        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; }
         .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); -webkit-backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .modal-content h3 { margin-top: 0; font-size: 22px; font-weight: 600; }
         .modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
-        .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; }
+        .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none; }
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
+        .modal-btn-end { background: rgba(255, 76, 76, 0.2); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
-        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 10px 24px 10px 14px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; font-size: 14px; z-index: 100; transition: transform 0.2s ease, box-shadow 0.2s; }
-        #floating-return-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
-        .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
@@ -173,6 +189,9 @@
             .code-box { width: 40px; height: 50px; font-size: 20px; }
             #toast-container { top: 20px; left: 20px; right: 20px; align-items: center; }
             #gradient-popup { right: 20px; }
+            .active-room-content { padding-left: 40px; }
+            .chat-sidebar { width: 100%; left: -100%; }
+            .chat-toggle-btn { display: none !important; }
         }
     </style>
 </head>
@@ -199,8 +218,26 @@
         </div>
     </div>
 
-    <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
-        <div id="fluid-indicator-circle" class="fluid-indicator grad-0"></div> Return to room
+    <!-- SIDEBAR CHAT UI -->
+    <div id="chat-toggle" class="chat-toggle-btn" onclick="toggleChat()">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        <div id="chat-notif" class="chat-notif-dot">0</div>
+    </div>
+
+    <div id="chat-sidebar" class="chat-sidebar">
+        <div class="chat-header">
+            Room Chat
+            <svg onclick="toggleChat()" style="cursor:pointer;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Messages inject here -->
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendChat()">
+            <button class="btn" style="padding: 10px; border-radius: 50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;" onclick="sendChat()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            </button>
+        </div>
     </div>
 
     <nav>
@@ -211,12 +248,28 @@
                 <div class="nav-item active" onclick="navigateTo('home', this)">Home</div>
                 <div class="nav-item" onclick="goToLobby(this)">Lobby</div>
                 <div class="nav-item" onclick="navigateTo('explore', this)">Explore</div>
-                <div class="nav-item" onclick="navigateTo('settings', this)">Settings</div>
             </div>
         </div>
-        <div class="user-profile">
-            <span id="display-username">Loading...</span>
-            <div class="nav-avatar"></div>
+        
+        <!-- PROFILE EDITOR UI -->
+        <div class="user-profile-container" onmouseenter="showProfileMenu()" onmouseleave="hideProfileMenu()">
+            <div class="user-profile glass-effect">
+                <span id="display-username">Loading...</span>
+                <div id="nav-avatar" class="nav-avatar"></div>
+            </div>
+            <div id="profile-dropdown" class="profile-dropdown">
+                <label>Username</label>
+                <input type="text" id="edit-username" class="profile-input" maxlength="20">
+                <label>Profile Picture</label>
+                <div class="profile-actions">
+                    <input type="color" id="edit-color" class="color-picker">
+                    <label class="file-upload-label">
+                        Upload Image
+                        <input type="file" id="edit-image" accept="image/*" onchange="handleImageUpload(event)">
+                    </label>
+                </div>
+                <button class="btn" style="width:100%; margin-top:5px;" onclick="saveProfile()">Save Profile</button>
+            </div>
         </div>
     </nav>
 
@@ -268,22 +321,21 @@
         <div class="room-header">
             <h2 id="display-room-title">My Syncro Room</h2>
             <div class="room-actions">
-                <div class="room-code-badge glass-effect">
-                    <div id="active-gradient-icon" class="gradient-btn grad-0" onclick="toggleGradientPopup()"></div>
+                <div class="room-code-badge glass-effect" onclick="toggleGradientPopup()">
+                    <div id="active-gradient-icon" class="gradient-btn grad-0"></div>
                     <span id="display-room-code">------</span>
                 </div>
+                
+                <!-- REDESIGNED GRADIENT LIST -->
                 <div id="gradient-popup">
-                    <div class="grad-option grad-0" onclick="selectGradient(0)"></div>
-                    <div class="grad-option grad-1" onclick="selectGradient(1)"></div>
-                    <div class="grad-option grad-2" onclick="selectGradient(2)"></div>
-                    <div class="grad-option grad-3" onclick="selectGradient(3)"></div>
-                    <div class="grad-option grad-4" onclick="selectGradient(4)"></div>
-                    <div class="grad-option grad-5" onclick="selectGradient(5)"></div>
-                    <div class="grad-option grad-6" onclick="selectGradient(6)"></div>
-                    <div class="grad-option grad-7" onclick="selectGradient(7)"></div>
-                    <div class="grad-option grad-8" onclick="selectGradient(8)"></div>
-                    <div class="grad-option grad-9" onclick="selectGradient(9)"></div>
+                    <div class="grad-list-item" onclick="selectGradient('dynamic')"><div class="grad-preview grad-dynamic"></div> Dynamic (Thumbnail)</div>
+                    <div class="grad-list-item" onclick="selectGradient(0)"><div class="grad-preview grad-0"></div> Classic Gold</div>
+                    <div class="grad-list-item" onclick="selectGradient(1)"><div class="grad-preview grad-1"></div> Deep Purple</div>
+                    <div class="grad-list-item" onclick="selectGradient(2)"><div class="grad-preview grad-2"></div> Emerald City</div>
+                    <div class="grad-list-item" onclick="selectGradient(3)"><div class="grad-preview grad-3"></div> Crimson Dusk</div>
+                    <div class="grad-list-item" onclick="selectGradient(4)"><div class="grad-preview grad-4"></div> Ocean Abyss</div>
                 </div>
+                
                 <button class="end-room-btn" onclick="openEndLeaveModal()"><span id="header-end-btn-text">End Room</span></button>
             </div>
         </div>
@@ -320,9 +372,8 @@
                 </div>
             </div>
 
-            <!-- THE ANTI-THROTTLE ENGINE FIX -->
-            <!-- Placed exactly behind everything in the viewport to trick the browser -->
-            <div id="youtube-player" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: -5; opacity: 0.001; pointer-events: none;"></div>
+            <!-- INVISIBLE PLAYER ENGINE -->
+            <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
                 <h3 style="margin-top: 0;">Listeners</h3>
@@ -336,11 +387,13 @@
         const socket = io(RENDER_URL);
         
         let currentUsername = '';
+        let currentPfp = '';
         let isCurrentUserHost = false;
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
         let currentRoomCode = '';
         let currentActiveSongId = null;
+        let currentGradientSetting = 0; // Can be int or 'dynamic'
 
         let ytPlayer;
         let isPlayerReady = false;
@@ -348,50 +401,249 @@
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
-        let isHostInAd = false; // NEW: Strict Lock
+        let isHostInAd = false;
         
         let pendingVideo = null;
         let pendingTime = 0;
         let pendingState = false;
 
+        let unreadChats = 0;
+        let isChatOpen = false;
+
         window.onload = function() {
-            generateIdentity();
+            loadIdentity();
             checkExistingRoomState();
             updatePillPos('active-pill', document.querySelector('.nav-item.active'));
-            
-            document.addEventListener('click', (e) => {
-                const gradPopup = document.getElementById('gradient-popup');
-                const gradBtn = document.getElementById('active-gradient-icon');
-                if (gradPopup.style.display === 'flex' && e.target !== gradPopup && e.target !== gradBtn && !gradPopup.contains(e.target)) gradPopup.style.display = 'none';
-
-                const searchPopup = document.getElementById('search-results');
-                const searchInput = document.getElementById('yt-search-input');
-                if (searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
-                    searchPopup.classList.remove('open');
-                }
-            });
         };
 
-        function applyGradientTheme(index) {
-            const gradClass = `grad-${index}`;
+        // --- PROFILE SYSTEM ---
+        function loadIdentity() {
+            currentUsername = localStorage.getItem('syncro_username');
+            currentPfp = localStorage.getItem('syncro_pfp');
+
+            if (!currentUsername) {
+                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
+                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
+                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
+                localStorage.setItem('syncro_username', currentUsername);
+            }
+            if (!currentPfp) {
+                currentPfp = '#c49a02'; 
+                localStorage.setItem('syncro_pfp', currentPfp);
+            }
+
+            applyProfileUI();
+        }
+
+        function applyProfileUI() {
+            document.getElementById('display-username').innerText = currentUsername;
+            const avatar = document.getElementById('nav-avatar');
+            if (currentPfp.startsWith('data:image')) {
+                avatar.style.backgroundImage = `url(${currentPfp})`;
+                avatar.style.backgroundColor = 'transparent';
+            } else {
+                avatar.style.backgroundImage = 'none';
+                avatar.style.backgroundColor = currentPfp;
+            }
+        }
+
+        function showProfileMenu() {
+            document.getElementById('profile-dropdown').style.display = 'flex';
+            document.getElementById('edit-username').value = currentUsername;
+            if (!currentPfp.startsWith('data:image')) document.getElementById('edit-color').value = currentPfp;
+        }
+
+        function hideProfileMenu() {
+            document.getElementById('profile-dropdown').style.display = 'none';
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    currentPfp = e.target.result;
+                    document.getElementById('nav-avatar').style.backgroundImage = `url(${currentPfp})`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveProfile() {
+            const newName = document.getElementById('edit-username').value.trim();
+            if (newName !== '') currentUsername = newName;
+            
+            // If they didn't upload a new image this session, grab the color picker
+            const fileInput = document.getElementById('edit-image');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                if (!currentPfp.startsWith('data:image') || document.getElementById('edit-color').value !== '#000000') {
+                    currentPfp = document.getElementById('edit-color').value;
+                }
+            }
+
+            localStorage.setItem('syncro_username', currentUsername);
+            localStorage.setItem('syncro_pfp', currentPfp);
+            
+            applyProfileUI();
+            hideProfileMenu();
+            
+            if (currentRoomCode) socket.emit('update_profile', { username: currentUsername, pfp: currentPfp });
+        }
+
+        // --- CHAT SYSTEM ---
+        function toggleChat() {
+            const sidebar = document.getElementById('chat-sidebar');
+            const btn = document.getElementById('chat-toggle');
+            isChatOpen = !isChatOpen;
+            
+            if (isChatOpen) {
+                sidebar.classList.add('open');
+                btn.style.left = '320px';
+                unreadChats = 0;
+                document.getElementById('chat-notif').style.display = 'none';
+                document.getElementById('chat-input').focus();
+            } else {
+                sidebar.classList.remove('open');
+                btn.style.left = '0';
+            }
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if (text !== '' && currentRoomCode) {
+                socket.emit('chat_message', { roomCode: currentRoomCode, text: text, pfp: currentPfp });
+                input.value = '';
+            }
+        }
+
+        socket.on('chat_message', (data) => {
+            const container = document.getElementById('chat-messages');
+            const isSelf = data.username === currentUsername;
+            
+            const pfpStyle = data.pfp.startsWith('data:image') 
+                ? `background-image: url(${data.pfp}); background-color: transparent;` 
+                : `background-color: ${data.pfp};`;
+
+            const msgHtml = `
+                <div class="chat-msg-wrapper ${isSelf ? 'self' : ''}">
+                    <div class="user-list-avatar" style="${pfpStyle}"></div>
+                    <div class="chat-msg-content">
+                        <span class="chat-msg-name">${data.username}</span>
+                        <div class="chat-msg-bubble">${data.text}</div>
+                    </div>
+                </div>
+            `;
+            container.innerHTML += msgHtml;
+            container.scrollTop = container.scrollHeight;
+
+            if (!isChatOpen && !isSelf) {
+                unreadChats++;
+                const notif = document.getElementById('chat-notif');
+                notif.innerText = unreadChats > 9 ? '9+' : unreadChats;
+                notif.style.display = 'flex';
+            }
+        });
+
+
+        // --- DYNAMIC BACKGROUND ENGINE ---
+        function extractAndApplyDynamicGradient(videoId) {
+            // Using Weserv Image Proxy to bypass YouTube CORS canvas poisoning
+            const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
+            const img = new Image();
+            img.crossOrigin = 'Anonymous';
+            img.src = proxyUrl;
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width; canvas.height = img.height;
+                ctx.drawImage(img, 0, 0, img.width, img.height);
+                
+                try {
+                    // Extract left and right center colors
+                    const left = ctx.getImageData(Math.floor(img.width * 0.2), Math.floor(img.height * 0.5), 1, 1).data;
+                    const right = ctx.getImageData(Math.floor(img.width * 0.8), Math.floor(img.height * 0.5), 1, 1).data;
+                    
+                    // Darken colors slightly so text remains readable
+                    const darken = 0.5;
+                    const c1 = `rgb(${left[0]*darken},${left[1]*darken},${left[2]*darken})`;
+                    const c2 = `rgb(${right[0]*darken},${right[1]*darken},${right[2]*darken})`;
+                    
+                    const gradientStr = `linear-gradient(135deg, ${c1} 0%, #000 50%, ${c2} 100%)`;
+                    injectDynamicGradient(gradientStr);
+                } catch(e) {
+                    injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); // Fallback
+                }
+            };
+            img.onerror = () => injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
+        }
+
+        function injectDynamicGradient(gradientStr) {
             const container = document.getElementById('room-bg-container');
             const newLayer = document.createElement('div');
-            newLayer.className = `room-bg-layer ${gradClass}`;
+            newLayer.className = `room-bg-layer`;
+            newLayer.style.background = gradientStr;
             container.appendChild(newLayer);
+            
             void newLayer.offsetWidth; 
             newLayer.style.opacity = '1';
+            
             setTimeout(() => {
                 const layers = container.getElementsByClassName('room-bg-layer');
                 while (layers.length > 1) container.removeChild(layers[0]);
             }, 800);
-            document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`;
-            document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`;
+
+            // Update UI buttons
+            const btn = document.getElementById('active-gradient-icon');
+            const play = document.getElementById('host-play-btn');
+            btn.className = 'gradient-btn'; btn.style.background = gradientStr;
+            play.className = 'play-pause-btn'; play.style.background = gradientStr;
         }
 
-        // --- YOUTUBE AUDIO ENGINE ---
+        function applyGradientTheme(setting) {
+            currentGradientSetting = setting;
+            if (setting === 'dynamic') {
+                if (currentActiveSongId) extractAndApplyDynamicGradient(currentActiveSongId);
+                else injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
+                return;
+            }
+            
+            const gradClass = `grad-${setting}`;
+            const container = document.getElementById('room-bg-container');
+            const newLayer = document.createElement('div');
+            newLayer.className = `room-bg-layer ${gradClass}`;
+            newLayer.style.background = ''; // Clear inline if previous was dynamic
+            container.appendChild(newLayer);
+            
+            void newLayer.offsetWidth; 
+            newLayer.style.opacity = '1';
+            
+            setTimeout(() => {
+                const layers = container.getElementsByClassName('room-bg-layer');
+                while (layers.length > 1) container.removeChild(layers[0]);
+            }, 800);
+
+            const btn = document.getElementById('active-gradient-icon');
+            const play = document.getElementById('host-play-btn');
+            btn.className = `gradient-btn ${gradClass}`; btn.style.background = '';
+            play.className = `play-pause-btn ${gradClass}`; play.style.background = '';
+        }
+
+        function toggleGradientPopup() {
+            const popup = document.getElementById('gradient-popup');
+            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+        }
+        
+        function selectGradient(setting) {
+            document.getElementById('gradient-popup').style.display = 'none';
+            socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
+        }
+
+        // --- YOUTUBE IFRAME AUDIO ENGINE ---
         function onYouTubeIframeAPIReady() {
             ytPlayer = new YT.Player('youtube-player', {
-                height: '100%', width: '100%', videoId: '', 
+                height: '200', width: '200', videoId: '', 
                 playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
                 events: {
                     'onReady': () => { 
@@ -405,6 +657,7 @@
 
         function onPlayerStateChange(event) {
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
+            
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
@@ -415,6 +668,7 @@
             }
 
             const isPlaying = (event.data === YT.PlayerState.PLAYING);
+            
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
             
@@ -466,21 +720,17 @@
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
+
             if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
 
-        // --- NEW FLUID SEARCH SYSTEM ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
             
             const resultsContainer = document.getElementById('search-results');
-            
-            if (query === '') {
-                resultsContainer.classList.remove('open');
-                return;
-            }
+            if (query === '') { resultsContainer.classList.remove('open'); return; }
 
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = query.match(regExp);
@@ -526,7 +776,7 @@
                     resultsContainer.appendChild(el);
                 });
             } catch (err) {
-                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Server search failed. Please try again.</div>';
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Try a direct link.</div>';
             }
         }
 
@@ -540,6 +790,10 @@
             artBg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             artBg.style.display = 'block';
             document.getElementById('album-art-svg').style.display = 'none';
+            
+            if (currentGradientSetting === 'dynamic') {
+                extractAndApplyDynamicGradient(videoId);
+            }
         }
 
         socket.on('song_loaded', (videoId) => {
@@ -566,12 +820,12 @@
                 if (isHostInAd) {
                     document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
                     if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
-                    return; // STRICT LOCK. We do not process timestamps while host is in ad.
+                    return; 
                 }
 
-                // Tight 0.4s sync tolerance
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
+                
                 if (Math.abs(hostTime - myTime) > 0.4) ytPlayer.seekTo(hostTime, true);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
@@ -585,7 +839,6 @@
             currentActiveSongId = pendingVideo;
 
             if (currentYtVid !== pendingVideo) {
-                // Instantly force load video and time
                 ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo);
             } else {
@@ -599,6 +852,7 @@
             pendingVideo = null;
         }
 
+        // --- SOCKET UI LOGIC ---
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
@@ -609,7 +863,6 @@
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
-                // Ultra-fast 200ms Heartbeat
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                         const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
@@ -646,10 +899,15 @@
             listEl.innerHTML = ''; 
             data.users.forEach(user => {
                 const li = document.createElement('li');
-                let displayName = user;
-                if (user === currentUsername) displayName += " (You)";
-                if (user === data.hostName) displayName += " (Host)";
-                li.innerHTML = `<div class="avatar"></div> <span>${displayName}</span>`;
+                let displayName = user.name;
+                if (user.name === currentUsername) displayName += " (You)";
+                if (user.name === data.hostName) displayName += " (Host)";
+                
+                const pfpStyle = user.pfp.startsWith('data:image') 
+                    ? `background-image: url(${user.pfp}); background-color: transparent;` 
+                    : `background-color: ${user.pfp};`;
+
+                li.innerHTML = `<div class="user-list-avatar" style="${pfpStyle}"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
             });
         });
@@ -663,6 +921,7 @@
                 document.getElementById('modal-desc').innerText = 'The host has closed this session.';
                 document.querySelector('.modal-btn-cancel').style.display = 'none';
                 document.getElementById('modal-confirm-btn').innerText = 'Okay';
+                
                 document.getElementById('modal-confirm-btn').onclick = () => {
                     closeModal();
                     forceClearRoomState();
@@ -673,25 +932,16 @@
             }
         });
 
-        function generateIdentity() {
-            currentUsername = localStorage.getItem('syncro_username');
-            if (!currentUsername) {
-                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
-                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
-                currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
-                localStorage.setItem('syncro_username', currentUsername);
-            }
-            document.getElementById('display-username').innerText = currentUsername;
-        }
-
         function triggerToast(message) {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = 'glass-effect toast-msg';
             toast.style.animation = 'slideInRight 0.4s forwards';
+            
             const bgContainer = document.getElementById('room-bg-container');
             const activeLayers = bgContainer.getElementsByClassName('room-bg-layer');
             const activeGradClass = activeLayers.length > 0 ? activeLayers[activeLayers.length - 1].className.replace('room-bg-layer ', '') : 'grad-0';
+            
             toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
             container.appendChild(toast);
             setTimeout(() => {
@@ -732,7 +982,15 @@
             if (pageId === 'home') document.body.classList.add('home-active');
             else if (pageId === 'lobby') { document.body.classList.add('lobby-create-active'); setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50); }
             else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
-            else if (pageId === 'active-room') { document.body.classList.add('active-room-active'); }
+            else if (pageId === 'active-room') { 
+                document.body.classList.add('active-room-active'); 
+                document.getElementById('chat-toggle').classList.add('active-room');
+            }
+
+            if (pageId !== 'active-room') {
+                document.getElementById('chat-toggle').classList.remove('active-room');
+                if (isChatOpen) toggleChat();
+            }
         }
 
         function goToLobby(navElement = null) { 
@@ -758,6 +1016,7 @@
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
             const btn = document.getElementById('join-room-btn');
+            
             if (enteredCode.length === 6) {
                 try {
                     const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
@@ -765,18 +1024,18 @@
                     if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
                     else { btn.classList.remove('valid'); btn.disabled = true; }
                 } catch (error) { console.error("Failed to verify room:", error); }
-            } else { btn.classList.remove('valid'); btn.disabled = true; }
+            } else {
+                btn.classList.remove('valid'); btn.disabled = true;
+            }
         }
 
         function checkExistingRoomState() {
             const savedCode = localStorage.getItem('syncro_room_code');
-            const savedName = localStorage.getItem('syncro_room_name');
             if (savedCode) {
                 currentRoomCode = savedCode;
-                socket.emit('join_room', { roomCode: savedCode, username: currentUsername }, (response) => {
+                socket.emit('join_room', { roomCode: savedCode, username: currentUsername, pfp: currentPfp }, (response) => {
                     if (response && response.success) {
                         document.getElementById('display-room-code').innerText = savedCode;
-                        document.getElementById('display-room-title').innerText = savedName;
                         goToLobby(); 
                     } else forceClearRoomState();
                 });
@@ -790,16 +1049,12 @@
             let roomCode = '';
             for (let i = 0; i < 6; i++) roomCode += characters.charAt(Math.floor(Math.random() * characters.length));
             const customName = document.getElementById('room-name-input').value;
-            const randomGrad = Math.floor(Math.random() * 10);
 
             currentRoomCode = roomCode;
-            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, customRoomName: customName, gradientIndex: randomGrad });
+            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, pfp: currentPfp, customRoomName: customName, gradientIndex: 'dynamic' });
 
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
-            
-            // To unlock Audio context on Safari/Chrome, emit play immediately upon click
-            if (isPlayerReady) ytPlayer.playVideo();
             
             resetPlayerUI();
             goToLobby();
@@ -816,15 +1071,11 @@
         }
 
         function proceedToJoinRoom(code) {
-            socket.emit('join_room', { roomCode: code, username: currentUsername }, (response) => {
+            socket.emit('join_room', { roomCode: code, username: currentUsername, pfp: currentPfp }, (response) => {
                 if (response && response.success) {
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
-                    
-                    // Unlock Audio Context
-                    if (isPlayerReady) ytPlayer.playVideo();
-                    
                     resetPlayerUI();
                     goToLobby();
                 }
@@ -840,15 +1091,6 @@
             document.getElementById('album-art-svg').style.display = 'block';
             currentActiveSongId = null;
             if (isPlayerReady) ytPlayer.stopVideo();
-        }
-
-        function toggleGradientPopup() {
-            const popup = document.getElementById('gradient-popup');
-            popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
-        }
-        function selectGradient(index) {
-            document.getElementById('gradient-popup').style.display = 'none';
-            socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: index });
         }
 
         function openModal() {
@@ -892,10 +1134,11 @@
             if (isPlayerReady) ytPlayer.stopVideo();
             currentRoomCode = '';
             localStorage.removeItem('syncro_room_code');
-            localStorage.removeItem('syncro_room_name');
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
+            document.getElementById('chat-messages').innerHTML = '';
             document.getElementById('floating-return-btn').style.display = 'none';
+            if (isChatOpen) toggleChat();
             applyGradientTheme(0);
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
