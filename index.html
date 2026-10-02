@@ -47,11 +47,12 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* RESTORED: GLOWING PROFILE EDITOR UI (COLORS ONLY) */
-        .user-profile-container { position: relative; display: inline-block; cursor: pointer; z-index: 100; }
-        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 6px 14px 6px 10px; border-radius: 25px; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); }
-        .user-profile:hover { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); transform: scale(1.03); background: rgba(255,255,255,0.15); }
-        .nav-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2); }
+        /* SLEEK WHITE PILL PROFILE UI */
+        .user-profile-container { position: relative; display: inline-block; z-index: 100; }
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; padding: 4px 14px 4px 10px; border-radius: 25px; transition: transform 0.2s ease; background: white; color: black; cursor: pointer; }
+        .user-profile:hover { transform: scale(1.03); }
+        .user-profile.disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .nav-avatar { width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0; }
         
         .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 220px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
         .profile-dropdown label { font-size: 12px; color: #aaa; margin-bottom: -5px; }
@@ -94,7 +95,7 @@
         .form-section { margin-bottom: 25px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
-        .active-room-content { max-width: 950px; margin: 0 auto; transition: padding-left 0.3s; }
+        .active-room-content { max-width: 900px; margin: 0 auto; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
         .room-actions { display: flex; align-items: center; gap: 12px; position: relative; }
@@ -108,12 +109,25 @@
         .grad-list-item:hover { background: rgba(255,255,255,0.1); color: white; }
         .grad-preview { width: 20px; height: 20px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); }
 
-        .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; transition: all 0.2s; }
+        .end-room-btn { background: rgba(255, 76, 76, 0.15); border: 1px solid rgba(255, 76, 76, 0.3); color: #ff8a8a; padding: 10px 16px; border-radius: 12px; cursor: pointer; font-size: 15px; font-weight: 500; display: flex; align-items: center; line-height: 1; transition: all 0.2s; }
         .end-room-btn:hover { background: rgba(255, 76, 76, 0.25); border-color: rgba(255, 76, 76, 0.5); color: #ff4c4c; }
         
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
+        /* UNIFIED MORPHING SEARCH UI */
+        #host-controls { display: none; margin-bottom: 20px; }
+        .unified-search-wrapper { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; transition: all 0.3s ease; }
+        .search-input-area { display: flex; padding: 15px 20px; align-items: center; gap: 10px; }
+        .search-input-area input { flex-grow: 1; background: transparent; border: none; color: white; font-size: 15px; outline: none; font-family: 'Inter', sans-serif; }
+        .search-results { max-height: 0; overflow-y: auto; transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; }
+        .search-results.open { max-height: 350px; border-top: 1px solid rgba(255,255,255,0.05); }
+        .search-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; cursor: pointer; transition: background 0.2s; }
+        .search-item:hover { background: rgba(255,255,255,0.1); }
+        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
+        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
+
         /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
@@ -127,15 +141,8 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* SEARCH UI */
-        #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
-        .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
-        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-        .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .search-item:hover { background: rgba(255,255,255,0.1); }
-        .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
-        .search-info h5 { margin: 0; font-size: 14px; font-weight: 500; color: white; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .search-info p { margin: 2px 0 0 0; font-size: 12px; color: #aaa; }
+        .skip-ad-btn { display: none; background: #e74c3c; color: white; border: none; border-radius: 12px; padding: 4px 10px; font-size: 11px; cursor: pointer; margin-top: 6px; font-weight: 600; transition: transform 0.2s; }
+        .skip-ad-btn:hover { transform: scale(1.05); }
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
@@ -147,7 +154,7 @@
         .modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
         .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none;}
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
+        .modal-btn-end { background: rgba(255, 76, 76, 0.2); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
@@ -210,11 +217,11 @@
             </div>
         </div>
         
-        <!-- RESTORED: GLOWING PROFILE UI (COLORS ONLY) -->
+        <!-- SLEEK WHITE PILL PROFILE UI -->
         <div class="user-profile-container">
-            <div class="user-profile" onclick="toggleProfileMenu()">
-                <span id="display-username">Loading...</span>
+            <div class="user-profile" id="user-profile-btn" onclick="toggleProfileMenu()">
                 <div id="nav-avatar" class="nav-avatar"></div>
+                <span id="display-username">Loading...</span>
             </div>
             <div id="profile-dropdown" class="profile-dropdown">
                 <label>Username</label>
@@ -227,7 +234,7 @@
                     <div class="color-swatch" style="background: #f1c40f" onclick="selectProfileColor('#f1c40f', this)"></div>
                     <div class="color-swatch" style="background: #9b59b6" onclick="selectProfileColor('#9b59b6', this)"></div>
                 </div>
-                <button class="btn" style="width:100%; margin-top:5px;" onclick="saveProfile()">Save Profile</button>
+                <button class="btn" style="width:100%; margin-top:5px; background: black; color: white;" onclick="saveProfile()">Save</button>
             </div>
         </div>
     </nav>
@@ -301,10 +308,14 @@
         <div class="dashboard-grid">
             <div style="display: flex; flex-direction: column; gap: 20px;">
                 
-                <div id="host-controls" class="glass-card glass-effect" style="display: none;">
-                    <h3 style="margin: 0 0 10px 0; font-size: 18px;">Queue Song</h3>
-                    <div class="search-container">
-                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
+                <!-- UNIFIED MORPHING SEARCH UI -->
+                <div id="host-controls">
+                    <h3 style="margin: 0 0 10px 5px; font-size: 18px;">Queue Song</h3>
+                    <div class="unified-search-wrapper">
+                        <div class="search-input-area">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" id="yt-search-input" placeholder="Search for a song or paste link..." oninput="handleSearchInput()" autocomplete="off">
+                        </div>
                         <div id="search-results" class="search-results"></div>
                     </div>
                 </div>
@@ -319,6 +330,7 @@
                         <div class="song-details">
                             <h4 id="ui-song-title">Waiting for host...</h4>
                             <p id="ui-song-status">Search for a song to begin syncing</p>
+                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="skipAd()">Skip Ad >></button>
                             <input type="range" id="ui-progress-slider" min="0" max="100" value="0" class="progress-slider" oninput="hostScrubbing()" onchange="hostSeekTo(this.value)">
                         </div>
                         
@@ -331,6 +343,7 @@
             </div>
 
             <!-- INVISIBLE PLAYER ENGINE -->
+            <!-- 200px offscreen prevents browser background throttling -->
             <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
 
             <div class="glass-card glass-effect">
@@ -345,7 +358,7 @@
         const socket = io(RENDER_URL);
         
         let currentUsername = '';
-        let currentProfileColor = '#f1c40f'; // Default Yellow
+        let currentProfileColor = '#f1c40f';
         let tempProfileColor = '';
 
         let isCurrentUserHost = false;
@@ -391,8 +404,8 @@
 
                     const searchPopup = document.getElementById('search-results');
                     const searchInput = document.getElementById('yt-search-input');
-                    if (searchPopup && searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
-                        searchPopup.style.display = 'none';
+                    if (searchPopup && searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
+                        searchPopup.classList.remove('open');
                     }
                 });
             } catch (err) { console.error("Init error:", err); }
@@ -422,6 +435,11 @@
         }
 
         function toggleProfileMenu() {
+            if (currentRoomCode) {
+                triggerToast("Leave the room to edit your profile.");
+                return;
+            }
+
             const menu = document.getElementById('profile-dropdown');
             isProfileMenuOpen = !isProfileMenuOpen;
             if (isProfileMenuOpen) {
@@ -457,11 +475,10 @@
             localStorage.setItem('syncro_username', currentUsername);
             localStorage.setItem('syncro_color', currentProfileColor);
             applyProfileUI();
-            toggleProfileMenu();
             
-            if (currentRoomCode) socket.emit('update_profile', { username: currentUsername, color: currentProfileColor });
+            isProfileMenuOpen = false;
+            document.getElementById('profile-dropdown').style.display = 'none';
         }
-
 
         // --- DYNAMIC BACKGROUND ENGINE ---
         function extractAndApplyDynamicGradient(videoId) {
@@ -567,14 +584,27 @@
         }
 
         function onPlayerStateChange(event) {
+            // Force pause guests if they wander into the next recommended song
+            if (!isCurrentUserHost && event.data === YT.PlayerState.ENDED) {
+                ytPlayer.pauseVideo();
+            }
+
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
             if (isPlayingAd) {
                 document.getElementById('ui-song-status').innerText = "Playing Ad / Buffering...";
-                if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
+                if (isCurrentUserHost) {
+                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                    socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
+                } else {
+                    // Strict block for non-host early ad wanderers
+                    ytPlayer.pauseVideo(); 
+                }
                 return;
+            } else {
+                if (isCurrentUserHost) document.getElementById('skip-ad-btn').style.display = 'none';
             }
 
             const isPlaying = (event.data === YT.PlayerState.PLAYING);
@@ -589,6 +619,12 @@
             if (isCurrentUserHost) {
                 const broadcastState = isBuffering ? 3 : event.data;
                 socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: broadcastState });
+            }
+        }
+
+        function skipAd() {
+            if (ytPlayer && ytPlayer.getDuration) {
+                ytPlayer.seekTo(ytPlayer.getDuration() - 0.5, true);
             }
         }
 
@@ -629,24 +665,25 @@
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
+
             if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
 
-        // --- PIPED SEARCH API ---
+        // --- FLUID SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
             const resultsContainer = document.getElementById('search-results');
             
-            if (query === '') { resultsContainer.style.display = 'none'; return; }
+            if (query === '') { resultsContainer.classList.remove('open'); return; }
 
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = query.match(regExp);
             if (match && match[2].length === 11) {
                 executeHostLoad(match[2]);
                 document.getElementById('yt-search-input').value = '';
-                resultsContainer.style.display = 'none';
+                resultsContainer.classList.remove('open');
                 return;
             }
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
@@ -658,7 +695,7 @@
 
             const resultsContainer = document.getElementById('search-results');
             resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching server...</div>';
-            resultsContainer.style.display = 'flex';
+            resultsContainer.classList.add('open');
 
             try {
                 const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
@@ -678,7 +715,7 @@
                     el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.author}</p></div>`;
                     el.onclick = () => {
                         executeHostLoad(item.id);
-                        resultsContainer.style.display = 'none';
+                        resultsContainer.classList.remove('open');
                         document.getElementById('yt-search-input').value = '';
                     };
                     resultsContainer.appendChild(el);
@@ -712,24 +749,26 @@
             }
         });
 
-        // --- GUEST SYNC WAITING PROTOCOL ---
+        // --- GUEST STRICT SYNC RECEIVER ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
                 const actualVid = ytPlayer.getVideoData()?.video_id;
                 const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
-                if (isGuestInAd) return;
-
+                
                 isHostInAd = (data.state === 'AD' || data.state === 3);
                 
                 if (isHostInAd) {
                     document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
-                    if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+                    if (!isGuestInAd && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
                     return; 
                 }
+
+                if (isGuestInAd) return; // Wait for guest ad to finish
 
                 const hostTime = data.time;
                 const myTime = ytPlayer.getCurrentTime();
                 
+                // Tightened sync to a 0.4s tolerance
                 if (Math.abs(hostTime - myTime) > 0.4) ytPlayer.seekTo(hostTime, true);
                 
                 if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
@@ -767,6 +806,7 @@
 
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
+                // Ultra-fast 200ms Heartbeat
                 syncInterval = setInterval(() => {
                     if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
                         const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
@@ -887,6 +927,13 @@
             else if (pageId === 'lobby') { document.body.classList.add('lobby-create-active'); setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50); }
             else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
             else if (pageId === 'active-room') { document.body.classList.add('active-room-active'); }
+            
+            const profileBtn = document.getElementById('user-profile-btn');
+            if (pageId === 'active-room') {
+                profileBtn.classList.add('disabled');
+            } else {
+                profileBtn.classList.remove('disabled');
+            }
         }
 
         function goToLobby(navElement = null) { 
@@ -949,6 +996,9 @@
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
             
+            // Un-throttle hack
+            if (isPlayerReady) ytPlayer.playVideo();
+            
             resetPlayerUI();
             goToLobby();
         }
@@ -969,6 +1019,9 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
+                    
+                    if (isPlayerReady) ytPlayer.playVideo();
+
                     resetPlayerUI();
                     goToLobby();
                 }
@@ -982,6 +1035,7 @@
             document.getElementById('ui-progress-slider').style.background = `linear-gradient(to right, white 0%, rgba(255,255,255,0.2) 0%)`;
             document.getElementById('album-art-image').style.display = 'none';
             document.getElementById('album-art-svg').style.display = 'block';
+            document.getElementById('skip-ad-btn').style.display = 'none';
             currentActiveSongId = null;
             if (isPlayerReady) ytPlayer.stopVideo();
         }
