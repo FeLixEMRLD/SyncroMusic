@@ -47,21 +47,19 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* GLOWING PROFILE EDITOR UI */
+        /* RESTORED: GLOWING PROFILE EDITOR UI (COLORS ONLY) */
         .user-profile-container { position: relative; display: inline-block; cursor: pointer; z-index: 100; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 6px 14px 6px 10px; border-radius: 25px; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); }
         .user-profile:hover { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); transform: scale(1.03); background: rgba(255,255,255,0.15); }
-        .nav-avatar { width: 32px; height: 32px; background-color: #c49a02; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.2); }
+        .nav-avatar { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.2); }
         
-        .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 250px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
+        .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 220px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
         .profile-dropdown label { font-size: 12px; color: #aaa; margin-bottom: -5px; }
         .profile-input { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); color: white; padding: 10px; border-radius: 8px; outline: none; font-family: 'Inter'; }
-        .profile-actions { display: flex; gap: 10px; align-items: center; }
-        .color-picker { width: 35px; height: 35px; padding: 0; border: none; border-radius: 8px; cursor: pointer; background: transparent; }
-        .color-picker::-webkit-color-swatch { border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; }
-        .file-upload-label { flex-grow: 1; background: rgba(255,255,255,0.1); text-align: center; padding: 8px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: background 0.2s; }
-        .file-upload-label:hover { background: rgba(255,255,255,0.2); }
-        input[type="file"] { display: none; }
+        
+        .color-preset-container { display: flex; gap: 10px; justify-content: space-between; }
+        .color-swatch { width: 30px; height: 30px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: transform 0.2s; }
+        .color-swatch:hover, .color-swatch.selected { transform: scale(1.1); border-color: white; }
 
         .page { display: none; padding: 40px 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
         .page.active-page { display: block; }
@@ -96,13 +94,14 @@
         .form-section { margin-bottom: 25px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
-        .active-room-content { max-width: 950px; margin: 0 auto; padding-left: 80px; transition: padding-left 0.3s; }
+        .active-room-content { max-width: 950px; margin: 0 auto; transition: padding-left 0.3s; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
         .room-actions { display: flex; align-items: center; gap: 12px; position: relative; }
         
         .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer;}
-        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
+        .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); transition: transform 0.2s; }
+        .gradient-btn:hover { transform: scale(1.1); }
         
         #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
         .grad-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; font-weight: 500; color: #eee; }
@@ -115,6 +114,7 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
+        /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
         .song-details { flex-grow: 1; overflow: hidden; }
@@ -127,10 +127,10 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
+        /* SEARCH UI */
         #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
         .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
-        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
-        .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
+        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .search-item:hover { background: rgba(255,255,255,0.1); }
         .search-thumb { width: 50px; height: 50px; border-radius: 8px; object-fit: cover; }
@@ -139,34 +139,15 @@
 
         .user-list { list-style: none; padding: 0; margin: 15px 0 0 0; }
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
-        .user-list-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background-color: #c49a02; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.2);}
-
-        /* SIDEBAR CHAT UI */
-        .chat-toggle-btn { position: fixed; left: 0; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px 10px; border-radius: 0 12px 12px 0; cursor: pointer; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); border-left: none; transition: left 0.3s; display: none; }
-        .chat-toggle-btn.active-room { display: flex; align-items: center; justify-content: center; }
-        .chat-notif-dot { position: absolute; top: -5px; right: -5px; background: #ff4c4c; color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; }
+        .user-list-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; }
         
-        .chat-sidebar { position: fixed; left: -320px; top: 0; width: 320px; height: 100vh; background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(30px); border-right: 1px solid rgba(255,255,255,0.1); z-index: 999; transition: left 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); display: flex; flex-direction: column; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
-        .chat-sidebar.open { left: 0; }
-        .chat-header { padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); font-weight: 600; font-size: 18px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 15px; }
-        .chat-msg-wrapper { display: flex; gap: 10px; }
-        .chat-msg-content { display: flex; flex-direction: column; }
-        .chat-msg-name { font-size: 12px; color: #aaa; margin-bottom: 3px; }
-        .chat-msg-bubble { background: rgba(255,255,255,0.1); padding: 10px 14px; border-radius: 0 12px 12px 12px; font-size: 14px; line-height: 1.4; word-wrap: break-word; max-width: 230px;}
-        .chat-msg-wrapper.self { flex-direction: row-reverse; }
-        .chat-msg-wrapper.self .chat-msg-content { align-items: flex-end; }
-        .chat-msg-wrapper.self .chat-msg-bubble { background: rgba(255,255,255,0.2); border-radius: 12px 0 12px 12px; }
-        .chat-input-area { padding: 20px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; gap: 10px; }
-        .chat-input { flex-grow: 1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 10px 15px; color: white; outline: none; font-family: 'Inter'; }
-        
-        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; }
+        #custom-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.75); display: none; align-items: center; justify-content: center; z-index: 999; opacity: 0; transition: opacity 0.3s ease; }
         .modal-content { border-radius: 20px; padding: 35px; text-align: center; max-width: 350px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(80px); border: 1px solid rgba(255, 255, 255, 0.3); box-shadow: 0 20px 50px rgba(0,0,0,0.6); }
         .modal-content h3 { margin-top: 0; font-size: 22px; font-weight: 600; }
         .modal-actions { display: flex; gap: 15px; justify-content: center; margin-top: 25px; }
-        .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none; }
+        .modal-btn-cancel, .modal-btn-end { padding: 10px 20px; border-radius: 12px; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.2s; border: none;}
         .modal-btn-cancel { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); }
-        .modal-btn-end { background: rgba(255, 76, 76, 0.2); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
+        .modal-btn-end { background: rgba(255, 76, 76, 0.15); color: #ff6b6b; border: 1px solid rgba(255, 76, 76, 0.4); font-weight: 500; }
         
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
@@ -188,20 +169,15 @@
             .code-box { width: 40px; height: 50px; font-size: 20px; }
             #toast-container { top: 20px; left: 20px; right: 20px; align-items: center; }
             #gradient-popup { right: 20px; }
-            .active-room-content { padding-left: 40px; }
-            .chat-sidebar { width: 100%; left: -100%; }
-            .chat-toggle-btn { display: none !important; }
         }
     </style>
 </head>
 <body class="home-active">
 
-    <!-- STATIC BASE PAGES BACKGROUND -->
     <div id="bg-home" class="page-bg"></div>
     <div id="bg-lobby-create" class="page-bg"></div>
     <div id="bg-explore" class="page-bg"></div>
 
-    <!-- DYNAMIC ROOM THEME BACKGROUND -->
     <div id="room-bg-container">
         <div id="active-room-base-layer" class="room-bg-layer grad-0" style="opacity: 1;"></div>
     </div>
@@ -219,24 +195,8 @@
         </div>
     </div>
 
-    <!-- SIDEBAR CHAT UI -->
-    <div id="chat-toggle" class="chat-toggle-btn" onclick="toggleChat()">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
-        <div id="chat-notif" class="chat-notif-dot">0</div>
-    </div>
-
-    <div id="chat-sidebar" class="chat-sidebar">
-        <div class="chat-header">
-            Room Chat
-            <svg onclick="toggleChat()" style="cursor:pointer;" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </div>
-        <div class="chat-messages" id="chat-messages"></div>
-        <div class="chat-input-area">
-            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..." onkeydown="if(event.key === 'Enter') sendChat()">
-            <button class="btn" style="padding: 10px; border-radius: 50%; width:40px; height:40px; display:flex; align-items:center; justify-content:center;" onclick="sendChat()">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
-            </button>
-        </div>
+    <div id="floating-return-btn" class="glass-effect" onclick="goToLobby()">
+        <div id="fluid-indicator-circle" class="fluid-indicator grad-0"></div> Return to room
     </div>
 
     <nav>
@@ -250,7 +210,7 @@
             </div>
         </div>
         
-        <!-- GLOWING PROFILE EDITOR UI -->
+        <!-- RESTORED: GLOWING PROFILE UI (COLORS ONLY) -->
         <div class="user-profile-container">
             <div class="user-profile" onclick="toggleProfileMenu()">
                 <span id="display-username">Loading...</span>
@@ -259,13 +219,13 @@
             <div id="profile-dropdown" class="profile-dropdown">
                 <label>Username</label>
                 <input type="text" id="edit-username" class="profile-input" maxlength="20">
-                <label>Profile Picture</label>
-                <div class="profile-actions">
-                    <input type="color" id="edit-color" class="color-picker">
-                    <label class="file-upload-label">
-                        Upload Image
-                        <input type="file" id="edit-image" accept="image/*" onchange="handleImageUpload(event)">
-                    </label>
+                <label>Profile Color</label>
+                <div class="color-preset-container">
+                    <div class="color-swatch" style="background: #e74c3c" onclick="selectProfileColor('#e74c3c', this)"></div>
+                    <div class="color-swatch" style="background: #3498db" onclick="selectProfileColor('#3498db', this)"></div>
+                    <div class="color-swatch" style="background: #2ecc71" onclick="selectProfileColor('#2ecc71', this)"></div>
+                    <div class="color-swatch" style="background: #f1c40f" onclick="selectProfileColor('#f1c40f', this)"></div>
+                    <div class="color-swatch" style="background: #9b59b6" onclick="selectProfileColor('#9b59b6', this)"></div>
                 </div>
                 <button class="btn" style="width:100%; margin-top:5px;" onclick="saveProfile()">Save Profile</button>
             </div>
@@ -325,9 +285,8 @@
                     <span id="display-room-code">------</span>
                 </div>
                 
-                <!-- REDESIGNED GRADIENT LIST -->
                 <div id="gradient-popup">
-                    <div class="grad-list-item" onclick="selectGradient('dynamic')"><div class="grad-preview grad-dynamic"></div> Dynamic (Thumbnail)</div>
+                    <div class="grad-list-item" onclick="selectGradient('dynamic')"><div class="grad-preview grad-dynamic"></div> Dynamic</div>
                     <div class="grad-list-item" onclick="selectGradient(0)"><div class="grad-preview grad-0"></div> Classic Gold</div>
                     <div class="grad-list-item" onclick="selectGradient(1)"><div class="grad-preview grad-1"></div> Deep Purple</div>
                     <div class="grad-list-item" onclick="selectGradient(2)"><div class="grad-preview grad-2"></div> Emerald City</div>
@@ -386,7 +345,9 @@
         const socket = io(RENDER_URL);
         
         let currentUsername = '';
-        let currentPfp = '';
+        let currentProfileColor = '#f1c40f'; // Default Yellow
+        let tempProfileColor = '';
+
         let isCurrentUserHost = false;
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
@@ -406,8 +367,6 @@
         let pendingTime = 0;
         let pendingState = false;
 
-        let unreadChats = 0;
-        let isChatOpen = false;
         let isProfileMenuOpen = false;
 
         window.onload = function() {
@@ -432,8 +391,8 @@
 
                     const searchPopup = document.getElementById('search-results');
                     const searchInput = document.getElementById('yt-search-input');
-                    if (searchPopup && searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
-                        searchPopup.classList.remove('open');
+                    if (searchPopup && searchPopup.style.display === 'flex' && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
+                        searchPopup.style.display = 'none';
                     }
                 });
             } catch (err) { console.error("Init error:", err); }
@@ -442,31 +401,24 @@
         // --- PROFILE SYSTEM ---
         function loadIdentity() {
             currentUsername = localStorage.getItem('syncro_username');
-            currentPfp = localStorage.getItem('syncro_pfp');
+            currentProfileColor = localStorage.getItem('syncro_color');
 
             if (!currentUsername) {
-                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic', 'Electric'];
-                const nouns = ['Potato', 'Penguin', 'Cactus', 'Rhino', 'Panda', 'Tiger'];
+                const adjs = ['Sweet', 'Spicy', 'Chill', 'Funky', 'Cosmic'];
+                const nouns = ['Potato', 'Penguin', 'Cactus', 'Panda', 'Tiger'];
                 currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
                 localStorage.setItem('syncro_username', currentUsername);
             }
-            if (!currentPfp || currentPfp === 'null') {
-                currentPfp = '#c49a02'; 
-                localStorage.setItem('syncro_pfp', currentPfp);
+            if (!currentProfileColor) {
+                currentProfileColor = '#f1c40f'; 
+                localStorage.setItem('syncro_color', currentProfileColor);
             }
             applyProfileUI();
         }
 
         function applyProfileUI() {
             document.getElementById('display-username').innerText = currentUsername;
-            const avatar = document.getElementById('nav-avatar');
-            if (currentPfp && currentPfp.startsWith('data:image')) {
-                avatar.style.backgroundImage = `url(${currentPfp})`;
-                avatar.style.backgroundColor = 'transparent';
-            } else {
-                avatar.style.backgroundImage = 'none';
-                avatar.style.backgroundColor = currentPfp || '#c49a02';
-            }
+            document.getElementById('nav-avatar').style.backgroundColor = currentProfileColor;
         }
 
         function toggleProfileMenu() {
@@ -475,97 +427,41 @@
             if (isProfileMenuOpen) {
                 menu.style.display = 'flex';
                 document.getElementById('edit-username').value = currentUsername;
-                if (currentPfp && !currentPfp.startsWith('data:image')) document.getElementById('edit-color').value = currentPfp;
+                tempProfileColor = currentProfileColor;
+                updateSwatchSelection();
             } else {
                 menu.style.display = 'none';
             }
         }
 
-        function handleImageUpload(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    currentPfp = e.target.result;
-                    document.getElementById('nav-avatar').style.backgroundImage = `url(${currentPfp})`;
-                };
-                reader.readAsDataURL(file);
-            }
+        function selectProfileColor(color, element) {
+            tempProfileColor = color;
+            document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('selected'));
+            if(element) element.classList.add('selected');
+        }
+
+        function updateSwatchSelection() {
+            document.querySelectorAll('.color-swatch').forEach(el => {
+                el.classList.remove('selected');
+                if(el.style.backgroundColor === tempProfileColor || el.style.background === tempProfileColor) {
+                    el.classList.add('selected');
+                }
+            });
         }
 
         function saveProfile() {
             const newName = document.getElementById('edit-username').value.trim();
             if (newName !== '') currentUsername = newName;
-            
-            const fileInput = document.getElementById('edit-image');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                if (!currentPfp || !currentPfp.startsWith('data:image') || document.getElementById('edit-color').value !== '#000000') {
-                    currentPfp = document.getElementById('edit-color').value;
-                }
-            }
+            currentProfileColor = tempProfileColor;
 
             localStorage.setItem('syncro_username', currentUsername);
-            localStorage.setItem('syncro_pfp', currentPfp);
+            localStorage.setItem('syncro_color', currentProfileColor);
             applyProfileUI();
             toggleProfileMenu();
             
-            if (currentRoomCode) socket.emit('update_profile', { username: currentUsername, pfp: currentPfp });
+            if (currentRoomCode) socket.emit('update_profile', { username: currentUsername, color: currentProfileColor });
         }
 
-        // --- CHAT SYSTEM ---
-        function toggleChat() {
-            const sidebar = document.getElementById('chat-sidebar');
-            const btn = document.getElementById('chat-toggle');
-            isChatOpen = !isChatOpen;
-            
-            if (isChatOpen) {
-                sidebar.classList.add('open');
-                btn.style.left = '320px';
-                unreadChats = 0;
-                document.getElementById('chat-notif').style.display = 'none';
-                document.getElementById('chat-input').focus();
-            } else {
-                sidebar.classList.remove('open');
-                btn.style.left = '0';
-            }
-        }
-
-        function sendChat() {
-            const input = document.getElementById('chat-input');
-            const text = input.value.trim();
-            if (text !== '' && currentRoomCode) {
-                socket.emit('chat_message', { roomCode: currentRoomCode, text: text, pfp: currentPfp });
-                input.value = '';
-            }
-        }
-
-        socket.on('chat_message', (data) => {
-            const container = document.getElementById('chat-messages');
-            const isSelf = data.username === currentUsername;
-            
-            const pfpStyle = (data.pfp && data.pfp.startsWith('data:image')) 
-                ? `background-image: url(${data.pfp}); background-color: transparent;` 
-                : `background-color: ${data.pfp || '#c49a02'};`;
-
-            const msgHtml = `
-                <div class="chat-msg-wrapper ${isSelf ? 'self' : ''}">
-                    <div class="user-list-avatar" style="${pfpStyle}"></div>
-                    <div class="chat-msg-content">
-                        <span class="chat-msg-name">${data.username}</span>
-                        <div class="chat-msg-bubble">${data.text}</div>
-                    </div>
-                </div>
-            `;
-            container.innerHTML += msgHtml;
-            container.scrollTop = container.scrollHeight;
-
-            if (!isChatOpen && !isSelf) {
-                unreadChats++;
-                const notif = document.getElementById('chat-notif');
-                notif.innerText = unreadChats > 9 ? '9+' : unreadChats;
-                notif.style.display = 'flex';
-            }
-        });
 
         // --- DYNAMIC BACKGROUND ENGINE ---
         function extractAndApplyDynamicGradient(videoId) {
@@ -737,19 +633,20 @@
             else ytPlayer.playVideo();
         }
 
+        // --- PIPED SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
             const resultsContainer = document.getElementById('search-results');
             
-            if (query === '') { resultsContainer.classList.remove('open'); return; }
+            if (query === '') { resultsContainer.style.display = 'none'; return; }
 
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = query.match(regExp);
             if (match && match[2].length === 11) {
                 executeHostLoad(match[2]);
                 document.getElementById('yt-search-input').value = '';
-                resultsContainer.classList.remove('open');
+                resultsContainer.style.display = 'none';
                 return;
             }
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
@@ -760,8 +657,8 @@
             if (query === '') return;
 
             const resultsContainer = document.getElementById('search-results');
-            resultsContainer.innerHTML = '<div class="loading-spinner"></div>';
-            resultsContainer.classList.add('open');
+            resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#aaa;">Searching server...</div>';
+            resultsContainer.style.display = 'flex';
 
             try {
                 const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
@@ -781,7 +678,7 @@
                     el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.author}</p></div>`;
                     el.onclick = () => {
                         executeHostLoad(item.id);
-                        resultsContainer.classList.remove('open');
+                        resultsContainer.style.display = 'none';
                         document.getElementById('yt-search-input').value = '';
                     };
                     resultsContainer.appendChild(el);
@@ -815,6 +712,7 @@
             }
         });
 
+        // --- GUEST SYNC WAITING PROTOCOL ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
                 const actualVid = ytPlayer.getVideoData()?.video_id;
@@ -904,20 +802,15 @@
             const listEl = document.getElementById('live-user-list');
             listEl.innerHTML = ''; 
             data.users.forEach(user => {
-                // Safeguard parsing object
                 const userName = typeof user === 'object' ? user.name : user;
-                const userPfp = typeof user === 'object' ? user.pfp : '#c49a02';
+                const userColor = typeof user === 'object' ? user.color : '#c49a02';
 
                 const li = document.createElement('li');
                 let displayName = userName;
                 if (userName === currentUsername) displayName += " (You)";
                 if (userName === data.hostName) displayName += " (Host)";
-                
-                const pfpStyle = (userPfp && userPfp.startsWith('data:image')) 
-                    ? `background-image: url(${userPfp}); background-color: transparent;` 
-                    : `background-color: ${userPfp || '#c49a02'};`;
 
-                li.innerHTML = `<div class="user-list-avatar" style="${pfpStyle}"></div> <span>${displayName}</span>`;
+                li.innerHTML = `<div class="user-list-avatar" style="background-color: ${userColor};"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
             });
         });
@@ -993,17 +886,7 @@
             if (pageId === 'home') document.body.classList.add('home-active');
             else if (pageId === 'lobby') { document.body.classList.add('lobby-create-active'); setTimeout(() => updatePillPos('room-type-pill', document.querySelector('#lobby .active-pill')), 50); }
             else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
-            else if (pageId === 'active-room') { 
-                document.body.classList.add('active-room-active'); 
-                const chatToggle = document.getElementById('chat-toggle');
-                if (chatToggle) chatToggle.classList.add('active-room');
-            }
-
-            if (pageId !== 'active-room') {
-                const chatToggle = document.getElementById('chat-toggle');
-                if (chatToggle) chatToggle.classList.remove('active-room');
-                if (isChatOpen) toggleChat();
-            }
+            else if (pageId === 'active-room') { document.body.classList.add('active-room-active'); }
         }
 
         function goToLobby(navElement = null) { 
@@ -1043,7 +926,7 @@
             const savedCode = localStorage.getItem('syncro_room_code');
             if (savedCode) {
                 currentRoomCode = savedCode;
-                socket.emit('join_room', { roomCode: savedCode, username: currentUsername, pfp: currentPfp }, (response) => {
+                socket.emit('join_room', { roomCode: savedCode, username: currentUsername, color: currentProfileColor }, (response) => {
                     if (response && response.success) {
                         document.getElementById('display-room-code').innerText = savedCode;
                         goToLobby(); 
@@ -1061,7 +944,7 @@
             const customName = document.getElementById('room-name-input').value;
 
             currentRoomCode = roomCode;
-            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, pfp: currentPfp, customRoomName: customName, gradientIndex: 'dynamic' });
+            socket.emit('create_room', { roomCode: roomCode, username: currentUsername, color: currentProfileColor, customRoomName: customName, gradientIndex: 'dynamic' });
 
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
@@ -1081,7 +964,7 @@
         }
 
         function proceedToJoinRoom(code) {
-            socket.emit('join_room', { roomCode: code, username: currentUsername, pfp: currentPfp }, (response) => {
+            socket.emit('join_room', { roomCode: code, username: currentUsername, color: currentProfileColor }, (response) => {
                 if (response && response.success) {
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
@@ -1146,10 +1029,7 @@
             localStorage.removeItem('syncro_room_code');
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
-            document.getElementById('chat-messages').innerHTML = '';
-            const fBtn = document.getElementById('floating-return-btn');
-            if(fBtn) fBtn.style.display = 'none';
-            if (isChatOpen) toggleChat();
+            document.getElementById('floating-return-btn').style.display = 'none';
             applyGradientTheme(0);
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
