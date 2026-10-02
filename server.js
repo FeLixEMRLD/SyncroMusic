@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const ytSearch = require('yt-search'); // NEW: Unbreakable Server-Side Search Engine
+const ytSearch = require('yt-search'); 
 
 const app = express();
 app.use(cors()); 
@@ -14,11 +14,17 @@ const io = new Server(server, {
 
 const activeRooms = {}; 
 const roomTimeouts = {}; 
+const searchCache = new Map(); // NEW: Blazing fast memory cache for searches
 
-// NEW: Internal Search API. Never goes offline.
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
+    
+    // Instantly return if we've searched this recently
+    if (searchCache.has(query.toLowerCase())) {
+        return res.json({ items: searchCache.get(query.toLowerCase()) });
+    }
+
     try {
         const results = await ytSearch(query);
         const videos = results.videos.slice(0, 5).map(v => ({
@@ -27,6 +33,8 @@ app.get('/search', async (req, res) => {
             thumbnail: v.thumbnail,
             author: v.author.name
         }));
+        
+        searchCache.set(query.toLowerCase(), videos);
         res.json({ items: videos });
     } catch (e) {
         console.error("Search Engine Error:", e);
