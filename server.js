@@ -47,7 +47,7 @@ io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
     socket.on('create_room', (data) => {
-        const { roomCode, username, pfp, customRoomName, gradientIndex } = data;
+        const { roomCode, username, color, customRoomName, gradientIndex } = data;
         if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         
         socket.join(roomCode);
@@ -56,14 +56,14 @@ io.on('connection', (socket) => {
             gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTimestamp: 0, 
             isPlaying: false, sockets: {} 
         };
-        activeRooms[roomCode].sockets[socket.id] = { username, pfp };
+        activeRooms[roomCode].sockets[socket.id] = { username, color };
         socket.username = username; socket.roomCode = roomCode;
 
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
     });
 
     socket.on('join_room', (data, callback) => {
-        const { roomCode, username, pfp } = data;
+        const { roomCode, username, color } = data;
         if (!activeRooms[roomCode]) {
             if (callback) callback({ success: false });
             return;
@@ -71,7 +71,7 @@ io.on('connection', (socket) => {
 
         if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         socket.join(roomCode);
-        activeRooms[roomCode].sockets[socket.id] = { username, pfp };
+        activeRooms[roomCode].sockets[socket.id] = { username, color };
         socket.username = username; socket.roomCode = roomCode;
 
         if (activeRooms[roomCode].hostName === username) activeRooms[roomCode].hostId = socket.id;
@@ -81,23 +81,16 @@ io.on('connection', (socket) => {
         if (callback) callback({ success: true });
     });
 
-    // RESTORED: Profile Updates
     socket.on('update_profile', (data) => {
-        const { username, pfp } = data;
+        const { username, color } = data;
         socket.username = username;
         if (socket.roomCode && activeRooms[socket.roomCode]) {
             if (activeRooms[socket.roomCode].hostId === socket.id) {
                 activeRooms[socket.roomCode].hostName = username;
             }
-            activeRooms[socket.roomCode].sockets[socket.id] = { username, pfp };
+            activeRooms[socket.roomCode].sockets[socket.id] = { username, color };
             io.to(socket.roomCode).emit('room_updated', generateRoomData(socket.roomCode));
         }
-    });
-
-    // RESTORED: Chat Messaging
-    socket.on('chat_message', (data) => {
-        const { roomCode, text, pfp } = data;
-        io.to(roomCode).emit('chat_message', { username: socket.username, text, pfp });
     });
 
     socket.on('change_gradient', (data) => {
@@ -135,7 +128,6 @@ io.on('connection', (socket) => {
             const room = activeRooms[sock.roomCode];
             const exitingUser = sock.username;
             
-            // STRICT HOST KILL
             if (room.hostId === sock.id) {
                 io.to(sock.roomCode).emit('room_ended');
                 delete activeRooms[sock.roomCode];
@@ -162,11 +154,9 @@ io.on('connection', (socket) => {
 
     function generateRoomData(code) {
         const room = activeRooms[code];
-        // RESTORED: Passing PFP back to the frontend correctly
         const userArray = Object.values(room.sockets).map(s => ({
-            name: s.username, pfp: s.pfp
+            name: s.username, color: s.color
         }));
-        
         const uniqueUsers = Array.from(new Map(userArray.map(item => [item.name, item])).values());
 
         return {
