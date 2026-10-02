@@ -25,19 +25,15 @@
         body.active-room-active #room-bg-container { opacity: 1; }
         .room-bg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transition: opacity 0.8s ease-in-out; opacity: 0; }
         
-        /* Static Gradients */
         .grad-0 { background: linear-gradient(135deg, #093b4f 0%, #000000 40%, #876c12 100%) !important; } 
         .grad-1 { background: linear-gradient(135deg, #180b29 0%, #000000 50%, #2f1947 100%) !important; } 
         .grad-2 { background: linear-gradient(135deg, #022b1a 0%, #000000 40%, #0a5c4d 100%) !important; } 
         .grad-3 { background: linear-gradient(135deg, #3d0a0a 0%, #000000 40%, #8a4103 100%) !important; } 
         .grad-4 { background: linear-gradient(135deg, #0a1128 0%, #000000 40%, #154c79 100%) !important; } 
-        
-        /* Dynamic Thumbnail Gradient class (applied via JS style overrides) */
         .grad-dynamic { background: linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%); } 
 
         h3, p, .nav-item { font-family: 'Poppins', sans-serif; }
 
-        /* HEADER & NAVIGATION */
         nav { display: flex; align-items: center; padding: 20px 40px; justify-content: space-between; z-index: 10; position: relative;}
         .nav-left { display: flex; align-items: center; }
         .logo { font-size: 22px; font-weight: 800; margin-right: 40px; }
@@ -46,10 +42,10 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* USER PROFILE EDITOR */
-        .user-profile-container { position: relative; display: inline-block; cursor: pointer; }
-        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 5px 10px; border-radius: 20px; transition: background 0.2s; }
-        .user-profile:hover { background: rgba(255,255,255,0.1); }
+        /* HOVER GLOW PROFILE UI */
+        .user-profile-container { position: relative; display: inline-block; cursor: pointer; z-index: 100; }
+        .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 500; padding: 6px 14px 6px 10px; border-radius: 25px; transition: all 0.3s ease; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); }
+        .user-profile:hover { box-shadow: 0 0 20px rgba(255, 255, 255, 0.3); transform: scale(1.03); background: rgba(255,255,255,0.15); }
         .nav-avatar { width: 32px; height: 32px; background-color: #c49a02; border-radius: 50%; flex-shrink: 0; background-size: cover; background-position: center; border: 2px solid rgba(255,255,255,0.2); }
         
         .profile-dropdown { position: absolute; top: 120%; right: 0; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 20px; width: 250px; display: none; flex-direction: column; gap: 15px; box-shadow: 0 15px 40px rgba(0,0,0,0.7); z-index: 200; cursor: default; }
@@ -62,12 +58,10 @@
         .file-upload-label:hover { background: rgba(255,255,255,0.2); }
         input[type="file"] { display: none; }
 
-        /* PAGES & GLASS EFFECTS */
         .page { display: none; padding: 40px 40px; animation: fadeIn 0.4s ease-in-out; box-sizing: border-box; }
         .page.active-page { display: block; }
         .glass-effect { background: rgba(255, 255, 255, 0.04); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
 
-        /* GENERAL UI */
         .home-content { text-align: center; margin-top: 10vh; }
         .home-content h1 { font-size: 46px; font-weight: 600; margin-bottom: 8px; }
         .home-content p { font-size: 18px; margin-bottom: 35px; color: #e0e0e0; font-weight: 300; }
@@ -97,7 +91,6 @@
         .form-section { margin-bottom: 25px; }
         .create-final-btn { background-color: white; color: black; border: none; padding: 12px 28px; border-radius: 25px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 15px; font-family: 'Inter', sans-serif; transition: transform 0.2s; }
 
-        /* ACTIVE ROOM & LIST GRADIENT POPUP */
         .active-room-content { max-width: 950px; margin: 0 auto; padding-left: 80px; transition: padding-left 0.3s; }
         .room-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px; flex-wrap: wrap; gap: 15px;}
         .room-header h2 { font-weight: 500; margin: 0; font-size: 24px; }
@@ -106,7 +99,6 @@
         .room-code-badge { padding: 10px 16px; border-radius: 12px; font-size: 15px; font-weight: 500; letter-spacing: 1px; color: #ffffff; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; gap: 10px; line-height: 1; cursor: pointer;}
         .gradient-btn { width: 18px; height: 18px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.5); }
         
-        /* Redesigned List Popup for Gradients */
         #gradient-popup { position: absolute; top: 50px; right: 110px; padding: 10px; border-radius: 16px; display: none; flex-direction: column; width: 180px; background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(40px); -webkit-backdrop-filter: blur(40px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.7); z-index: 100; animation: fadeIn 0.2s ease-out; }
         .grad-list-item { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 8px; cursor: pointer; transition: background 0.2s; font-size: 13px; font-weight: 500; color: #eee; }
         .grad-list-item:hover { background: rgba(255,255,255,0.1); color: white; }
@@ -118,7 +110,6 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; }
         
-        /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
         .song-details { flex-grow: 1; overflow: hidden; }
@@ -131,10 +122,9 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* SEARCH UI */
         #host-controls { display: none; padding: 20px; position: relative; z-index: 50; }
         .search-container { position: relative; width: 100%; margin-top: 0; display: flex; gap: 10px; }
-        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: flex; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
+        .search-results { position: absolute; top: 110%; left: 0; width: 100%; max-height: 250px; overflow-y: auto; background: rgba(20, 20, 20, 0.95); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; display: none; flex-direction: column; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform-origin: top; transform: scaleY(0); opacity: 0; transition: transform 0.2s ease, opacity 0.2s; pointer-events: none;}
         .search-results.open { transform: scaleY(1); opacity: 1; pointer-events: auto; }
         .search-item { display: flex; align-items: center; gap: 15px; padding: 10px 15px; cursor: pointer; transition: background 0.2s; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .search-item:hover { background: rgba(255,255,255,0.1); }
@@ -146,7 +136,7 @@
         .user-list li { padding: 10px 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 8px; border-radius: 8px; font-size: 14px; display: flex; align-items: center; gap: 10px; }
         .user-list-avatar { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; background-color: #c49a02; background-size: cover; background-position: center; border: 1px solid rgba(255,255,255,0.2);}
 
-        /* SIDEBAR CHAT */
+        /* CHAT SIDEBAR */
         .chat-toggle-btn { position: fixed; left: 0; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 15px 10px; border-radius: 0 12px 12px 0; cursor: pointer; z-index: 1000; border: 1px solid rgba(255,255,255,0.2); border-left: none; transition: left 0.3s; display: none; }
         .chat-toggle-btn.active-room { display: flex; align-items: center; justify-content: center; }
         .chat-notif-dot { position: absolute; top: -5px; right: -5px; background: #ff4c4c; color: white; font-size: 10px; width: 18px; height: 18px; border-radius: 50%; display: none; align-items: center; justify-content: center; font-weight: bold; }
@@ -176,6 +166,10 @@
         #toast-container { position: fixed; top: 90px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 1000; pointer-events: none; }
         .toast-msg { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 10px; }
         
+        #floating-return-btn { position: fixed; bottom: 40px; right: 40px; padding: 10px 24px 10px 14px; border-radius: 30px; display: none; align-items: center; gap: 12px; cursor: pointer; font-weight: 500; font-size: 14px; z-index: 100; transition: transform 0.2s ease, box-shadow 0.2s; }
+        #floating-return-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+        .fluid-indicator { width: 14px; height: 14px; border-radius: 50%; box-shadow: 0 0 10px rgba(255,255,255,0.4); }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes fadeOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
@@ -197,10 +191,12 @@
 </head>
 <body class="home-active">
 
+    <!-- STATIC BASE PAGES BACKGROUND -->
     <div id="bg-home" class="page-bg"></div>
     <div id="bg-lobby-create" class="page-bg"></div>
     <div id="bg-explore" class="page-bg"></div>
 
+    <!-- DYNAMIC ROOM THEME BACKGROUND -->
     <div id="room-bg-container">
         <div id="active-room-base-layer" class="room-bg-layer grad-0" style="opacity: 1;"></div>
     </div>
@@ -251,9 +247,10 @@
             </div>
         </div>
         
-        <!-- PROFILE EDITOR UI -->
-        <div class="user-profile-container" onmouseenter="showProfileMenu()" onmouseleave="hideProfileMenu()">
-            <div class="user-profile glass-effect">
+        <!-- GLOWING PROFILE EDITOR UI -->
+        <div class="user-profile-container">
+            <!-- Click triggers dropdown -->
+            <div class="user-profile" onclick="toggleProfileMenu()">
                 <span id="display-username">Loading...</span>
                 <div id="nav-avatar" class="nav-avatar"></div>
             </div>
@@ -321,7 +318,7 @@
         <div class="room-header">
             <h2 id="display-room-title">My Syncro Room</h2>
             <div class="room-actions">
-                <div class="room-code-badge glass-effect" onclick="toggleGradientPopup()">
+                <div class="room-code-badge glass-effect" onclick="toggleGradientPopup(event)">
                     <div id="active-gradient-icon" class="gradient-btn grad-0"></div>
                     <span id="display-room-code">------</span>
                 </div>
@@ -393,7 +390,7 @@
         let pendingSwitchCode = '';
         let currentRoomCode = '';
         let currentActiveSongId = null;
-        let currentGradientSetting = 0; // Can be int or 'dynamic'
+        let currentGradientSetting = 0;
 
         let ytPlayer;
         let isPlayerReady = false;
@@ -409,11 +406,40 @@
 
         let unreadChats = 0;
         let isChatOpen = false;
+        let isProfileMenuOpen = false;
 
         window.onload = function() {
-            loadIdentity();
-            checkExistingRoomState();
-            updatePillPos('active-pill', document.querySelector('.nav-item.active'));
+            try {
+                loadIdentity();
+                checkExistingRoomState();
+                updatePillPos('active-pill', document.querySelector('.nav-item.active'));
+                
+                document.addEventListener('click', (e) => {
+                    // Profile Menu Click-Away
+                    const profilePopup = document.getElementById('profile-dropdown');
+                    const profileContainer = document.querySelector('.user-profile-container');
+                    if (isProfileMenuOpen && profilePopup && profileContainer && !profileContainer.contains(e.target)) {
+                        isProfileMenuOpen = false;
+                        profilePopup.style.display = 'none';
+                    }
+
+                    // Gradient Menu Click-Away
+                    const gradPopup = document.getElementById('gradient-popup');
+                    const gradBtn = document.querySelector('.room-code-badge');
+                    if (gradPopup && gradPopup.style.display === 'flex' && e.target !== gradPopup && e.target !== gradBtn && !gradPopup.contains(e.target) && !gradBtn.contains(e.target)) {
+                        gradPopup.style.display = 'none';
+                    }
+
+                    // Search Menu Click-Away
+                    const searchPopup = document.getElementById('search-results');
+                    const searchInput = document.getElementById('yt-search-input');
+                    if (searchPopup && searchPopup.classList.contains('open') && e.target !== searchPopup && e.target !== searchInput && !searchPopup.contains(e.target)) {
+                        searchPopup.classList.remove('open');
+                    }
+                });
+            } catch (err) {
+                console.error("Initialization error:", err);
+            }
         };
 
         // --- PROFILE SYSTEM ---
@@ -427,34 +453,35 @@
                 currentUsername = adjs[Math.floor(Math.random() * adjs.length)] + nouns[Math.floor(Math.random() * nouns.length)] + Math.floor(Math.random() * 99);
                 localStorage.setItem('syncro_username', currentUsername);
             }
-            if (!currentPfp) {
+            if (!currentPfp || currentPfp === 'null') {
                 currentPfp = '#c49a02'; 
                 localStorage.setItem('syncro_pfp', currentPfp);
             }
-
             applyProfileUI();
         }
 
         function applyProfileUI() {
             document.getElementById('display-username').innerText = currentUsername;
             const avatar = document.getElementById('nav-avatar');
-            if (currentPfp.startsWith('data:image')) {
+            if (currentPfp && currentPfp.startsWith('data:image')) {
                 avatar.style.backgroundImage = `url(${currentPfp})`;
                 avatar.style.backgroundColor = 'transparent';
             } else {
                 avatar.style.backgroundImage = 'none';
-                avatar.style.backgroundColor = currentPfp;
+                avatar.style.backgroundColor = currentPfp || '#c49a02';
             }
         }
 
-        function showProfileMenu() {
-            document.getElementById('profile-dropdown').style.display = 'flex';
-            document.getElementById('edit-username').value = currentUsername;
-            if (!currentPfp.startsWith('data:image')) document.getElementById('edit-color').value = currentPfp;
-        }
-
-        function hideProfileMenu() {
-            document.getElementById('profile-dropdown').style.display = 'none';
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-dropdown');
+            isProfileMenuOpen = !isProfileMenuOpen;
+            if (isProfileMenuOpen) {
+                menu.style.display = 'flex';
+                document.getElementById('edit-username').value = currentUsername;
+                if (currentPfp && !currentPfp.startsWith('data:image')) document.getElementById('edit-color').value = currentPfp;
+            } else {
+                menu.style.display = 'none';
+            }
         }
 
         function handleImageUpload(event) {
@@ -473,19 +500,17 @@
             const newName = document.getElementById('edit-username').value.trim();
             if (newName !== '') currentUsername = newName;
             
-            // If they didn't upload a new image this session, grab the color picker
             const fileInput = document.getElementById('edit-image');
             if (!fileInput.files || fileInput.files.length === 0) {
-                if (!currentPfp.startsWith('data:image') || document.getElementById('edit-color').value !== '#000000') {
+                if (!currentPfp || !currentPfp.startsWith('data:image') || document.getElementById('edit-color').value !== '#000000') {
                     currentPfp = document.getElementById('edit-color').value;
                 }
             }
 
             localStorage.setItem('syncro_username', currentUsername);
             localStorage.setItem('syncro_pfp', currentPfp);
-            
             applyProfileUI();
-            hideProfileMenu();
+            toggleProfileMenu();
             
             if (currentRoomCode) socket.emit('update_profile', { username: currentUsername, pfp: currentPfp });
         }
@@ -521,9 +546,9 @@
             const container = document.getElementById('chat-messages');
             const isSelf = data.username === currentUsername;
             
-            const pfpStyle = data.pfp.startsWith('data:image') 
+            const pfpStyle = (data.pfp && data.pfp.startsWith('data:image')) 
                 ? `background-image: url(${data.pfp}); background-color: transparent;` 
-                : `background-color: ${data.pfp};`;
+                : `background-color: ${data.pfp || '#c49a02'};`;
 
             const msgHtml = `
                 <div class="chat-msg-wrapper ${isSelf ? 'self' : ''}">
@@ -545,10 +570,8 @@
             }
         });
 
-
         // --- DYNAMIC BACKGROUND ENGINE ---
         function extractAndApplyDynamicGradient(videoId) {
-            // Using Weserv Image Proxy to bypass YouTube CORS canvas poisoning
             const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
             const img = new Image();
             img.crossOrigin = 'Anonymous';
@@ -561,19 +584,14 @@
                 ctx.drawImage(img, 0, 0, img.width, img.height);
                 
                 try {
-                    // Extract left and right center colors
                     const left = ctx.getImageData(Math.floor(img.width * 0.2), Math.floor(img.height * 0.5), 1, 1).data;
                     const right = ctx.getImageData(Math.floor(img.width * 0.8), Math.floor(img.height * 0.5), 1, 1).data;
-                    
-                    // Darken colors slightly so text remains readable
                     const darken = 0.5;
                     const c1 = `rgb(${left[0]*darken},${left[1]*darken},${left[2]*darken})`;
                     const c2 = `rgb(${right[0]*darken},${right[1]*darken},${right[2]*darken})`;
-                    
-                    const gradientStr = `linear-gradient(135deg, ${c1} 0%, #000 50%, ${c2} 100%)`;
-                    injectDynamicGradient(gradientStr);
+                    injectDynamicGradient(`linear-gradient(135deg, ${c1} 0%, #000 50%, ${c2} 100%)`);
                 } catch(e) {
-                    injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); // Fallback
+                    injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
                 }
             };
             img.onerror = () => injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
@@ -594,11 +612,10 @@
                 while (layers.length > 1) container.removeChild(layers[0]);
             }, 800);
 
-            // Update UI buttons
-            const btn = document.getElementById('active-gradient-icon');
-            const play = document.getElementById('host-play-btn');
-            btn.className = 'gradient-btn'; btn.style.background = gradientStr;
-            play.className = 'play-pause-btn'; play.style.background = gradientStr;
+            document.getElementById('active-gradient-icon').className = 'gradient-btn'; 
+            document.getElementById('active-gradient-icon').style.background = gradientStr;
+            document.getElementById('host-play-btn').className = 'play-pause-btn'; 
+            document.getElementById('host-play-btn').style.background = gradientStr;
         }
 
         function applyGradientTheme(setting) {
@@ -613,7 +630,7 @@
             const container = document.getElementById('room-bg-container');
             const newLayer = document.createElement('div');
             newLayer.className = `room-bg-layer ${gradClass}`;
-            newLayer.style.background = ''; // Clear inline if previous was dynamic
+            newLayer.style.background = ''; 
             container.appendChild(newLayer);
             
             void newLayer.offsetWidth; 
@@ -624,13 +641,14 @@
                 while (layers.length > 1) container.removeChild(layers[0]);
             }, 800);
 
-            const btn = document.getElementById('active-gradient-icon');
-            const play = document.getElementById('host-play-btn');
-            btn.className = `gradient-btn ${gradClass}`; btn.style.background = '';
-            play.className = `play-pause-btn ${gradClass}`; play.style.background = '';
+            document.getElementById('active-gradient-icon').className = `gradient-btn ${gradClass}`; 
+            document.getElementById('active-gradient-icon').style.background = '';
+            document.getElementById('host-play-btn').className = `play-pause-btn ${gradClass}`; 
+            document.getElementById('host-play-btn').style.background = '';
         }
 
-        function toggleGradientPopup() {
+        function toggleGradientPopup(e) {
+            if (e) e.stopPropagation();
             const popup = document.getElementById('gradient-popup');
             popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
         }
@@ -657,7 +675,6 @@
 
         function onPlayerStateChange(event) {
             const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-            
             const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
             const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
             
@@ -668,7 +685,6 @@
             }
 
             const isPlaying = (event.data === YT.PlayerState.PLAYING);
-            
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
             
@@ -720,16 +736,16 @@
             const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
             document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
             document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
-
             if (isPlaying) ytPlayer.pauseVideo();
             else ytPlayer.playVideo();
         }
 
+        // --- FLUID SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
-            
             const resultsContainer = document.getElementById('search-results');
+            
             if (query === '') { resultsContainer.classList.remove('open'); return; }
 
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -740,7 +756,6 @@
                 resultsContainer.classList.remove('open');
                 return;
             }
-
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
         }
 
@@ -790,15 +805,12 @@
             artBg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
             artBg.style.display = 'block';
             document.getElementById('album-art-svg').style.display = 'none';
-            
-            if (currentGradientSetting === 'dynamic') {
-                extractAndApplyDynamicGradient(videoId);
-            }
+            if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
         socket.on('song_loaded', (videoId) => {
             currentActiveSongId = videoId;
-            if (isPlayerReady) {
+            if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
                 ytPlayer.loadVideoById(videoId);
                 updateThumbnail(videoId);
                 startUIUpdates();
@@ -807,10 +819,8 @@
             }
         });
 
-        // --- STRICT AD LOCK RECEIVER ---
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
-                
                 const actualVid = ytPlayer.getVideoData()?.video_id;
                 const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
                 if (isGuestInAd) return;
@@ -898,14 +908,18 @@
             const listEl = document.getElementById('live-user-list');
             listEl.innerHTML = ''; 
             data.users.forEach(user => {
+                // Safeguard against legacy backend formats during live updates
+                const userName = typeof user === 'object' ? user.name : user;
+                const userPfp = typeof user === 'object' ? user.pfp : '#c49a02';
+
                 const li = document.createElement('li');
-                let displayName = user.name;
-                if (user.name === currentUsername) displayName += " (You)";
-                if (user.name === data.hostName) displayName += " (Host)";
+                let displayName = userName;
+                if (userName === currentUsername) displayName += " (You)";
+                if (userName === data.hostName) displayName += " (Host)";
                 
-                const pfpStyle = user.pfp.startsWith('data:image') 
-                    ? `background-image: url(${user.pfp}); background-color: transparent;` 
-                    : `background-color: ${user.pfp};`;
+                const pfpStyle = (userPfp && userPfp.startsWith('data:image')) 
+                    ? `background-image: url(${userPfp}); background-color: transparent;` 
+                    : `background-color: ${userPfp || '#c49a02'};`;
 
                 li.innerHTML = `<div class="user-list-avatar" style="${pfpStyle}"></div> <span>${displayName}</span>`;
                 listEl.appendChild(li);
@@ -932,27 +946,11 @@
             }
         });
 
-        function triggerToast(message) {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = 'glass-effect toast-msg';
-            toast.style.animation = 'slideInRight 0.4s forwards';
-            
-            const bgContainer = document.getElementById('room-bg-container');
-            const activeLayers = bgContainer.getElementsByClassName('room-bg-layer');
-            const activeGradClass = activeLayers.length > 0 ? activeLayers[activeLayers.length - 1].className.replace('room-bg-layer ', '') : 'grad-0';
-            
-            toast.innerHTML = `<div class="fluid-indicator ${activeGradClass}"></div> ${message}`;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.style.animation = 'fadeOutRight 0.4s forwards';
-                setTimeout(() => toast.remove(), 400);
-            }, 3000);
-        }
-
+        // --- NAVIGATION & MODALS ---
         function updatePillPos(pillId, element) {
+            if (!element) return;
             const pill = document.getElementById(pillId);
-            if (element && pill) {
+            if (pill) {
                 pill.style.width = element.offsetWidth + 'px';
                 pill.style.left = element.offsetLeft + 'px';
             }
@@ -967,7 +965,7 @@
         function navigateTo(pageId, navElement) {
             const isRoomActive = localStorage.getItem('syncro_room_code') !== null;
             const floatingBtn = document.getElementById('floating-return-btn');
-            floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
+            if (floatingBtn) floatingBtn.style.display = (isRoomActive && pageId !== 'active-room') ? 'flex' : 'none';
 
             if (navElement) {
                 document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -984,11 +982,13 @@
             else if (pageId === 'explore') { document.body.classList.add('explore-active'); setTimeout(() => updatePillPos('explore-type-pill', document.querySelector('#explore .active-pill')), 50); }
             else if (pageId === 'active-room') { 
                 document.body.classList.add('active-room-active'); 
-                document.getElementById('chat-toggle').classList.add('active-room');
+                const chatToggle = document.getElementById('chat-toggle');
+                if (chatToggle) chatToggle.classList.add('active-room');
             }
 
             if (pageId !== 'active-room') {
-                document.getElementById('chat-toggle').classList.remove('active-room');
+                const chatToggle = document.getElementById('chat-toggle');
+                if (chatToggle) chatToggle.classList.remove('active-room');
                 if (isChatOpen) toggleChat();
             }
         }
@@ -1016,7 +1016,6 @@
             let enteredCode = '';
             document.querySelectorAll('.code-box').forEach(box => enteredCode += box.value.trim().toUpperCase());
             const btn = document.getElementById('join-room-btn');
-            
             if (enteredCode.length === 6) {
                 try {
                     const response = await fetch(`${RENDER_URL}/check-room/${enteredCode}`);
@@ -1024,9 +1023,7 @@
                     if (data.valid) { btn.classList.add('valid'); btn.disabled = false; } 
                     else { btn.classList.remove('valid'); btn.disabled = true; }
                 } catch (error) { console.error("Failed to verify room:", error); }
-            } else {
-                btn.classList.remove('valid'); btn.disabled = true;
-            }
+            } else { btn.classList.remove('valid'); btn.disabled = true; }
         }
 
         function checkExistingRoomState() {
@@ -1137,7 +1134,8 @@
             document.getElementById('live-user-list').innerHTML = '';
             document.getElementById('room-name-input').value = '';
             document.getElementById('chat-messages').innerHTML = '';
-            document.getElementById('floating-return-btn').style.display = 'none';
+            const fBtn = document.getElementById('floating-return-btn');
+            if(fBtn) fBtn.style.display = 'none';
             if (isChatOpen) toggleChat();
             applyGradientTheme(0);
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
