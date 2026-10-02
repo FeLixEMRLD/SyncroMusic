@@ -13,14 +13,12 @@ const io = new Server(server, {
 });
 
 const activeRooms = {}; 
-const roomTimeouts = {}; 
-const searchCache = new Map(); // NEW: Blazing fast memory cache for searches
+const searchCache = new Map(); 
 
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
     
-    // Instantly return if we've searched this recently
     if (searchCache.has(query.toLowerCase())) {
         return res.json({ items: searchCache.get(query.toLowerCase()) });
     }
@@ -28,12 +26,8 @@ app.get('/search', async (req, res) => {
     try {
         const results = await ytSearch(query);
         const videos = results.videos.slice(0, 5).map(v => ({
-            id: v.videoId,
-            title: v.title,
-            thumbnail: v.thumbnail,
-            author: v.author.name
+            id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
         }));
-        
         searchCache.set(query.toLowerCase(), videos);
         res.json({ items: videos });
     } catch (e) {
@@ -52,31 +46,29 @@ io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
     socket.on('create_room', (data) => {
-        const { roomCode, username, customRoomName, gradientIndex } = data;
-        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
-        
+        const { roomCode, username, pfp, customRoomName, gradientIndex } = data;
         socket.join(roomCode);
+        
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 0, currentVideo: null, currentTimestamp: 0, 
+            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTimestamp: 0, 
             isPlaying: false, sockets: {} 
         };
-        activeRooms[roomCode].sockets[socket.id] = username;
+        activeRooms[roomCode].sockets[socket.id] = { username, pfp };
         socket.username = username; socket.roomCode = roomCode;
 
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
     });
 
     socket.on('join_room', (data, callback) => {
-        const { roomCode, username } = data;
+        const { roomCode, username, pfp } = data;
         if (!activeRooms[roomCode]) {
             if (callback) callback({ success: false });
             return;
         }
 
-        if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         socket.join(roomCode);
-        activeRooms[roomCode].sockets[socket.id] = username;
+        activeRooms[roomCode].sockets[socket.id] = { username, pfp };
         socket.username = username; socket.roomCode = roomCode;
 
         if (activeRooms[roomCode].hostName === username) activeRooms[roomCode].hostId = socket.id;
@@ -84,6 +76,25 @@ io.on('connection', (socket) => {
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
         socket.to(roomCode).emit('toast_message', `${username} joined the room`);
         if (callback) callback({ success: true });
+    });
+
+    // Profile Update Handler
+    socket.on('update_profile', (data) => {
+        const { username, pfp } = data;
+        socket.username = username;
+        if (socket.roomCode && activeRooms[socket.roomCode]) {
+            if (activeRooms[socket.roomCode].hostId === socket.id) {
+                activeRooms[socket.roomCode].hostName = username;
+            }
+            activeRooms[socket.roomCode].sockets[socket.id] = { username, pfp };
+            io.to(socket.roomCode).emit('room_updated', generateRoomData(socket.roomCode));
+        }
+    });
+
+    // Chat Handler
+    socket.on('chat_message', (data) => {
+        const { roomCode, text, pfp } = data;
+        io.to(roomCode).emit('chat_message', { username: socket.username, text, pfp });
     });
 
     socket.on('change_gradient', (data) => {
@@ -121,20 +132,20 @@ io.on('connection', (socket) => {
             const room = activeRooms[sock.roomCode];
             const exitingUser = sock.username;
             
-            delete room.sockets[sock.id];
-            sock.leave(sock.roomCode);
-
-            const uniqueUsers = [...new Set(Object.values(room.sockets))];
-
-            if (uniqueUsers.length === 0) {
-                roomTimeouts[sock.roomCode] = setTimeout(() => {
-                    if (activeRooms[sock.roomCode] && Object.keys(activeRooms[sock.roomCode].sockets).length === 0) {
-                        delete activeRooms[sock.roomCode];
-                    }
-                }, 5000);
+            // STRICT HOST KILL: If host closes tab, room dies instantly.
+            if (room.hostId === sock.id) {
+                io.to(sock.roomCode).emit('room_ended');
+                delete activeRooms[sock.roomCode];
             } else {
+                delete room.sockets[sock.id];
+                sock.leave(sock.roomCode);
+                
                 io.to(sock.roomCode).emit('room_updated', generateRoomData(sock.roomCode));
                 io.to(sock.roomCode).emit('toast_message', `${exitingUser} left the room`);
+                
+                if (Object.keys(room.sockets).length === 0) {
+                    delete activeRooms[sock.roomCode];
+                }
             }
             sock.roomCode = null; 
         }
@@ -142,11 +153,18 @@ io.on('connection', (socket) => {
 
     function generateRoomData(code) {
         const room = activeRooms[code];
+        const userArray = Object.values(room.sockets).map(s => ({
+            name: s.username, pfp: s.pfp
+        }));
+        
+        // Remove duplicates by name
+        const uniqueUsers = Array.from(new Map(userArray.map(item => [item.name, item])).values());
+
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
             currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying,
-            users: [...new Set(Object.values(room.sockets))]
+            users: uniqueUsers
         };
     }
 });
