@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const ytSearch = require('yt-search'); 
 
 const app = express();
 app.use(cors()); 
@@ -15,7 +16,6 @@ const activeRooms = {};
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
 
-// --- THE NEW JIOSAAVN MUSIC SEARCH ENGINE ---
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -25,41 +25,10 @@ app.get('/search', async (req, res) => {
     }
 
     try {
-        // Multi-instance fallback to ensure search never goes down
-        const instances = [
-            'https://saavn.dev/api/search/songs?query=',
-            'https://jiosaavn-api-privatecvc2.vercel.app/search/songs?query='
-        ];
-        
-        let data = null;
-        for (let api of instances) {
-            try {
-                const response = await fetch(api + encodeURIComponent(query));
-                if (response.ok) {
-                    data = await response.json();
-                    break;
-                }
-            } catch (e) { console.log("Trying fallback API instance..."); }
-        }
-
-        if (!data || !data.success || !data.data || !data.data.results) {
-             return res.json({ items: [] });
-        }
-
-        const videos = data.data.results.slice(0, 10).map(track => {
-            // Extract the highest quality audio stream and album cover
-            const bestAudio = track.downloadUrl ? track.downloadUrl[track.downloadUrl.length - 1].url : null;
-            const bestImage = track.image ? track.image[track.image.length - 1].url : null;
-            
-            return {
-                id: track.id, 
-                title: track.name || track.title, 
-                thumbnail: bestImage, 
-                author: track.primaryArtists || track.subtitle || "Unknown Artist",
-                streamUrl: bestAudio // DIRECT MP4 LINK (NO ADS)
-            };
-        }).filter(t => t.streamUrl); 
-
+        const results = await ytSearch(query);
+        const videos = results.videos.slice(0, 8).map(v => ({
+            id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
+        }));
         searchCache.set(query.toLowerCase(), videos);
         res.json({ items: videos });
     } catch (e) {
@@ -84,8 +53,7 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '', 
-            currentThumbnail: '', currentStreamUrl: '',
+            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '',
             currentTimestamp: 0, isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = { username, color };
@@ -133,16 +101,15 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('load_song', (data) => {
-        const { roomCode, videoId, title, streamUrl, thumbnail } = data;
+    socket.on('load_song', async (data) => {
+        const { roomCode, videoId, title } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
+            let finalTitle = title || "Unknown Song";
             activeRooms[roomCode].currentVideo = videoId;
-            activeRooms[roomCode].currentTitle = title;
-            activeRooms[roomCode].currentStreamUrl = streamUrl;
-            activeRooms[roomCode].currentThumbnail = thumbnail;
+            activeRooms[roomCode].currentTitle = finalTitle;
             activeRooms[roomCode].currentTimestamp = 0;
             activeRooms[roomCode].isPlaying = true;
-            io.to(roomCode).emit('song_loaded', { videoId, title, streamUrl, thumbnail });
+            io.to(roomCode).emit('song_loaded', { videoId, title: finalTitle });
         }
     });
 
@@ -150,7 +117,7 @@ io.on('connection', (socket) => {
         const { roomCode, time, state, timestamp } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
+            activeRooms[roomCode].isPlaying = (state === 'PLAYING'); 
             socket.to(roomCode).emit('sync_update', { time, state, hostTimestamp: timestamp });
         }
     });
@@ -197,8 +164,8 @@ io.on('connection', (socket) => {
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
-            currentTitle: room.currentTitle, currentStreamUrl: room.currentStreamUrl, currentThumbnail: room.currentThumbnail,
-            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying, users: uniqueUsers
+            currentTitle: room.currentTitle, currentTimestamp: room.currentTimestamp, 
+            isPlaying: room.isPlaying, users: uniqueUsers
         };
     }
 });
