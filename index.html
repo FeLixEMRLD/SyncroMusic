@@ -146,9 +146,22 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* HOST AD KILLER BUTTON */
-        .skip-ad-btn { display: none; background: rgba(231, 76, 60, 0.2); color: #ff6b6b; border: 1px solid rgba(231, 76, 60, 0.5); border-radius: 8px; padding: 8px 12px; font-size: 12px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
-        .skip-ad-btn:hover { background: rgba(231, 76, 60, 0.4); transform: scale(1.05); }
+        /* FIXED UI BUTTON TO MATCH NAVBAR */
+        .skip-ad-btn { 
+            display: none; 
+            background: white; 
+            color: black; 
+            border: none; 
+            border-radius: 20px; 
+            padding: 8px 16px; 
+            font-size: 13px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.2s; 
+            font-family: 'Inter', sans-serif;
+            margin-right: 10px;
+        }
+        .skip-ad-btn:hover { background: #f0f0f0; transform: scale(1.05); }
 
         /* FLOATING SEARCH OVERLAY */
         #host-controls { display: none; margin-bottom: 20px; z-index: 50; position: relative; }
@@ -208,7 +221,6 @@
             #gradient-popup { right: 20px; }
             .active-room-content { padding: 20px; }
             
-            /* Stacking the player for Mobile Readability */
             .custom-player { flex-direction: column; text-align: center; padding: 15px 0; }
             .album-art-placeholder { width: 140px; height: 140px; margin: 0 auto; }
             .song-details { width: 100%; display: flex; flex-direction: column; align-items: center; }
@@ -373,7 +385,7 @@
                         </div>
                         
                         <div class="controls-wrapper">
-                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="skipAd()">Force Sync / Skip Ad</button>
+                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="manualSync()">Tap to Sync</button>
                             <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
                                 <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                 <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
@@ -381,10 +393,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- INVISIBLE PLAYER ENGINE -->
-                <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
-
             </div>
 
             <div class="glass-card glass-effect">
@@ -395,7 +403,7 @@
     </div>
 
     <script>
-      const RENDER_URL = 'https://syncroserver-rfy8.onrender.com';
+        const RENDER_URL = 'https://syncroserver-rfy8.onrender.com';
         const socket = io(RENDER_URL);
         
         let currentUsername = '';
@@ -413,6 +421,7 @@
         audioPlayer.crossOrigin = 'anonymous';
 
         let isDraggingSlider = false;
+        let isSeeking = false; // Tracks if user is manually scrubbing
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
@@ -645,7 +654,15 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
-        // --- AUDIO EVENT LISTENERS ---
+        // --- FORTIFIED AUDIO EVENT LISTENERS ---
+        audioPlayer.addEventListener('error', (e) => {
+            console.error("Audio Engine Error:", audioPlayer.error);
+            document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
+        });
+
+        audioPlayer.addEventListener('seeking', () => isSeeking = true);
+        audioPlayer.addEventListener('seeked', () => isSeeking = false);
+
         audioPlayer.addEventListener('play', () => {
             document.getElementById('icon-play').style.display = 'none';
             document.getElementById('icon-pause').style.display = 'block';
@@ -706,8 +723,7 @@
             else audioPlayer.pause();
         }
 
-        // Repurposed Ad-Skip button to override mobile autoplay blockers
-        function skipAd() {
+        function manualSync() {
             audioPlayer.play().then(() => {
                 document.getElementById('skip-ad-btn').style.display = 'none';
             }).catch(e => console.error("Manual sync failed", e));
@@ -780,27 +796,22 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        // --- ROOM SYNC LOGIC ---
+        // --- NEW SMART SYNC LOGIC ---
         socket.on('song_loaded', (data) => {
             currentActiveSongId = data.videoId;
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+            document.getElementById('skip-ad-btn').style.display = 'none';
             
             audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
+            audioPlayer.playbackRate = 1.0;
             
-            // CRITICAL FIX: Wait for metadata before setting time to prevent mobile browser crash
-            audioPlayer.addEventListener('loadedmetadata', () => {
+            audioPlayer.addEventListener('canplay', () => {
                 audioPlayer.currentTime = 0;
-                
-                if (isCurrentUserHost) {
-                    audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
-                } else {
-                    // Force the Mobile Tap-To-Sync Button to appear if autoplay policy blocks the guest
-                    audioPlayer.play().catch(e => {
-                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
-                    });
-                }
+                audioPlayer.play().catch(e => {
+                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                    document.getElementById('skip-ad-btn').innerText = isCurrentUserHost ? "Tap to Start" : "Tap to Sync";
+                });
             }, { once: true });
             
             updateThumbnail(data.videoId);
@@ -808,13 +819,22 @@
         });
 
         socket.on('sync_update', (data) => {
-            if (!isCurrentUserHost && audioPlayer.src) {
-                const hostTime = data.time + 0.15; 
+            if (!isCurrentUserHost && audioPlayer.src && !isSeeking) {
+                const hostTime = data.time; 
                 
-                if (audioPlayer.readyState >= 1) { 
+                if (audioPlayer.readyState >= 2) { 
                     const myTime = audioPlayer.currentTime;
-                    if (Math.abs(myTime - hostTime) > 0.4) {
-                        audioPlayer.currentTime = hostTime;
+                    const drift = hostTime - myTime;
+                    
+                    // Smart Sync: Adjusts playback speed instead of breaking network requests
+                    if (Math.abs(drift) > 3) {
+                        audioPlayer.currentTime = hostTime; // Hard seek only if severely behind
+                    } else if (drift > 0.4) {
+                        audioPlayer.playbackRate = 1.15; // Speed up to catch host
+                    } else if (drift < -0.4) {
+                        audioPlayer.playbackRate = 0.85; // Slow down to let host catch up
+                    } else {
+                        audioPlayer.playbackRate = 1.0; // Perfectly synced
                     }
                 }
                 
@@ -823,7 +843,7 @@
                         document.getElementById('skip-ad-btn').style.display = 'none';
                     }).catch(e => {
                         document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
                     });
                 } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
                     audioPlayer.pause();
@@ -840,22 +860,22 @@
             
             if (currentVid !== pendingVideo.videoId) {
                 audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
+                audioPlayer.playbackRate = 1.0;
                 
-                // CRITICAL FIX: Safe metadata loading
-                audioPlayer.addEventListener('loadedmetadata', () => {
+                audioPlayer.addEventListener('canplay', () => {
                     audioPlayer.currentTime = pendingTime;
                     if (pendingState) {
                         audioPlayer.play().catch(e => {
                             document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
                         });
                     }
                 }, { once: true });
                 
                 updateThumbnail(pendingVideo.videoId);
             } else {
-                if (audioPlayer.readyState >= 1) {
-                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 0.4) {
+                if (audioPlayer.readyState >= 2) {
+                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 3) {
                         audioPlayer.currentTime = pendingTime;
                     }
                 }
@@ -863,7 +883,7 @@
                 if (pendingState) {
                     audioPlayer.play().catch(e => {
                         document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
                     });
                 } else {
                     audioPlayer.pause();
