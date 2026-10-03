@@ -7,7 +7,6 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23c49a02%22/><text x=%2250%22 y=%2272%22 font-size=%2265%22 font-family=%22Inter, sans-serif%22 font-weight=%22800%22 fill=%22%23fff%22 text-anchor=%22middle%22>S</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
@@ -384,7 +383,7 @@
                         </div>
                         
                         <div class="controls-wrapper">
-                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="manualSync()">Force Sync</button>
+                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="manualSync()">Tap to Sync</button>
                             <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
                                 <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                 <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
@@ -392,10 +391,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- INVISIBLE YOUTUBE IFRAME ENGINE -->
-                <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
-
             </div>
 
             <div class="glass-card glass-effect">
@@ -419,13 +414,13 @@
         let currentRoomCode = '';
         let currentActiveSongId = null;
         let currentGradientSetting = 0; 
-        
-        let latestHostTime = 0; // GLOBAL TRACKER FOR FORCE SYNC FIX
 
-        let ytPlayer;
-        let isPlayerReady = false;
+        // THE BULLETPROOF HTML5 AUDIO ENGINE RETURNS
+        const audioPlayer = new Audio();
+        audioPlayer.crossOrigin = 'anonymous';
 
         let isDraggingSlider = false;
+        let isSeeking = false; 
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
@@ -659,58 +654,44 @@
         }
 
 
-        // --- YOUTUBE IFRAME LOGIC ---
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('youtube-player', {
-                height: '200', width: '200', videoId: '', 
-                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
-                events: {
-                    'onReady': () => { 
-                        isPlayerReady = true; 
-                        if (pendingVideo) applyPendingVideo();
-                    },
-                    'onStateChange': onPlayerStateChange
-                }
-            });
-        }
+        // --- PURE HTML AUDIO EVENTS ---
+        audioPlayer.addEventListener('error', (e) => {
+            console.error("Audio Engine Error:", audioPlayer.error);
+            document.getElementById('ui-song-status').innerText = "Stream failed. Host must select another song.";
+        });
 
-        function onPlayerStateChange(event) {
-            const isPlaying = (event.data === YT.PlayerState.PLAYING);
-            const isBuffering = (event.data === YT.PlayerState.BUFFERING);
-            
-            document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
-            document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
+        audioPlayer.addEventListener('seeking', () => isSeeking = true);
+        audioPlayer.addEventListener('seeked', () => isSeeking = false);
 
-            // AD DETECTOR: Check if the playing video matches the room's song
-            const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
-            const inAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
+        audioPlayer.addEventListener('play', () => {
+            document.getElementById('icon-play').style.display = 'none';
+            document.getElementById('icon-pause').style.display = 'block';
+            document.getElementById('ui-song-status').innerText = "Playing Now";
+            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PLAYING', timestamp: Date.now() });
+        });
 
-            if (inAd) {
-                document.getElementById('ui-song-status').innerText = "Playing Ad... Waiting to sync.";
-                return;
-            }
-            
-            if (ytPlayer.getVideoData && ytPlayer.getVideoData().title && currentActiveSongId) {
-                document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : (isBuffering ? "Buffering..." : "Paused");
-            }
+        audioPlayer.addEventListener('pause', () => {
+            document.getElementById('icon-play').style.display = 'block';
+            document.getElementById('icon-pause').style.display = 'none';
+            document.getElementById('ui-song-status').innerText = "Paused";
+            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PAUSED', timestamp: Date.now() });
+        });
 
-            // Hides Force Sync button if the video successfully starts playing normally
-            if (isPlaying && !isCurrentUserHost) {
-                document.getElementById('skip-ad-btn').style.display = 'none';
-            }
-        }
+        audioPlayer.addEventListener('waiting', () => {
+            document.getElementById('ui-song-status').innerText = "Buffering stream...";
+        });
+
+        audioPlayer.addEventListener('playing', () => {
+            document.getElementById('ui-song-status').innerText = "Playing Now";
+            document.getElementById('skip-ad-btn').style.display = 'none';
+        });
 
         function startUIUpdates() {
             clearInterval(uiInterval);
             uiInterval = setInterval(() => {
-                if (isPlayerReady && ytPlayer.getDuration && !isDraggingSlider) {
-                    const duration = ytPlayer.getDuration();
-                    const current = ytPlayer.getCurrentTime();
-                    
-                    // Ad Detection inside UI loop to pause slider
-                    const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
-                    if (actualVid && currentActiveSongId && actualVid !== currentActiveSongId) return;
-
+                if (!isNaN(audioPlayer.duration) && !isDraggingSlider) {
+                    const duration = audioPlayer.duration;
+                    const current = audioPlayer.currentTime;
                     if (duration > 0) {
                         const percentage = (current / duration) * 100;
                         const slider = document.getElementById('ui-progress-slider');
@@ -729,28 +710,26 @@
 
         function hostSeekTo(value) {
             isDraggingSlider = false;
-            if (isCurrentUserHost && isPlayerReady && ytPlayer.getDuration) {
-                const duration = ytPlayer.getDuration();
-                const seekTime = (value / 100) * duration;
-                ytPlayer.seekTo(seekTime, true);
-                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: ytPlayer.getPlayerState(), timestamp: Date.now() });
+            if (isCurrentUserHost && !isNaN(audioPlayer.duration)) {
+                const seekTime = (value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekTime;
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: audioPlayer.paused ? 'PAUSED' : 'PLAYING', timestamp: Date.now() });
             }
         }
 
         function toggleHostPlay() {
-            if (!isPlayerReady) return;
-            const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
-            if (isPlaying) ytPlayer.pauseVideo();
-            else ytPlayer.playVideo();
+            if (!audioPlayer.src) return;
+            if (audioPlayer.paused) audioPlayer.play();
+            else audioPlayer.pause();
         }
 
-        // REWRITTEN MANUAL FORCE SYNC
         function manualSync() {
-            if (isPlayerReady) {
-                ytPlayer.playVideo();
-                if (latestHostTime > 0) ytPlayer.seekTo(latestHostTime, true);
+            const playPromise = audioPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    document.getElementById('skip-ad-btn').style.display = 'none';
+                }).catch(e => console.error("Manual sync failed", e));
             }
-            document.getElementById('skip-ad-btn').style.display = 'none';
         }
 
         function handleSearchInput() {
@@ -820,68 +799,70 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        // --- NEW SMART SYNC & PING COMPENSATION ---
+        // --- NEW NATIVE AUDIO SYNC ---
         socket.on('song_loaded', (data) => {
             currentActiveSongId = data.videoId;
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            // FIX: UNCOUPLED UI UPDATES FROM IFRAME READINESS
+            // Decoupled UI update - instantly shows on mobile
             updateThumbnail(data.videoId);
 
-            if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+            audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
+            audioPlayer.playbackRate = 1.0;
+            
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                audioPlayer.currentTime = 0;
+                
                 if (isCurrentUserHost) {
-                    ytPlayer.loadVideoById(data.videoId);
+                    audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
                 } else {
-                    ytPlayer.cueVideoById(data.videoId);
-                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                    document.getElementById('skip-ad-btn').innerText = "Tap to Start";
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
+                    }
                 }
-                startUIUpdates();
-            } else {
-                pendingVideo = data;
-            }
+            }, { once: true });
+            
+            startUIUpdates();
         });
 
         socket.on('sync_update', (data) => {
-            if (!isCurrentUserHost && isPlayerReady) {
-                const ping = Math.max(0, (Date.now() - data.hostTimestamp) / 1000); 
-                latestHostTime = data.time + ping; 
+            if (!isCurrentUserHost && audioPlayer.src && !isSeeking) {
+                const ping = Math.max(0, (Date.now() - data.hostTimestamp) / 1000);
+                const hostTime = data.time + ping; 
                 
-                const myState = ytPlayer.getPlayerState();
-                const myTime = ytPlayer.getCurrentTime();
-                const drift = latestHostTime - myTime;
-
-                // POST-AD RECOVERY LOGIC
-                const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
-                const inAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
-
-                if (inAd) {
-                    document.getElementById('ui-song-status').innerText = "Playing Ad... Waiting to sync.";
-                    return; // Completely ignore sync while an ad is running
+                if (audioPlayer.readyState >= 1) { 
+                    const myTime = audioPlayer.currentTime;
+                    const drift = hostTime - myTime;
+                    
+                    // Smart Sync: Smoothly corrects audio drift without re-buffering
+                    if (Math.abs(drift) > 3) {
+                        audioPlayer.currentTime = hostTime; 
+                    } else if (drift > 0.4) {
+                        audioPlayer.playbackRate = 1.15;
+                    } else if (drift < -0.4) {
+                        audioPlayer.playbackRate = 0.85; 
+                    } else {
+                        audioPlayer.playbackRate = 1.0; 
+                    }
                 }
                 
-                // Smart Sync Math
-                if (Math.abs(drift) > 4) {
-                    ytPlayer.seekTo(latestHostTime, true);
-                } else if (drift > 0.5) {
-                    ytPlayer.setPlaybackRate(1.25);
-                } else if (drift < -0.5) {
-                    ytPlayer.setPlaybackRate(0.75);
-                } else {
-                    ytPlayer.setPlaybackRate(1.0);
-                }
-                
-                // State Enforcer
-                if (data.state === 1 && myState !== 1 && myState !== 3) {
-                    ytPlayer.playVideo();
-                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                    document.getElementById('skip-ad-btn').innerText = "Force Sync";
-                } else if (data.state === 2 && myState !== 2) { 
-                    ytPlayer.pauseVideo();
-                    ytPlayer.setPlaybackRate(1.0);
-                } else if (myState === 1 && Math.abs(drift) <= 4) {
-                    document.getElementById('skip-ad-btn').style.display = 'none';
+                if (data.state === 'PLAYING' && audioPlayer.paused) {
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            document.getElementById('skip-ad-btn').style.display = 'none';
+                        }).catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
+                    }
+                } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
+                    audioPlayer.pause();
                 }
             }
         });
@@ -896,13 +877,41 @@
             updateThumbnail(pendingVideo.videoId);
             
             if (currentVid !== pendingVideo.videoId) {
-                ytPlayer.loadVideoById({videoId: pendingVideo.videoId, startSeconds: pendingTime});
+                audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
+                audioPlayer.playbackRate = 1.0;
+                
+                audioPlayer.addEventListener('loadedmetadata', () => {
+                    audioPlayer.currentTime = pendingTime;
+                    if (pendingState) {
+                        const playPromise = audioPlayer.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                                document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                            });
+                        }
+                    }
+                }, { once: true });
+                
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
+                if (audioPlayer.readyState >= 1) {
+                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 3) {
+                        audioPlayer.currentTime = pendingTime;
+                    }
+                }
+                
+                if (pendingState) {
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
+                    }
+                } else {
+                    audioPlayer.pause();
+                }
             }
-            
-            if (pendingState) ytPlayer.playVideo();
-            else ytPlayer.pauseVideo();
             
             startUIUpdates();
             pendingVideo = null;
@@ -919,11 +928,11 @@
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
                 syncInterval = setInterval(() => {
-                    if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                    if(!audioPlayer.paused && audioPlayer.src) {
                         socket.emit('sync_time', { 
                             roomCode: currentRoomCode, 
-                            time: ytPlayer.getCurrentTime(), 
-                            state: YT.PlayerState.PLAYING,
+                            time: audioPlayer.currentTime, 
+                            state: 'PLAYING',
                             timestamp: Date.now() 
                         });
                     }
@@ -936,7 +945,7 @@
                 pendingVideo = { videoId: data.currentVideo, title: data.currentTitle };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
-                if (isPlayerReady) applyPendingVideo();
+                applyPendingVideo();
             }
             
             const titleEl = document.getElementById('display-room-title');
@@ -1142,7 +1151,8 @@
             document.getElementById('album-art-svg').style.display = 'block';
             document.getElementById('skip-ad-btn').style.display = 'none';
             currentActiveSongId = null;
-            if (isPlayerReady) ytPlayer.stopVideo();
+            
+            audioPlayer.src = "";
         }
 
         function openModal() {
@@ -1183,7 +1193,7 @@
         function forceClearRoomState() {
             clearInterval(syncInterval);
             clearInterval(uiInterval);
-            if (isPlayerReady) ytPlayer.stopVideo();
+            audioPlayer.src = ""; 
             currentRoomCode = '';
             localStorage.removeItem('syncro_room_code');
             document.getElementById('live-user-list').innerHTML = '';
