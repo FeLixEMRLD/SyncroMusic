@@ -3,7 +3,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search');
-const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors()); 
@@ -16,14 +15,23 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 
-// 1. FAST, RELIABLE SEARCH
+// Fallback architecture to bypass Render IP blocks for streaming
+const pipedInstances = [
+    'https://pipedapi.kavin.rocks',
+    'https://pipedapi.smnz.de',
+    'https://pipedapi.adminforge.de',
+    'https://pipedapi.qwik.space',
+    'https://api.piped.projectsegfau.lt'
+];
+
+// 1. FAST, RELIABLE SEARCH (Fixed by yt-search)
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
 
     try {
         const r = await ytSearch(query);
-        const videos = r.videos.slice(0, 8); // Get top 8 results
+        const videos = r.videos.slice(0, 8);
         const results = videos.map(v => ({
             id: v.videoId,
             title: v.title,
@@ -37,28 +45,36 @@ app.get('/search', async (req, res) => {
     }
 });
 
-// 2. FETCH SONG INFO QUICKLY
-app.get('/metadata/:id', async (req, res) => {
-    try {
-        const video = await ytSearch({ videoId: req.params.id });
-        res.json({ title: video.title, thumbnail: video.thumbnail });
-    } catch (e) {
-        res.status(500).json({ error: 'Failed to fetch song info.' });
+// 2. AD-FREE STREAM GENERATOR (Restored from your original working logic)
+app.get('/api/stream/:id', async (req, res) => {
+    const videoId = req.params.id;
+    
+    for (let api of pipedInstances) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4000);
+            
+            const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
+            clearTimeout(timeout);
+            
+            if (!response.ok) continue;
+            const data = await response.json();
+            
+            if (data.audioStreams && data.audioStreams.length > 0) {
+                const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
+                const streamUrl = mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
+                
+                return res.json({ 
+                    streamUrl: streamUrl, 
+                    title: data.title, 
+                    thumbnail: data.thumbnailUrl 
+                });
+            }
+        } catch (e) {
+            console.log(`Stream fallback triggered from ${api}`);
+        }
     }
-});
-
-// 3. AD-FREE AUDIO PROXY
-app.get('/proxy/:id', (req, res) => {
-    try {
-        const url = `https://www.youtube.com/watch?v=${req.params.id}`;
-        // Tell the browser this is an audio file
-        res.header('Content-Type', 'audio/mpeg');
-        // Stream the pure audio straight from YouTube to your website through the server
-        ytdl(url, { filter: 'audioonly', quality: 'highestaudio' }).pipe(res);
-    } catch (e) {
-        console.error("Stream error:", e);
-        res.status(500).end();
-    }
+    res.status(500).json({ error: 'Failed to extract ad-free stream.' });
 });
 
 app.get('/check-room/:code', (req, res) => {
