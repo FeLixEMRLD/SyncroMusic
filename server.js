@@ -121,7 +121,6 @@ io.on('connection', (socket) => {
         }
     });
 
-    // PING COMPENSATION: We now stamp the exact server time to fix the delay
     socket.on('sync_time', (data) => {
         const { roomCode, time, state, timestamp } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
