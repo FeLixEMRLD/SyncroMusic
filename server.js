@@ -3,7 +3,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search');
-const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors()); 
@@ -16,6 +15,7 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 
+// Search is the only external API the server handles now
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -32,57 +32,6 @@ app.get('/search', async (req, res) => {
     } catch (e) {
         console.error("Search error:", e);
         res.status(500).json({ error: 'Search failed.' });
-    }
-});
-
-// DIRECT SERVER PROXY WITH REDIRECT FAILSAFE
-app.get('/proxy/:id', (req, res) => {
-    const videoId = req.params.id;
-    
-    try {
-        const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, { 
-            filter: 'audioonly', 
-            quality: 'highestaudio' 
-        });
-
-        let fallbackTriggered = false;
-
-        stream.on('info', () => {
-            if (!fallbackTriggered && !res.headersSent) {
-                res.header('Content-Type', 'audio/mpeg');
-                stream.pipe(res);
-            }
-        });
-
-        stream.on('error', async (err) => {
-            console.error("YTDL Error, attempting fallback:", err.message);
-            fallbackTriggered = true;
-            
-            if (!res.headersSent) {
-                const pipedInstances = [
-                    'https://pipedapi.kavin.rocks',
-                    'https://pipedapi.smnz.de',
-                    'https://api.piped.projectsegfau.lt'
-                ];
-                
-                for (let api of pipedInstances) {
-                    try {
-                        const pRes = await fetch(`${api}/streams/${videoId}`);
-                        if (!pRes.ok) continue;
-                        const pData = await pRes.json();
-                        if (pData.audioStreams && pData.audioStreams.length > 0) {
-                            const audio = pData.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4')) || pData.audioStreams[0];
-                            if (audio && audio.url) {
-                                return res.redirect(audio.url);
-                            }
-                        }
-                    } catch(e) { }
-                }
-                res.status(500).end();
-            }
-        });
-    } catch (e) {
-        if (!res.headersSent) res.status(500).end();
     }
 });
 
