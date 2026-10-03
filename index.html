@@ -412,13 +412,12 @@
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
         let currentRoomCode = '';
-        
         let currentActiveSongId = null;
-        let currentThumbnailUrl = null;
         let currentGradientSetting = 0; 
 
         // THE PURE HTML5 AUDIO ENGINE
         const audioPlayer = new Audio();
+        audioPlayer.crossOrigin = 'anonymous';
 
         let isDraggingSlider = false;
         let isSeeking = false; 
@@ -533,13 +532,8 @@
             document.getElementById('nav-avatar').classList.remove('hide');
         }
 
-        function extractAndApplyDynamicGradient(imageUrl) {
-            if (!imageUrl) {
-                injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
-                return;
-            }
-
-            const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=jpg`;
+        function extractAndApplyDynamicGradient(videoId) {
+            const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.src = proxyUrl;
@@ -613,7 +607,7 @@
         function applyGradientTheme(setting) {
             currentGradientSetting = setting;
             if (setting === 'dynamic') {
-                if (currentThumbnailUrl) extractAndApplyDynamicGradient(currentThumbnailUrl);
+                if (currentActiveSongId) extractAndApplyDynamicGradient(currentActiveSongId);
                 else injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
                 return;
             }
@@ -663,11 +657,16 @@
         // --- PURE HTML AUDIO EVENTS ---
         audioPlayer.addEventListener('error', (e) => {
             console.error("Audio Engine Error:", audioPlayer.error);
-            document.getElementById('ui-song-status').innerText = "Stream failed. Host must select another song.";
+            document.getElementById('ui-song-status').innerText = "Stream block detected. Host must re-queue.";
         });
 
         audioPlayer.addEventListener('seeking', () => isSeeking = true);
-        audioPlayer.addEventListener('seeked', () => isSeeking = false);
+        audioPlayer.addEventListener('seeked', () => {
+            isSeeking = false;
+            if (isCurrentUserHost) {
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: audioPlayer.paused ? 'PAUSED' : 'PLAYING', timestamp: Date.now() });
+            }
+        });
 
         audioPlayer.addEventListener('play', () => {
             document.getElementById('icon-play').style.display = 'none';
@@ -744,7 +743,6 @@
             const resultsContainer = document.getElementById('search-results');
             
             if (query === '') { resultsContainer.classList.remove('open'); return; }
-
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
         }
 
@@ -764,7 +762,7 @@
                 const items = data.items;
                 
                 if (!items || items.length === 0) {
-                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found. Try another search.</div>';
+                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found.</div>';
                     return;
                 }
 
@@ -780,41 +778,75 @@
                     resultsContainer.appendChild(el);
                 });
             } catch (err) {
-                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Please try again.</div>';
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Try a direct link.</div>';
             }
         }
 
         function executeHostLoad(item) {
             currentActiveSongId = item.id;
-            socket.emit('load_song', { 
-                roomCode: currentRoomCode, 
-                videoId: item.id, 
-                title: item.title, 
-                streamUrl: item.streamUrl, 
-                thumbnail: item.thumbnail 
-            });
+            socket.emit('load_song', { roomCode: currentRoomCode, videoId: item.id, title: item.title });
         }
 
-        function updateThumbnail(thumbnailUrl) {
+        function updateThumbnail(videoId) {
             const artBg = document.getElementById('album-art-image');
-            artBg.src = thumbnailUrl || '';
-            artBg.style.display = thumbnailUrl ? 'block' : 'none';
-            document.getElementById('album-art-svg').style.display = thumbnailUrl ? 'none' : 'block';
-            if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(thumbnailUrl);
+            artBg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            artBg.style.display = 'block';
+            document.getElementById('album-art-svg').style.display = 'none';
+            if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        // --- NEW NATIVE AUDIO SYNC ---
-        socket.on('song_loaded', (data) => {
+        // --- BULLETPROOF AUDIO EXTRACTION ARRAY ---
+        async function getAudioStreamUrl(videoId) {
+            const pipedInstances = [
+                'https://pipedapi.kavin.rocks',
+                'https://pipedapi.smnz.de',
+                'https://pipedapi.adminforge.de',
+                'https://pipedapi.qwik.space',
+                'https://pipedapi.drgns.space',
+                'https://pipedapi.r4fo.com'
+            ];
+            
+            for (let api of pipedInstances) {
+                try {
+                    // 3-second timeout so a dead API doesn't freeze your app
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 3000);
+                    
+                    const res = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    
+                    if (data.audioStreams && data.audioStreams.length > 0) {
+                        // Prioritize native MP4 to prevent iOS decoding errors
+                        const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
+                        return mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
+                    }
+                } catch (e) {
+                    // Silently fail and instantly try the next proxy API
+                }
+            }
+            return null;
+        }
+
+        socket.on('song_loaded', async (data) => {
             currentActiveSongId = data.videoId;
-            currentThumbnailUrl = data.thumbnail;
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            // Instantly load the high-res Spotify-style album cover
-            updateThumbnail(data.thumbnail);
+            updateThumbnail(data.videoId);
+            document.getElementById('ui-song-status').innerText = "Locating ad-free audio stream...";
 
-            // Directly stream the MP4 audio without backend proxying
-            audioPlayer.src = data.streamUrl;
+            const streamUrl = await getAudioStreamUrl(data.videoId);
+            
+            if (!streamUrl) {
+                document.getElementById('ui-song-status').innerText = "Stream extraction failed. Host must re-queue.";
+                return;
+            }
+
+            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+            audioPlayer.src = streamUrl;
             audioPlayer.playbackRate = 1.0;
             
             audioPlayer.addEventListener('loadedmetadata', () => {
@@ -827,7 +859,7 @@
                     if (playPromise !== undefined) {
                         playPromise.catch(e => {
                             document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Start";
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
                         });
                     }
                 }
@@ -845,8 +877,8 @@
                     const myTime = audioPlayer.currentTime;
                     const drift = hostTime - myTime;
                     
-                    // Smart Sync: Smoothly speeds up/slows down without pausing to buffer
-                    if (Math.abs(drift) > 3) {
+                    // Smart Sync: Smoothly speeds up/slows down without buffering loops
+                    if (Math.abs(drift) > 4) {
                         audioPlayer.currentTime = hostTime; 
                     } else if (drift > 0.4) {
                         audioPlayer.playbackRate = 1.15;
@@ -873,18 +905,25 @@
             }
         });
 
-        function applyPendingVideo() {
+        async function applyPendingVideo() {
             if (!pendingVideo) return;
             const currentVid = currentActiveSongId;
             currentActiveSongId = pendingVideo.videoId;
-            currentThumbnailUrl = pendingVideo.thumbnail;
 
             document.getElementById('ui-song-title').innerText = pendingVideo.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
-            updateThumbnail(pendingVideo.thumbnail);
+            updateThumbnail(pendingVideo.videoId);
             
             if (currentVid !== pendingVideo.videoId) {
-                audioPlayer.src = pendingVideo.streamUrl;
+                document.getElementById('ui-song-status').innerText = "Locating ad-free audio stream...";
+                const streamUrl = await getAudioStreamUrl(pendingVideo.videoId);
+                
+                if (!streamUrl) {
+                    document.getElementById('ui-song-status').innerText = "Stream extraction failed. Host must re-queue.";
+                    return;
+                }
+
+                audioPlayer.src = streamUrl;
                 audioPlayer.playbackRate = 1.0;
                 
                 audioPlayer.addEventListener('loadedmetadata', () => {
@@ -902,7 +941,7 @@
                 
             } else {
                 if (audioPlayer.readyState >= 1) {
-                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 3) {
+                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 4) {
                         audioPlayer.currentTime = pendingTime;
                     }
                 }
@@ -949,12 +988,7 @@
             }
 
             if (data.currentVideo) {
-                pendingVideo = { 
-                    videoId: data.currentVideo, 
-                    title: data.currentTitle,
-                    streamUrl: data.currentStreamUrl,
-                    thumbnail: data.currentThumbnail 
-                };
+                pendingVideo = { videoId: data.currentVideo, title: data.currentTitle };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
                 applyPendingVideo();
