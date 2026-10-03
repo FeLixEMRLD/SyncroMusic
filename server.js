@@ -26,7 +26,7 @@ app.get('/search', async (req, res) => {
 
     try {
         const results = await ytSearch(query);
-        const videos = results.videos.slice(0, 10).map(v => ({
+        const videos = results.videos.slice(0, 8).map(v => ({
             id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
         }));
         searchCache.set(query.toLowerCase(), videos);
@@ -121,12 +121,13 @@ io.on('connection', (socket) => {
         }
     });
 
+    // PING COMPENSATION: We now stamp the exact server time to fix the delay
     socket.on('sync_time', (data) => {
-        const { roomCode, time, state } = data;
+        const { roomCode, time, state, timestamp } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
-            socket.to(roomCode).emit('sync_update', { time, state });
+            activeRooms[roomCode].isPlaying = (state === 1); 
+            socket.to(roomCode).emit('sync_update', { time, state, hostTimestamp: timestamp });
         }
     });
 
