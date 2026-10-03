@@ -15,7 +15,6 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 
-// Fallback architecture to bypass Render IP blocks for streaming
 const pipedInstances = [
     'https://pipedapi.kavin.rocks',
     'https://pipedapi.smnz.de',
@@ -24,7 +23,7 @@ const pipedInstances = [
     'https://api.piped.projectsegfau.lt'
 ];
 
-// 1. FAST, RELIABLE SEARCH (Fixed by yt-search)
+// 1. FAST, RELIABLE SEARCH
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -45,36 +44,50 @@ app.get('/search', async (req, res) => {
     }
 });
 
-// 2. AD-FREE STREAM GENERATOR (Restored from your original working logic)
+// 2. UNIFIED STREAM AND METADATA FETCHER (Fixes the "undefined" error)
 app.get('/api/stream/:id', async (req, res) => {
     const videoId = req.params.id;
     
-    for (let api of pipedInstances) {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 4000);
-            
-            const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
-            clearTimeout(timeout);
-            
-            if (!response.ok) continue;
-            const data = await response.json();
-            
-            if (data.audioStreams && data.audioStreams.length > 0) {
-                const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
-                const streamUrl = mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
+    try {
+        // First, guarantee we get the correct title and thumbnail
+        const videoMeta = await ytSearch({ videoId: videoId });
+        const title = videoMeta.title || "Unknown Title";
+        const thumbnail = videoMeta.thumbnail || "";
+
+        // Next, hunt for a working ad-free audio stream
+        let streamUrl = null;
+
+        for (let api of pipedInstances) {
+            try {
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3500);
                 
-                return res.json({ 
-                    streamUrl: streamUrl, 
-                    title: data.title, 
-                    thumbnail: data.thumbnailUrl 
-                });
+                const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
+                clearTimeout(timeout);
+                
+                if (!response.ok) continue;
+                const data = await response.json();
+                
+                if (data.audioStreams && data.audioStreams.length > 0) {
+                    const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
+                    streamUrl = mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
+                    break; // We found a working stream, stop searching!
+                }
+            } catch (e) {
+                console.log(`Stream fallback skipped for ${api}`);
             }
-        } catch (e) {
-            console.log(`Stream fallback triggered from ${api}`);
         }
+
+        if (streamUrl) {
+            return res.json({ streamUrl, title, thumbnail });
+        } else {
+            return res.status(500).json({ error: 'All audio proxy instances failed.' });
+        }
+        
+    } catch (error) {
+        console.error("Stream generation error:", error);
+        res.status(500).json({ error: 'Critical failure fetching data.' });
     }
-    res.status(500).json({ error: 'Failed to extract ad-free stream.' });
 });
 
 app.get('/check-room/:code', (req, res) => {
