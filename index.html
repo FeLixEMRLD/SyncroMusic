@@ -662,8 +662,8 @@
 
         // --- PURE HTML AUDIO EVENTS ---
         audioPlayer.addEventListener('error', (e) => {
-            console.error("Audio Engine Error:", audioPlayer.error);
-            document.getElementById('ui-song-status').innerText = "Stream block detected. Host must re-queue.";
+            console.error("Audio Engine Error");
+            document.getElementById('ui-song-status').innerText = "Stream error. Host must re-queue.";
         });
 
         audioPlayer.addEventListener('seeking', () => isSeeking = true);
@@ -761,7 +761,7 @@
             resultsContainer.classList.add('open');
 
             try {
-                // BACKEND PROXY API CALL TO PIPED
+                // Hits the NEW reliable backend search route
                 const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 
@@ -790,7 +790,6 @@
         }
 
         function executeHostLoad(item) {
-            // ONLY EMIT THE VIDEO ID
             socket.emit('load_song', item.id);
         }
 
@@ -808,18 +807,18 @@
             document.getElementById('skip-ad-btn').style.display = 'none';
             
             try {
-                // FRESH TOKEN RETRIEVAL ON TRACK CHANGE VIA BACKEND PROXY
-                const res = await fetch(`${RENDER_URL}/api/stream/${videoId}`);
-                const data = await res.json();
+                // Get Metadata directly from our new backend route
+                const metaRes = await fetch(`${RENDER_URL}/metadata/${videoId}`);
+                const metaData = await metaRes.json();
                 
-                if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
-                document.getElementById('ui-song-title').innerText = data.title;
-                currentThumbnailUrl = data.thumbnail;
-                updateThumbnail(data.thumbnail);
+                document.getElementById('ui-song-title').innerText = metaData.title;
+                currentThumbnailUrl = metaData.thumbnail;
+                updateThumbnail(metaData.thumbnail);
 
                 document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
-                audioPlayer.src = data.streamUrl;
+                
+                // Route directly to the backend proxy for ad-free listening!
+                audioPlayer.src = `${RENDER_URL}/proxy/${videoId}`;
                 audioPlayer.playbackRate = 1.0;
                 
                 audioPlayer.addEventListener('loadedmetadata', () => {
@@ -893,17 +892,15 @@
                 document.getElementById('skip-ad-btn').style.display = 'none';
 
                 try {
-                    const res = await fetch(`${RENDER_URL}/api/stream/${targetVideoId}`);
-                    const data = await res.json();
+                    const metaRes = await fetch(`${RENDER_URL}/metadata/${targetVideoId}`);
+                    const metaData = await metaRes.json();
                     
-                    if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
                     currentActiveSongId = targetVideoId;
-                    currentThumbnailUrl = data.thumbnail;
-                    document.getElementById('ui-song-title').innerText = data.title;
-                    updateThumbnail(data.thumbnail);
+                    currentThumbnailUrl = metaData.thumbnail;
+                    document.getElementById('ui-song-title').innerText = metaData.title;
+                    updateThumbnail(metaData.thumbnail);
 
-                    audioPlayer.src = data.streamUrl;
+                    audioPlayer.src = `${RENDER_URL}/proxy/${targetVideoId}`;
                     audioPlayer.playbackRate = 1.0;
                     
                     audioPlayer.addEventListener('loadedmetadata', () => {
