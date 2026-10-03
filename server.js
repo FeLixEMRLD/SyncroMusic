@@ -23,7 +23,6 @@ app.get('/stream/:videoId', async (req, res) => {
     try {
         const videoId = req.params.videoId;
         
-        // Trap getInfo errors so they don't kill the server
         const info = await ytdl.getInfo(videoId);
         const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
 
@@ -31,17 +30,19 @@ app.get('/stream/:videoId', async (req, res) => {
 
         const videoSize = format.contentLength;
         const range = req.headers.range;
+        
+        // CRITICAL FIX: Extract the exact codec from YouTube (e.g., audio/webm or audio/mp4)
+        const mimeType = format.mimeType ? format.mimeType.split(';')[0] : 'audio/mpeg';
 
-        stream = ytdl(videoId, { format });
+        // Increased highWaterMark buffers the audio significantly faster to prevent stalling
+        stream = ytdl(videoId, { format, highWaterMark: 1 << 25 });
 
-        // CRITICAL: Handle pipeline errors to prevent Node.js crashes
         stream.on('error', (err) => {
             console.error("Stream Pipeline Error:", err.message);
             if (!res.headersSent) res.status(500).end();
             if (stream) stream.destroy();
         });
 
-        // Clean up memory if the user closes the browser/leaves the room
         req.on('close', () => {
             if (stream) stream.destroy();
         });
@@ -56,13 +57,13 @@ app.get('/stream/:videoId', async (req, res) => {
                 'Content-Range': `bytes ${start}-${end}/${videoSize}`,
                 'Accept-Ranges': 'bytes',
                 'Content-Length': chunksize,
-                'Content-Type': 'audio/mpeg',
+                'Content-Type': mimeType, // Sends the correct decoder instruction
             });
             stream.pipe(res);
         } else {
             res.writeHead(200, {
                 'Content-Length': videoSize,
-                'Content-Type': 'audio/mpeg',
+                'Content-Type': mimeType,
             });
             stream.pipe(res);
         }
