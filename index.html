@@ -642,7 +642,7 @@
         }
 
         audioPlayer.addEventListener('error', (e) => {
-            console.error("Audio Engine Error");
+            console.error("Audio Engine Error", e);
             document.getElementById('ui-song-status').innerText = "Stream error. Host must re-queue.";
         });
 
@@ -768,7 +768,6 @@
         }
 
         function executeHostLoad(item) {
-            // Send the entire object so the backend doesn't have to scrape for the title
             socket.emit('load_song', { id: item.id, title: item.title, thumbnail: item.thumbnail });
         }
 
@@ -786,42 +785,32 @@
             currentActiveSongId = videoId;
             currentThumbnailUrl = dataPayload.thumbnail;
             
-            // Instantly update UI from the websocket data
             document.getElementById('ui-song-title').innerText = dataPayload.title;
             updateThumbnail(dataPayload.thumbnail);
             
-            document.getElementById('ui-song-status').innerText = "Requesting secure audio stream...";
+            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            try {
-                const res = await fetch(`${RENDER_URL}/api/stream/${videoId}`);
-                const data = await res.json();
-                
-                if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
-                document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
-                audioPlayer.src = data.streamUrl;
-                audioPlayer.playbackRate = 1.0;
-                
-                audioPlayer.addEventListener('loadedmetadata', () => {
-                    audioPlayer.currentTime = 0;
-                    if (isCurrentUserHost) {
-                        audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
-                    } else {
-                        const playPromise = audioPlayer.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(e => {
-                                document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                                document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                            });
-                        }
+            // DIRECT AUDIO CONNECTION - Bypasses JSON entirely
+            audioPlayer.src = `${RENDER_URL}/proxy/${videoId}`;
+            audioPlayer.playbackRate = 1.0;
+            
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                audioPlayer.currentTime = 0;
+                if (isCurrentUserHost) {
+                    audioPlayer.play().catch(e => console.log("Waiting for interaction"));
+                } else {
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
                     }
-                }, { once: true });
-                
-                startUIUpdates();
-            } catch (err) {
-                document.getElementById('ui-song-status').innerText = "Stream block detected. Host must re-queue.";
-            }
+                }
+            }, { once: true });
+            
+            startUIUpdates();
         });
 
         socket.on('sync_update', (data) => {
@@ -872,33 +861,25 @@
                 
                 document.getElementById('ui-song-title').innerText = pendingVideo.title;
                 updateThumbnail(pendingVideo.thumbnail);
-                document.getElementById('ui-song-status').innerText = "Fetching secure stream...";
+                document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
                 document.getElementById('skip-ad-btn').style.display = 'none';
 
-                try {
-                    const res = await fetch(`${RENDER_URL}/api/stream/${targetVideoId}`);
-                    const data = await res.json();
-                    
-                    if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
-                    audioPlayer.src = data.streamUrl;
-                    audioPlayer.playbackRate = 1.0;
-                    
-                    audioPlayer.addEventListener('loadedmetadata', () => {
-                        audioPlayer.currentTime = targetTime;
-                        if (targetState) {
-                            const playPromise = audioPlayer.play();
-                            if (playPromise !== undefined) {
-                                playPromise.catch(e => {
-                                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                                    document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                                });
-                            }
+                // DIRECT AUDIO CONNECTION
+                audioPlayer.src = `${RENDER_URL}/proxy/${targetVideoId}`;
+                audioPlayer.playbackRate = 1.0;
+                
+                audioPlayer.addEventListener('loadedmetadata', () => {
+                    audioPlayer.currentTime = targetTime;
+                    if (targetState) {
+                        const playPromise = audioPlayer.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                                document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                            });
                         }
-                    }, { once: true });
-                } catch(e) {
-                    document.getElementById('ui-song-status').innerText = "Stream block detected.";
-                }
+                    }
+                }, { once: true });
             } else {
                 if (audioPlayer.readyState >= 1) {
                     if (Math.abs(audioPlayer.currentTime - targetTime) > 3) {
@@ -1212,6 +1193,5 @@
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
     </script>
-       
 </body>
 </html>
