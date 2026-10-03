@@ -416,7 +416,6 @@
         let currentThumbnailUrl = null;
         let currentGradientSetting = 0; 
 
-        // THE PURE HTML5 AUDIO ENGINE
         const audioPlayer = new Audio();
         audioPlayer.crossOrigin = 'anonymous';
 
@@ -429,7 +428,6 @@
         let pendingVideo = null;
         let pendingTime = 0;
         let pendingState = false;
-
         let isProfileMenuOpen = false;
 
         window.onload = function() {
@@ -538,7 +536,6 @@
                 injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
                 return;
             }
-
             const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=jpg`;
             const img = new Image();
             img.crossOrigin = 'Anonymous';
@@ -551,36 +548,23 @@
                 ctx.drawImage(img, 0, 0, img.width, img.height);
                 
                 try {
-                    let maxColorfulness = -1;
-                    let c1 = [20, 20, 20];
-                    let pixels = [];
-                    
+                    let maxColorfulness = -1; let c1 = [20, 20, 20]; let pixels = [];
                     for (let x = img.width * 0.1; x < img.width * 0.9; x += img.width * 0.2) {
                         for (let y = img.height * 0.1; y < img.height * 0.9; y += img.height * 0.2) {
                             const data = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
                             pixels.push(data);
                             const c = Math.max(data[0], data[1], data[2]) - Math.min(data[0], data[1], data[2]);
-                            if (c > maxColorfulness) {
-                                maxColorfulness = c;
-                                c1 = data;
-                            }
+                            if (c > maxColorfulness) { maxColorfulness = c; c1 = data; }
                         }
                     }
-                    
-                    let maxDist = -1;
-                    let c2 = [20, 20, 20];
+                    let maxDist = -1; let c2 = [20, 20, 20];
                     for (let p of pixels) {
                         const dist = Math.abs(p[0] - c1[0]) + Math.abs(p[1] - c1[1]) + Math.abs(p[2] - c1[2]);
-                        if (dist > maxDist) {
-                            maxDist = dist;
-                            c2 = p;
-                        }
+                        if (dist > maxDist) { maxDist = dist; c2 = p; }
                     }
-
                     const darken = 0.65; 
                     const r1 = Math.floor(c1[0] * darken), g1 = Math.floor(c1[1] * darken), b1 = Math.floor(c1[2] * darken);
                     const r2 = Math.floor(c2[0] * darken), g2 = Math.floor(c2[1] * darken), b2 = Math.floor(c2[2] * darken);
-                    
                     injectDynamicGradient(`linear-gradient(135deg, rgb(${r1},${g1},${b1}) 0%, #050505 50%, rgb(${r2},${g2},${b2}) 100%)`);
                 } catch(e) {
                     injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
@@ -617,7 +601,6 @@
                 else injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
                 return;
             }
-            
             const gradClass = `grad-${setting}`;
             const container = document.getElementById('room-bg-container');
             const newLayer = document.createElement('div');
@@ -643,7 +626,6 @@
             if (e) e.stopPropagation();
             const popup = document.getElementById('gradient-popup');
             const btn = document.getElementById('active-gradient-icon');
-            
             if (popup.classList.contains('open')) {
                 popup.classList.remove('open');
                 btn.classList.remove('hide');
@@ -746,7 +728,6 @@
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
             const resultsContainer = document.getElementById('search-results');
-            
             if (query === '') { resultsContainer.classList.remove('open'); return; }
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
         }
@@ -760,7 +741,6 @@
             resultsContainer.classList.add('open');
 
             try {
-                // Hits the NEW reliable backend search route
                 const res = await fetch(`${RENDER_URL}/search?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
                 
@@ -800,13 +780,13 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(thumbnailUrl);
         }
 
+        // FIX: Reverted strictly to the reliable /api/stream/ route for everything
         socket.on('song_loaded', async (videoId) => {
             currentActiveSongId = videoId;
             document.getElementById('ui-song-status').innerText = "Requesting secure audio stream...";
             document.getElementById('skip-ad-btn').style.display = 'none';
             
             try {
-                // Return to the original, reliable stream fetcher
                 const res = await fetch(`${RENDER_URL}/api/stream/${videoId}`);
                 const data = await res.json();
                 
@@ -822,7 +802,6 @@
                 
                 audioPlayer.addEventListener('loadedmetadata', () => {
                     audioPlayer.currentTime = 0;
-                    
                     if (isCurrentUserHost) {
                         audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
                     } else {
@@ -851,7 +830,6 @@
                     const myTime = audioPlayer.currentTime;
                     const drift = hostTime - myTime;
                     
-                    // Smart Sync: Smoothly speeds up/slows down without buffering loops
                     if (Math.abs(drift) > 3) {
                         audioPlayer.currentTime = hostTime; 
                     } else if (drift > 0.4) {
@@ -879,6 +857,7 @@
             }
         });
 
+        // FIX: Reverted applyPendingVideo to match the working route
         async function applyPendingVideo() {
             if (!pendingVideo) return;
             const targetVideoId = pendingVideo.videoId;
@@ -891,7 +870,6 @@
                 document.getElementById('skip-ad-btn').style.display = 'none';
 
                 try {
-                    // Return to the original, reliable stream fetcher
                     const res = await fetch(`${RENDER_URL}/api/stream/${targetVideoId}`);
                     const data = await res.json();
                     
@@ -1229,5 +1207,6 @@
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
     </script>
+
 </body>
 </html>
