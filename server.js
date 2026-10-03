@@ -2,8 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const ytSearch = require('yt-search'); 
-const ytdl = require('@distube/ytdl-core'); // THE AUDIO EXTRACTOR
 
 const app = express();
 app.use(cors()); 
@@ -17,62 +15,7 @@ const activeRooms = {};
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
 
-// --- ZERO-AD PURE AUDIO EXTRACTOR ---
-app.get('/stream/:videoId', async (req, res) => {
-    let stream;
-    try {
-        const videoId = req.params.videoId;
-        const info = await ytdl.getInfo(videoId);
-        
-        // CRITICAL FIX: Strictly force YouTube to give us MP4 (AAC) audio.
-        // This plays natively on all PC, Android, and iOS browsers without needing FFmpeg conversion.
-        const format = ytdl.chooseFormat(info.formats, { 
-            filter: format => format.container === 'mp4' && format.hasAudio && !format.hasVideo
-        });
-
-        if (!format) return res.status(404).send("No audio format found");
-
-        const videoSize = format.contentLength;
-        const range = req.headers.range;
-
-        stream = ytdl(videoId, { format, highWaterMark: 1 << 25 });
-
-        stream.on('error', (err) => {
-            if (!res.headersSent) res.status(500).end();
-            if (stream) stream.destroy();
-        });
-
-        req.on('close', () => {
-            if (stream) stream.destroy();
-        });
-
-        if (range && videoSize) {
-            const parts = range.replace(/bytes=/, "").split("-");
-            const start = parseInt(parts[0], 10);
-            const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
-            const chunksize = (end - start) + 1;
-
-            res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunksize,
-                'Content-Type': 'audio/mp4', // Native browser format
-            });
-            stream.pipe(res);
-        } else {
-            res.writeHead(200, {
-                'Content-Length': videoSize,
-                'Content-Type': 'audio/mp4',
-            });
-            stream.pipe(res);
-        }
-    } catch (err) {
-        console.error("Stream Error:", err.message);
-        if (!res.headersSent) res.status(500).send("Error streaming audio");
-        if (stream) stream.destroy();
-    }
-});
-
+// --- THE NEW JIOSAAVN MUSIC SEARCH ENGINE ---
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -82,10 +25,41 @@ app.get('/search', async (req, res) => {
     }
 
     try {
-        const results = await ytSearch(query);
-        const videos = results.videos.slice(0, 8).map(v => ({
-            id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
-        }));
+        // Multi-instance fallback to ensure search never goes down
+        const instances = [
+            'https://saavn.dev/api/search/songs?query=',
+            'https://jiosaavn-api-privatecvc2.vercel.app/search/songs?query='
+        ];
+        
+        let data = null;
+        for (let api of instances) {
+            try {
+                const response = await fetch(api + encodeURIComponent(query));
+                if (response.ok) {
+                    data = await response.json();
+                    break;
+                }
+            } catch (e) { console.log("Trying fallback API instance..."); }
+        }
+
+        if (!data || !data.success || !data.data || !data.data.results) {
+             return res.json({ items: [] });
+        }
+
+        const videos = data.data.results.slice(0, 10).map(track => {
+            // Extract the highest quality audio stream and album cover
+            const bestAudio = track.downloadUrl ? track.downloadUrl[track.downloadUrl.length - 1].url : null;
+            const bestImage = track.image ? track.image[track.image.length - 1].url : null;
+            
+            return {
+                id: track.id, 
+                title: track.name || track.title, 
+                thumbnail: bestImage, 
+                author: track.primaryArtists || track.subtitle || "Unknown Artist",
+                streamUrl: bestAudio // DIRECT MP4 LINK (NO ADS)
+            };
+        }).filter(t => t.streamUrl); 
+
         searchCache.set(query.toLowerCase(), videos);
         res.json({ items: videos });
     } catch (e) {
@@ -110,7 +84,8 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '',
+            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '', 
+            currentThumbnail: '', currentStreamUrl: '',
             currentTimestamp: 0, isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = { username, color };
@@ -158,23 +133,16 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('load_song', async (data) => {
-        const { roomCode, videoId, title } = data;
+    socket.on('load_song', (data) => {
+        const { roomCode, videoId, title, streamUrl, thumbnail } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
-            let finalTitle = title || "Unknown Song";
-            
-            if (!title) {
-                try {
-                    const v = await ytSearch({ videoId });
-                    if (v) finalTitle = v.title;
-                } catch(e){}
-            }
-
             activeRooms[roomCode].currentVideo = videoId;
-            activeRooms[roomCode].currentTitle = finalTitle;
+            activeRooms[roomCode].currentTitle = title;
+            activeRooms[roomCode].currentStreamUrl = streamUrl;
+            activeRooms[roomCode].currentThumbnail = thumbnail;
             activeRooms[roomCode].currentTimestamp = 0;
             activeRooms[roomCode].isPlaying = true;
-            io.to(roomCode).emit('song_loaded', { videoId, title: finalTitle });
+            io.to(roomCode).emit('song_loaded', { videoId, title, streamUrl, thumbnail });
         }
     });
 
@@ -229,8 +197,8 @@ io.on('connection', (socket) => {
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
-            currentTitle: room.currentTitle, currentTimestamp: room.currentTimestamp, 
-            isPlaying: room.isPlaying, users: uniqueUsers
+            currentTitle: room.currentTitle, currentStreamUrl: room.currentStreamUrl, currentThumbnail: room.currentThumbnail,
+            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying, users: uniqueUsers
         };
     }
 });
