@@ -145,7 +145,6 @@
         .play-pause-btn { width: 50px; height: 50px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.2s; }
         .play-pause-btn:hover { transform: scale(1.05); }
 
-        /* FIXED UI BUTTON TO MATCH NAVBAR */
         .skip-ad-btn { 
             display: none; 
             background: white; 
@@ -364,7 +363,7 @@
                 <div id="host-controls">
                     <h3 style="margin: 0 0 10px 5px; font-size: 18px;">Queue Song</h3>
                     <div class="search-container">
-                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search song or paste link..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
+                        <input type="text" id="yt-search-input" class="input-dark glass-effect" placeholder="Search for a song or artist..." style="width: 100%; box-sizing: border-box;" oninput="handleSearchInput()" autocomplete="off">
                         <div id="search-results" class="search-results"></div>
                     </div>
                 </div>
@@ -391,6 +390,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div class="glass-card glass-effect">
@@ -412,12 +412,13 @@
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
         let currentRoomCode = '';
+        
         let currentActiveSongId = null;
+        let currentThumbnailUrl = null;
         let currentGradientSetting = 0; 
 
-        // THE BULLETPROOF HTML5 AUDIO ENGINE RETURNS
+        // THE PURE HTML5 AUDIO ENGINE
         const audioPlayer = new Audio();
-        audioPlayer.crossOrigin = 'anonymous';
 
         let isDraggingSlider = false;
         let isSeeking = false; 
@@ -532,8 +533,13 @@
             document.getElementById('nav-avatar').classList.remove('hide');
         }
 
-        function extractAndApplyDynamicGradient(videoId) {
-            const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
+        function extractAndApplyDynamicGradient(imageUrl) {
+            if (!imageUrl) {
+                injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)'); 
+                return;
+            }
+
+            const proxyUrl = `https://images.weserv.nl/?url=${encodeURIComponent(imageUrl)}&output=jpg`;
             const img = new Image();
             img.crossOrigin = 'Anonymous';
             img.src = proxyUrl;
@@ -607,7 +613,7 @@
         function applyGradientTheme(setting) {
             currentGradientSetting = setting;
             if (setting === 'dynamic') {
-                if (currentActiveSongId) extractAndApplyDynamicGradient(currentActiveSongId);
+                if (currentThumbnailUrl) extractAndApplyDynamicGradient(currentThumbnailUrl);
                 else injectDynamicGradient('linear-gradient(135deg, #1a1a1a 0%, #000 50%, #333 100%)');
                 return;
             }
@@ -739,14 +745,6 @@
             
             if (query === '') { resultsContainer.classList.remove('open'); return; }
 
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = query.match(regExp);
-            if (match && match[2].length === 11) {
-                executeHostLoad({ id: match[2], title: "" });
-                document.getElementById('yt-search-input').value = '';
-                resultsContainer.classList.remove('open');
-                return;
-            }
             searchTimeout = setTimeout(() => { searchSong(); }, 500);
         }
 
@@ -766,7 +764,7 @@
                 const items = data.items;
                 
                 if (!items || items.length === 0) {
-                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found.</div>';
+                    resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">No results found. Try another search.</div>';
                     return;
                 }
 
@@ -782,33 +780,41 @@
                     resultsContainer.appendChild(el);
                 });
             } catch (err) {
-                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Try a direct link.</div>';
+                resultsContainer.innerHTML = '<div style="padding: 15px; text-align:center; color:#ff8a8a;">Search failed. Please try again.</div>';
             }
         }
 
         function executeHostLoad(item) {
             currentActiveSongId = item.id;
-            socket.emit('load_song', { roomCode: currentRoomCode, videoId: item.id, title: item.title });
+            socket.emit('load_song', { 
+                roomCode: currentRoomCode, 
+                videoId: item.id, 
+                title: item.title, 
+                streamUrl: item.streamUrl, 
+                thumbnail: item.thumbnail 
+            });
         }
 
-        function updateThumbnail(videoId) {
+        function updateThumbnail(thumbnailUrl) {
             const artBg = document.getElementById('album-art-image');
-            artBg.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-            artBg.style.display = 'block';
-            document.getElementById('album-art-svg').style.display = 'none';
-            if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
+            artBg.src = thumbnailUrl || '';
+            artBg.style.display = thumbnailUrl ? 'block' : 'none';
+            document.getElementById('album-art-svg').style.display = thumbnailUrl ? 'none' : 'block';
+            if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(thumbnailUrl);
         }
 
         // --- NEW NATIVE AUDIO SYNC ---
         socket.on('song_loaded', (data) => {
             currentActiveSongId = data.videoId;
+            currentThumbnailUrl = data.thumbnail;
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            // Decoupled UI update - instantly shows on mobile
-            updateThumbnail(data.videoId);
+            // Instantly load the high-res Spotify-style album cover
+            updateThumbnail(data.thumbnail);
 
-            audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
+            // Directly stream the MP4 audio without backend proxying
+            audioPlayer.src = data.streamUrl;
             audioPlayer.playbackRate = 1.0;
             
             audioPlayer.addEventListener('loadedmetadata', () => {
@@ -821,7 +827,7 @@
                     if (playPromise !== undefined) {
                         playPromise.catch(e => {
                             document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Start";
                         });
                     }
                 }
@@ -839,7 +845,7 @@
                     const myTime = audioPlayer.currentTime;
                     const drift = hostTime - myTime;
                     
-                    // Smart Sync: Smoothly corrects audio drift without re-buffering
+                    // Smart Sync: Smoothly speeds up/slows down without pausing to buffer
                     if (Math.abs(drift) > 3) {
                         audioPlayer.currentTime = hostTime; 
                     } else if (drift > 0.4) {
@@ -871,13 +877,14 @@
             if (!pendingVideo) return;
             const currentVid = currentActiveSongId;
             currentActiveSongId = pendingVideo.videoId;
+            currentThumbnailUrl = pendingVideo.thumbnail;
 
             document.getElementById('ui-song-title').innerText = pendingVideo.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
-            updateThumbnail(pendingVideo.videoId);
+            updateThumbnail(pendingVideo.thumbnail);
             
             if (currentVid !== pendingVideo.videoId) {
-                audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
+                audioPlayer.src = pendingVideo.streamUrl;
                 audioPlayer.playbackRate = 1.0;
                 
                 audioPlayer.addEventListener('loadedmetadata', () => {
@@ -942,7 +949,12 @@
             }
 
             if (data.currentVideo) {
-                pendingVideo = { videoId: data.currentVideo, title: data.currentTitle };
+                pendingVideo = { 
+                    videoId: data.currentVideo, 
+                    title: data.currentTitle,
+                    streamUrl: data.currentStreamUrl,
+                    thumbnail: data.currentThumbnail 
+                };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
                 applyPendingVideo();
