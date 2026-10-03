@@ -110,7 +110,6 @@ io.on('connection', (socket) => {
             activeRooms[roomCode].currentTitle = videoData.title || 'Playing Song';
             activeRooms[roomCode].currentThumbnail = videoData.thumbnail || `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
             
-            // Reset all user states on new song
             Object.keys(activeRooms[roomCode].sockets).forEach(sockId => {
                 activeRooms[roomCode].sockets[sockId].inAd = false;
             });
@@ -123,7 +122,7 @@ io.on('connection', (socket) => {
         }
     });
 
-    // HEARTBEAT AND GLOBAL SYNC MANAGER
+    // CRITICAL FIX: The Sync Loop
     socket.on('player_status', (data) => {
         const roomCode = data.roomCode;
         const room = activeRooms[roomCode];
@@ -131,7 +130,6 @@ io.on('connection', (socket) => {
 
         const user = room.sockets[socket.id];
         
-        // AD DETECTION: If their current video ID doesn't match the room's song, they are in an ad
         const expectedVid = room.currentVideo;
         if (expectedVid && data.actualVideoId && data.actualVideoId !== expectedVid) {
             user.inAd = true;
@@ -142,22 +140,18 @@ io.on('connection', (socket) => {
         user.time = data.time;
         user.state = data.state;
 
-        // Check if ANY user in the room is currently stuck in an ad
         const usersInAd = Object.values(room.sockets).filter(u => u.inAd).map(u => u.username);
 
         if (usersInAd.length > 0) {
-            // Someone is in an ad! Broadcast global pause
             io.to(roomCode).emit('global_ad_wait', { waitingOn: usersInAd });
-        } else {
-            // Everyone is clear! Broadcast host's exact timestamp for perfect sync
-            const hostUser = room.sockets[room.hostId];
-            if (hostUser && expectedVid) {
-                io.to(roomCode).emit('sync_update', {
-                    time: hostUser.time,
-                    state: hostUser.state,
-                    hostTimestamp: data.timestamp
-                });
-            }
+        } 
+        // THIS LINE FIXES THE STUTTER: The server now ONLY broadcasts sync commands if the Host sends them.
+        else if (socket.id === room.hostId && expectedVid) {
+            io.to(roomCode).emit('sync_update', {
+                time: user.time,
+                state: user.state,
+                hostTimestamp: data.timestamp
+            });
         }
     });
 
