@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search');
+const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors()); 
@@ -18,7 +19,6 @@ const roomTimeouts = {};
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
-
     try {
         const r = await ytSearch(query);
         const videos = r.videos.slice(0, 8);
@@ -35,69 +35,54 @@ app.get('/search', async (req, res) => {
     }
 });
 
-// Dual-layer stream proxy to bypass Render IP blocks
-app.get('/api/stream/:id', async (req, res) => {
+// DIRECT SERVER PROXY WITH REDIRECT FAILSAFE
+app.get('/proxy/:id', (req, res) => {
     const videoId = req.params.id;
-    let streamUrl = null;
-
-    // Layer 1: Invidious Instances
-    const invidiousInstances = [
-        'https://inv.tux.pizza',
-        'https://invidious.jing.rocks',
-        'https://iv.melmac.space'
-    ];
     
-    for (let api of invidiousInstances) {
-        try {
-            const controller = new AbortController();
-            const timeout = setTimeout(() => controller.abort(), 3500);
-            const response = await fetch(`${api}/api/v1/videos/${videoId}`, { signal: controller.signal });
-            clearTimeout(timeout);
-            
-            if (response.ok) {
-                const data = await response.json();
-                if (data.adaptiveFormats) {
-                    const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio/mp4'));
-                    if (audio && audio.url) { 
-                        streamUrl = audio.url; 
-                        break; 
-                    }
-                }
+    try {
+        const stream = ytdl(`https://www.youtube.com/watch?v=${videoId}`, { 
+            filter: 'audioonly', 
+            quality: 'highestaudio' 
+        });
+
+        let fallbackTriggered = false;
+
+        stream.on('info', () => {
+            if (!fallbackTriggered && !res.headersSent) {
+                res.header('Content-Type', 'audio/mpeg');
+                stream.pipe(res);
             }
-        } catch(e) { }
-    }
+        });
 
-    // Layer 2: Piped Instances (Fallback)
-    if (!streamUrl) {
-        const pipedInstances = [
-            'https://pipedapi.kavin.rocks',
-            'https://pipedapi.smnz.de',
-            'https://api.piped.projectsegfau.lt'
-        ];
-        
-        for (let api of pipedInstances) {
-            try {
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 3500);
-                const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
-                clearTimeout(timeout);
+        stream.on('error', async (err) => {
+            console.error("YTDL Error, attempting fallback:", err.message);
+            fallbackTriggered = true;
+            
+            if (!res.headersSent) {
+                const pipedInstances = [
+                    'https://pipedapi.kavin.rocks',
+                    'https://pipedapi.smnz.de',
+                    'https://api.piped.projectsegfau.lt'
+                ];
                 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.audioStreams && data.audioStreams.length > 0) {
-                        const audio = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
-                        streamUrl = audio ? audio.url : data.audioStreams[0].url;
-                        break;
-                    }
+                for (let api of pipedInstances) {
+                    try {
+                        const pRes = await fetch(`${api}/streams/${videoId}`);
+                        if (!pRes.ok) continue;
+                        const pData = await pRes.json();
+                        if (pData.audioStreams && pData.audioStreams.length > 0) {
+                            const audio = pData.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4')) || pData.audioStreams[0];
+                            if (audio && audio.url) {
+                                return res.redirect(audio.url);
+                            }
+                        }
+                    } catch(e) { }
                 }
-            } catch(e) { }
-        }
-    }
-
-    if (streamUrl) {
-        return res.json({ streamUrl });
-    } else {
-        return res.status(500).json({ error: 'All audio proxy instances failed.' });
+                res.status(500).end();
+            }
+        });
+    } catch (e) {
+        if (!res.headersSent) res.status(500).end();
     }
 });
 
