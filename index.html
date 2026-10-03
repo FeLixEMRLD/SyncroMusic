@@ -7,7 +7,6 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23c49a02%22/><text x=%2250%22 y=%2272%22 font-size=%2265%22 font-family=%22Inter, sans-serif%22 font-weight=%22800%22 fill=%22%23fff%22 text-anchor=%22middle%22>S</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
@@ -382,10 +381,11 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- INVISIBLE PLAYER ENGINE -->
-            <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
+                <!-- INVISIBLE PLAYER ENGINE -->
+                <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
+
+            </div>
 
             <div class="glass-card glass-effect">
                 <h3 style="margin-top: 0;">Listeners</h3>
@@ -409,13 +409,14 @@
         let currentActiveSongId = null;
         let currentGradientSetting = 0; 
 
-        let ytPlayer;
-        let isPlayerReady = false;
+        // --- NEW HTML5 AUDIO ENGINE ---
+        const audioPlayer = new Audio();
+        audioPlayer.crossOrigin = 'anonymous';
+
         let isDraggingSlider = false;
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
-        let isHostInAd = false;
         
         let pendingVideo = null;
         let pendingTime = 0;
@@ -524,7 +525,6 @@
             document.getElementById('nav-avatar').classList.remove('hide');
         }
 
-        // --- UPGRADED DYNAMIC BACKGROUND ENGINE ---
         function extractAndApplyDynamicGradient(videoId) {
             const proxyUrl = `https://images.weserv.nl/?url=img.youtube.com/vi/${videoId}/hqdefault.jpg&output=jpg`;
             const img = new Image();
@@ -542,7 +542,6 @@
                     let c1 = [20, 20, 20];
                     let pixels = [];
                     
-                    // Sample a grid across the image
                     for (let x = img.width * 0.1; x < img.width * 0.9; x += img.width * 0.2) {
                         for (let y = img.height * 0.1; y < img.height * 0.9; y += img.height * 0.2) {
                             const data = ctx.getImageData(Math.floor(x), Math.floor(y), 1, 1).data;
@@ -555,7 +554,6 @@
                         }
                     }
                     
-                    // Find the second color with the highest RGB distance from the first
                     let maxDist = -1;
                     let c2 = [20, 20, 20];
                     for (let p of pixels) {
@@ -566,7 +564,6 @@
                         }
                     }
 
-                    // A lighter darken factor to keep the colors vibrant but text readable
                     const darken = 0.65; 
                     const r1 = Math.floor(c1[0] * darken), g1 = Math.floor(c1[1] * darken), b1 = Math.floor(c1[2] * darken);
                     const r2 = Math.floor(c2[0] * darken), g2 = Math.floor(c2[1] * darken), b2 = Math.floor(c2[2] * darken);
@@ -649,74 +646,36 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
-        // --- YOUTUBE IFRAME AUDIO ENGINE ---
-        function onYouTubeIframeAPIReady() {
-            ytPlayer = new YT.Player('youtube-player', {
-                height: '200', width: '200', videoId: '', 
-                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
-                events: {
-                    'onReady': () => { 
-                        isPlayerReady = true; 
-                        if (pendingVideo) applyPendingVideo();
-                    },
-                    'onStateChange': onPlayerStateChange
-                }
-            });
-        }
+        // --- AUDIO EVENT LISTENERS ---
+        audioPlayer.addEventListener('play', () => {
+            document.getElementById('icon-play').style.display = 'none';
+            document.getElementById('icon-pause').style.display = 'block';
+            document.getElementById('ui-song-status').innerText = "Playing Now";
+            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PLAYING' });
+        });
 
-        function onPlayerStateChange(event) {
-            const actualVideoId = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-            
-            // THE K-POP AUTOPLAY BUG FIX
-            // If YouTube tries to navigate to a random recommended video, snap it back instantly.
-            if (!isCurrentUserHost && currentActiveSongId && actualVideoId && actualVideoId !== currentActiveSongId) {
-                ytPlayer.loadVideoById({videoId: currentActiveSongId, startSeconds: ytPlayer.getCurrentTime()});
-                return;
-            }
+        audioPlayer.addEventListener('pause', () => {
+            document.getElementById('icon-play').style.display = 'block';
+            document.getElementById('icon-pause').style.display = 'none';
+            document.getElementById('ui-song-status').innerText = "Paused";
+            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PAUSED' });
+        });
 
-            const isPlayingAd = (actualVideoId && currentActiveSongId && actualVideoId !== currentActiveSongId);
-            const isBuffering = (event.data === YT.PlayerState.BUFFERING || event.data === -1);
-            
-            if (isPlayingAd) {
-                document.getElementById('ui-song-status').innerText = "Playing Ad / Buffering...";
-                if (isCurrentUserHost) {
-                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                    socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
-                } else {
-                    ytPlayer.pauseVideo(); // Guests MUST wait out their ad.
-                }
-                return;
-            } else {
-                if (isCurrentUserHost) document.getElementById('skip-ad-btn').style.display = 'none';
-            }
+        audioPlayer.addEventListener('waiting', () => {
+            document.getElementById('ui-song-status').innerText = "Buffering...";
+        });
 
-            const isPlaying = (event.data === YT.PlayerState.PLAYING);
-            document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
-            document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
-            
-            if (ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
-                document.getElementById('ui-song-title').innerText = ytPlayer.getVideoData().title;
-                document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : (isBuffering ? "Buffering..." : "Paused");
-            }
+        audioPlayer.addEventListener('playing', () => {
+            document.getElementById('ui-song-status').innerText = "Playing Now";
+        });
 
-            if (isCurrentUserHost) {
-                const broadcastState = isBuffering ? 3 : event.data;
-                socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: broadcastState });
-            }
-        }
-
-        function skipAd() {
-            if (ytPlayer && ytPlayer.getDuration) {
-                ytPlayer.seekTo(ytPlayer.getDuration() - 0.5, true);
-            }
-        }
 
         function startUIUpdates() {
             clearInterval(uiInterval);
             uiInterval = setInterval(() => {
-                if (isPlayerReady && ytPlayer.getDuration && !isDraggingSlider) {
-                    const duration = ytPlayer.getDuration();
-                    const current = ytPlayer.getCurrentTime();
+                if (!isNaN(audioPlayer.duration) && !isDraggingSlider) {
+                    const duration = audioPlayer.duration;
+                    const current = audioPlayer.currentTime;
                     if (duration > 0) {
                         const percentage = (current / duration) * 100;
                         const slider = document.getElementById('ui-progress-slider');
@@ -735,25 +694,19 @@
 
         function hostSeekTo(value) {
             isDraggingSlider = false;
-            if (isCurrentUserHost && isPlayerReady && ytPlayer.getDuration) {
-                const duration = ytPlayer.getDuration();
-                const seekTime = (value / 100) * duration;
-                ytPlayer.seekTo(seekTime, true);
-                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: ytPlayer.getPlayerState() });
+            if (isCurrentUserHost && !isNaN(audioPlayer.duration)) {
+                const seekTime = (value / 100) * audioPlayer.duration;
+                audioPlayer.currentTime = seekTime;
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: audioPlayer.paused ? 'PAUSED' : 'PLAYING' });
             }
         }
 
         function toggleHostPlay() {
-            if (!isPlayerReady) return;
-            const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
-            document.getElementById('icon-play').style.display = isPlaying ? 'block' : 'none';
-            document.getElementById('icon-pause').style.display = isPlaying ? 'none' : 'block';
-
-            if (isPlaying) ytPlayer.pauseVideo();
-            else ytPlayer.playVideo();
+            if (!audioPlayer.src) return;
+            if (audioPlayer.paused) audioPlayer.play();
+            else audioPlayer.pause();
         }
 
-        // --- FLUID SEARCH API ---
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -764,7 +717,7 @@
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = query.match(regExp);
             if (match && match[2].length === 11) {
-                executeHostLoad(match[2]);
+                executeHostLoad({ id: match[2], title: "" });
                 document.getElementById('yt-search-input').value = '';
                 resultsContainer.classList.remove('open');
                 return;
@@ -797,7 +750,7 @@
                     el.className = 'search-item';
                     el.innerHTML = `<img src="${item.thumbnail}" class="search-thumb"><div class="search-info"><h5>${item.title}</h5><p>${item.author}</p></div>`;
                     el.onclick = () => {
-                        executeHostLoad(item.id);
+                        executeHostLoad(item);
                         resultsContainer.classList.remove('open');
                         document.getElementById('yt-search-input').value = '';
                     };
@@ -808,9 +761,9 @@
             }
         }
 
-        function executeHostLoad(videoId) {
-            currentActiveSongId = videoId;
-            socket.emit('load_song', { roomCode: currentRoomCode, videoId: videoId });
+        function executeHostLoad(item) {
+            currentActiveSongId = item.id;
+            socket.emit('load_song', { roomCode: currentRoomCode, videoId: item.id, title: item.title });
         }
 
         function updateThumbnail(videoId) {
@@ -821,66 +774,67 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        socket.on('song_loaded', (videoId) => {
-            currentActiveSongId = videoId;
-            if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                ytPlayer.loadVideoById(videoId);
-                updateThumbnail(videoId);
-                startUIUpdates();
-            } else {
-                pendingVideo = videoId;
+        // --- ROOM SYNC LOGIC ---
+        socket.on('song_loaded', (data) => {
+            currentActiveSongId = data.videoId;
+            document.getElementById('ui-song-title').innerText = data.title;
+            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+            
+            // Connect pure audio API
+            audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
+            audioPlayer.currentTime = 0;
+            
+            updateThumbnail(data.videoId);
+            startUIUpdates();
+            
+            if (isCurrentUserHost) {
+                audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
             }
         });
 
-        // --- AGGRESSIVE SYNC RECEIVER ---
         socket.on('sync_update', (data) => {
-            if (!isCurrentUserHost && isPlayerReady) {
-                const actualVid = ytPlayer.getVideoData()?.video_id;
-                const isGuestInAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
+            if (!isCurrentUserHost && audioPlayer.src) {
+                // Latency compensation: Predict network delay by adding 150ms
+                const hostTime = data.time + 0.15; 
+                const myTime = audioPlayer.currentTime;
                 
-                if (isGuestInAd) return;
-
-                isHostInAd = (data.state === 'AD' || data.state === 3);
-                
-                if (isHostInAd) {
-                    document.getElementById('ui-song-status').innerText = "Host is watching an ad / buffering...";
-                    if (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
-                    return; 
-                }
-
-                const hostTime = data.time;
-                const myTime = ytPlayer.getCurrentTime();
-                
-                // Tightened sync down to 0.4s to completely eliminate the delay
-                if (Math.abs(hostTime - myTime) > 0.4) {
-                    ytPlayer.seekTo(hostTime, true);
+                // Only scrub if the guest is drastically out of sync (> 0.4 seconds off)
+                if (Math.abs(myTime - hostTime) > 0.4) {
+                    audioPlayer.currentTime = hostTime;
                 }
                 
-                if (data.state === YT.PlayerState.PLAYING && ytPlayer.getPlayerState() !== YT.PlayerState.PLAYING) ytPlayer.playVideo();
-                else if (data.state === YT.PlayerState.PAUSED && ytPlayer.getPlayerState() !== YT.PlayerState.PAUSED) ytPlayer.pauseVideo();
+                if (data.state === 'PLAYING' && audioPlayer.paused) {
+                    audioPlayer.play().catch(e => console.log("Autoplay blocked"));
+                } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
+                    audioPlayer.pause();
+                }
             }
         });
 
         function applyPendingVideo() {
             if (!pendingVideo) return;
-            const currentYtVid = ytPlayer.getVideoData ? ytPlayer.getVideoData().video_id : null;
-            currentActiveSongId = pendingVideo;
+            const currentVid = currentActiveSongId;
+            currentActiveSongId = pendingVideo.videoId;
 
-            if (currentYtVid !== pendingVideo) {
-                ytPlayer.loadVideoById({videoId: pendingVideo, startSeconds: pendingTime});
-                updateThumbnail(pendingVideo);
+            document.getElementById('ui-song-title').innerText = pendingVideo.title;
+            
+            if (currentVid !== pendingVideo.videoId) {
+                audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
+                audioPlayer.currentTime = pendingTime;
+                updateThumbnail(pendingVideo.videoId);
             } else {
-                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
+                if (Math.abs(audioPlayer.currentTime - pendingTime) > 0.4) {
+                    audioPlayer.currentTime = pendingTime;
+                }
             }
             
-            if (pendingState) ytPlayer.playVideo();
-            else ytPlayer.pauseVideo();
+            if (pendingState) audioPlayer.play().catch(e => console.log("Autoplay blocked"));
+            else audioPlayer.pause();
             
             startUIUpdates();
             pendingVideo = null;
         }
 
-        // --- SOCKET UI LOGIC ---
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
@@ -889,27 +843,23 @@
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
             document.getElementById('ui-progress-slider').style.pointerEvents = isCurrentUserHost ? 'auto' : 'none';
 
+            // Lightweight heartbeat sync (every 2 seconds instead of network spam)
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
                 syncInterval = setInterval(() => {
-                    if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
-                        const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
-                        if (actualVid && currentActiveSongId && actualVid !== currentActiveSongId) {
-                            socket.emit('sync_time', { roomCode: currentRoomCode, time: 0, state: 'AD' });
-                        } else {
-                            socket.emit('sync_time', { roomCode: currentRoomCode, time: ytPlayer.getCurrentTime(), state: YT.PlayerState.PLAYING });
-                        }
+                    if(!audioPlayer.paused && audioPlayer.src) {
+                        socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PLAYING' });
                     }
-                }, 200);
+                }, 2000); 
             } else {
                 clearInterval(syncInterval);
             }
 
             if (data.currentVideo) {
-                pendingVideo = data.currentVideo;
+                pendingVideo = { videoId: data.currentVideo, title: data.currentTitle };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
-                if (isPlayerReady) applyPendingVideo();
+                applyPendingVideo();
             }
             
             const titleEl = document.getElementById('display-room-title');
@@ -1080,7 +1030,6 @@
             localStorage.setItem('syncro_room_code', roomCode);
             document.getElementById('display-room-code').innerText = roomCode;
             
-            if (isPlayerReady) ytPlayer.playVideo();
             resetPlayerUI();
             goToLobby();
         }
@@ -1101,7 +1050,6 @@
                     currentRoomCode = code;
                     localStorage.setItem('syncro_room_code', code);
                     document.getElementById('display-room-code').innerText = code;
-                    if (isPlayerReady) ytPlayer.playVideo();
                     resetPlayerUI();
                     goToLobby();
                 }
@@ -1117,7 +1065,8 @@
             document.getElementById('album-art-svg').style.display = 'block';
             document.getElementById('skip-ad-btn').style.display = 'none';
             currentActiveSongId = null;
-            if (isPlayerReady) ytPlayer.stopVideo();
+            
+            audioPlayer.src = "";
         }
 
         function openModal() {
@@ -1158,7 +1107,7 @@
         function forceClearRoomState() {
             clearInterval(syncInterval);
             clearInterval(uiInterval);
-            if (isPlayerReady) ytPlayer.stopVideo();
+            audioPlayer.src = ""; 
             currentRoomCode = '';
             localStorage.removeItem('syncro_room_code');
             document.getElementById('live-user-list').innerHTML = '';
