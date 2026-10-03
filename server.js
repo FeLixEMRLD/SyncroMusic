@@ -15,15 +15,6 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 
-const pipedInstances = [
-    'https://pipedapi.kavin.rocks',
-    'https://pipedapi.smnz.de',
-    'https://pipedapi.adminforge.de',
-    'https://pipedapi.qwik.space',
-    'https://api.piped.projectsegfau.lt'
-];
-
-// 1. FAST, RELIABLE SEARCH
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -44,49 +35,69 @@ app.get('/search', async (req, res) => {
     }
 });
 
-// 2. UNIFIED STREAM AND METADATA FETCHER (Fixes the "undefined" error)
+// Dual-layer stream proxy to bypass Render IP blocks
 app.get('/api/stream/:id', async (req, res) => {
     const videoId = req.params.id;
+    let streamUrl = null;
+
+    // Layer 1: Invidious Instances
+    const invidiousInstances = [
+        'https://inv.tux.pizza',
+        'https://invidious.jing.rocks',
+        'https://iv.melmac.space'
+    ];
     
-    try {
-        // First, guarantee we get the correct title and thumbnail
-        const videoMeta = await ytSearch({ videoId: videoId });
-        const title = videoMeta.title || "Unknown Title";
-        const thumbnail = videoMeta.thumbnail || "";
+    for (let api of invidiousInstances) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3500);
+            const response = await fetch(`${api}/api/v1/videos/${videoId}`, { signal: controller.signal });
+            clearTimeout(timeout);
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.adaptiveFormats) {
+                    const audio = data.adaptiveFormats.find(f => f.type && f.type.includes('audio/mp4'));
+                    if (audio && audio.url) { 
+                        streamUrl = audio.url; 
+                        break; 
+                    }
+                }
+            }
+        } catch(e) { }
+    }
 
-        // Next, hunt for a working ad-free audio stream
-        let streamUrl = null;
-
+    // Layer 2: Piped Instances (Fallback)
+    if (!streamUrl) {
+        const pipedInstances = [
+            'https://pipedapi.kavin.rocks',
+            'https://pipedapi.smnz.de',
+            'https://api.piped.projectsegfau.lt'
+        ];
+        
         for (let api of pipedInstances) {
             try {
                 const controller = new AbortController();
                 const timeout = setTimeout(() => controller.abort(), 3500);
-                
                 const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
                 clearTimeout(timeout);
                 
-                if (!response.ok) continue;
-                const data = await response.json();
-                
-                if (data.audioStreams && data.audioStreams.length > 0) {
-                    const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
-                    streamUrl = mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
-                    break; // We found a working stream, stop searching!
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.audioStreams && data.audioStreams.length > 0) {
+                        const audio = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
+                        streamUrl = audio ? audio.url : data.audioStreams[0].url;
+                        break;
+                    }
                 }
-            } catch (e) {
-                console.log(`Stream fallback skipped for ${api}`);
-            }
+            } catch(e) { }
         }
+    }
 
-        if (streamUrl) {
-            return res.json({ streamUrl, title, thumbnail });
-        } else {
-            return res.status(500).json({ error: 'All audio proxy instances failed.' });
-        }
-        
-    } catch (error) {
-        console.error("Stream generation error:", error);
-        res.status(500).json({ error: 'Critical failure fetching data.' });
+    if (streamUrl) {
+        return res.json({ streamUrl });
+    } else {
+        return res.status(500).json({ error: 'All audio proxy instances failed.' });
     }
 });
 
@@ -96,7 +107,6 @@ app.get('/check-room/:code', (req, res) => {
     else res.json({ valid: false });
 });
 
-// --- WEBSOCKET ENGINE ---
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
@@ -108,6 +118,7 @@ io.on('connection', (socket) => {
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
             gradientIndex: gradientIndex || 'dynamic', currentVideo: null,
+            currentTitle: 'Waiting for host...', currentThumbnail: null,
             currentTimestamp: 0, isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = { username, color };
@@ -155,13 +166,21 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('load_song', (videoId) => {
+    socket.on('load_song', (videoData) => {
         const roomCode = socket.roomCode;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
-            activeRooms[roomCode].currentVideo = videoId;
+            const id = videoData.id || videoData;
+            activeRooms[roomCode].currentVideo = id;
+            activeRooms[roomCode].currentTitle = videoData.title || 'Playing Song';
+            activeRooms[roomCode].currentThumbnail = videoData.thumbnail || `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
             activeRooms[roomCode].currentTimestamp = 0;
             activeRooms[roomCode].isPlaying = true;
-            io.to(roomCode).emit('song_loaded', videoId);
+            
+            io.to(roomCode).emit('song_loaded', {
+                id: activeRooms[roomCode].currentVideo,
+                title: activeRooms[roomCode].currentTitle,
+                thumbnail: activeRooms[roomCode].currentThumbnail
+            });
         }
     });
 
@@ -216,6 +235,7 @@ io.on('connection', (socket) => {
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
+            currentTitle: room.currentTitle, currentThumbnail: room.currentThumbnail,
             currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying, users: uniqueUsers
         };
     }
