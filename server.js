@@ -15,7 +15,6 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 
-// Search is the only external API the server handles now
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -53,9 +52,9 @@ io.on('connection', (socket) => {
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
             gradientIndex: gradientIndex || 'dynamic', currentVideo: null,
             currentTitle: 'Waiting for host...', currentThumbnail: null,
-            currentTimestamp: 0, isPlaying: false, sockets: {} 
+            sockets: {} 
         };
-        activeRooms[roomCode].sockets[socket.id] = { username, color };
+        activeRooms[roomCode].sockets[socket.id] = { username, color, inAd: false, time: 0, state: -1 };
         socket.username = username; socket.roomCode = roomCode;
 
         io.to(roomCode).emit('room_updated', generateRoomData(roomCode));
@@ -70,7 +69,7 @@ io.on('connection', (socket) => {
 
         if (roomTimeouts[roomCode]) clearTimeout(roomTimeouts[roomCode]);
         socket.join(roomCode);
-        activeRooms[roomCode].sockets[socket.id] = { username, color };
+        activeRooms[roomCode].sockets[socket.id] = { username, color, inAd: false, time: 0, state: -1 };
         socket.username = username; socket.roomCode = roomCode;
 
         if (activeRooms[roomCode].hostName === username) activeRooms[roomCode].hostId = socket.id;
@@ -87,7 +86,10 @@ io.on('connection', (socket) => {
             if (activeRooms[socket.roomCode].hostId === socket.id) {
                 activeRooms[socket.roomCode].hostName = username;
             }
-            activeRooms[socket.roomCode].sockets[socket.id] = { username, color };
+            if (activeRooms[socket.roomCode].sockets[socket.id]) {
+                activeRooms[socket.roomCode].sockets[socket.id].username = username;
+                activeRooms[socket.roomCode].sockets[socket.id].color = color;
+            }
             io.to(socket.roomCode).emit('room_updated', generateRoomData(socket.roomCode));
         }
     });
@@ -107,8 +109,11 @@ io.on('connection', (socket) => {
             activeRooms[roomCode].currentVideo = id;
             activeRooms[roomCode].currentTitle = videoData.title || 'Playing Song';
             activeRooms[roomCode].currentThumbnail = videoData.thumbnail || `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-            activeRooms[roomCode].currentTimestamp = 0;
-            activeRooms[roomCode].isPlaying = true;
+            
+            // Reset all user states on new song
+            Object.keys(activeRooms[roomCode].sockets).forEach(sockId => {
+                activeRooms[roomCode].sockets[sockId].inAd = false;
+            });
             
             io.to(roomCode).emit('song_loaded', {
                 id: activeRooms[roomCode].currentVideo,
@@ -118,12 +123,41 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('sync_time', (data) => {
-        const { roomCode, time, state, timestamp } = data;
-        if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
-            activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
-            socket.to(roomCode).emit('sync_update', { time, state, hostTimestamp: timestamp });
+    // HEARTBEAT AND GLOBAL SYNC MANAGER
+    socket.on('player_status', (data) => {
+        const roomCode = data.roomCode;
+        const room = activeRooms[roomCode];
+        if (!room || !room.sockets[socket.id]) return;
+
+        const user = room.sockets[socket.id];
+        
+        // AD DETECTION: If their current video ID doesn't match the room's song, they are in an ad
+        const expectedVid = room.currentVideo;
+        if (expectedVid && data.actualVideoId && data.actualVideoId !== expectedVid) {
+            user.inAd = true;
+        } else {
+            user.inAd = false;
+        }
+        
+        user.time = data.time;
+        user.state = data.state;
+
+        // Check if ANY user in the room is currently stuck in an ad
+        const usersInAd = Object.values(room.sockets).filter(u => u.inAd).map(u => u.username);
+
+        if (usersInAd.length > 0) {
+            // Someone is in an ad! Broadcast global pause
+            io.to(roomCode).emit('global_ad_wait', { waitingOn: usersInAd });
+        } else {
+            // Everyone is clear! Broadcast host's exact timestamp for perfect sync
+            const hostUser = room.sockets[room.hostId];
+            if (hostUser && expectedVid) {
+                io.to(roomCode).emit('sync_update', {
+                    time: hostUser.time,
+                    state: hostUser.state,
+                    hostTimestamp: data.timestamp
+                });
+            }
         }
     });
 
@@ -170,7 +204,7 @@ io.on('connection', (socket) => {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
             currentTitle: room.currentTitle, currentThumbnail: room.currentThumbnail,
-            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying, users: uniqueUsers
+            users: uniqueUsers
         };
     }
 });
