@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search'); 
+const ytdl = require('@distube/ytdl-core'); // NEW AUDIO STREAMING API
 
 const app = express();
 app.use(cors()); 
@@ -15,6 +16,45 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
+
+// --- NEW AUDIO PROXY ENDPOINT (BYPASSES ADS) ---
+app.get('/stream/:videoId', async (req, res) => {
+    try {
+        const videoId = req.params.videoId;
+        const info = await ytdl.getInfo(videoId);
+        const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
+
+        if (!format) return res.status(404).send("No audio format found");
+
+        const videoSize = format.contentLength;
+        const range = req.headers.range;
+
+        // HTTP Range support so users can Seek/Skip through the song smoothly
+        if (range && videoSize) {
+            const parts = range.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
+            const chunksize = (end - start) + 1;
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': 'audio/mpeg',
+            });
+            ytdl(videoId, { format: format, range: { start, end } }).pipe(res);
+        } else {
+            res.writeHead(200, {
+                'Content-Length': videoSize,
+                'Content-Type': 'audio/mpeg',
+            });
+            ytdl(videoId, { format: format }).pipe(res);
+        }
+    } catch (err) {
+        console.error("Stream Error:", err);
+        if (!res.headersSent) res.status(500).send("Error streaming audio");
+    }
+});
 
 app.get('/search', async (req, res) => {
     const query = req.query.q;
@@ -53,8 +93,8 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTimestamp: 0, 
-            isPlaying: false, sockets: {} 
+            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '',
+            currentTimestamp: 0, isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = { username, color };
         socket.username = username; socket.roomCode = roomCode;
@@ -101,13 +141,24 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('load_song', (data) => {
-        const { roomCode, videoId } = data;
+    socket.on('load_song', async (data) => {
+        const { roomCode, videoId, title } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
+            let finalTitle = title || "Unknown Song";
+            
+            // If they pasted a raw link without a title, look it up instantly
+            if (!title) {
+                try {
+                    const v = await ytSearch({ videoId });
+                    if (v) finalTitle = v.title;
+                } catch(e){}
+            }
+
             activeRooms[roomCode].currentVideo = videoId;
+            activeRooms[roomCode].currentTitle = finalTitle;
             activeRooms[roomCode].currentTimestamp = 0;
             activeRooms[roomCode].isPlaying = true;
-            io.to(roomCode).emit('song_loaded', videoId);
+            io.to(roomCode).emit('song_loaded', { videoId, title: finalTitle });
         }
     });
 
@@ -115,7 +166,7 @@ io.on('connection', (socket) => {
         const { roomCode, time, state } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            if (state !== 'AD') activeRooms[roomCode].isPlaying = (state === 1);
+            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
             socket.to(roomCode).emit('sync_update', { time, state });
         }
     });
@@ -162,8 +213,8 @@ io.on('connection', (socket) => {
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
-            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying,
-            users: uniqueUsers
+            currentTitle: room.currentTitle, currentTimestamp: room.currentTimestamp, 
+            isPlaying: room.isPlaying, users: uniqueUsers
         };
     }
 });
