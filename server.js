@@ -3,6 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search'); 
+const ytdl = require('@distube/ytdl-core'); // THE AUDIO EXTRACTOR
 
 const app = express();
 app.use(cors()); 
@@ -15,6 +16,62 @@ const io = new Server(server, {
 const activeRooms = {}; 
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
+
+// --- ZERO-AD PURE AUDIO EXTRACTOR ---
+app.get('/stream/:videoId', async (req, res) => {
+    let stream;
+    try {
+        const videoId = req.params.videoId;
+        const info = await ytdl.getInfo(videoId);
+        
+        // CRITICAL FIX: Strictly force YouTube to give us MP4 (AAC) audio.
+        // This plays natively on all PC, Android, and iOS browsers without needing FFmpeg conversion.
+        const format = ytdl.chooseFormat(info.formats, { 
+            filter: format => format.container === 'mp4' && format.hasAudio && !format.hasVideo
+        });
+
+        if (!format) return res.status(404).send("No audio format found");
+
+        const videoSize = format.contentLength;
+        const range = req.headers.range;
+
+        stream = ytdl(videoId, { format, highWaterMark: 1 << 25 });
+
+        stream.on('error', (err) => {
+            if (!res.headersSent) res.status(500).end();
+            if (stream) stream.destroy();
+        });
+
+        req.on('close', () => {
+            if (stream) stream.destroy();
+        });
+
+        if (range && videoSize) {
+            const parts = range.replace(/bytes=/, "").split("-");
+            const start = parseInt(parts[0], 10);
+            const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
+            const chunksize = (end - start) + 1;
+
+            res.writeHead(206, {
+                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
+                'Accept-Ranges': 'bytes',
+                'Content-Length': chunksize,
+                'Content-Type': 'audio/mp4', // Native browser format
+            });
+            stream.pipe(res);
+        } else {
+            res.writeHead(200, {
+                'Content-Length': videoSize,
+                'Content-Type': 'audio/mp4',
+            });
+            stream.pipe(res);
+        }
+    } catch (err) {
+        console.error("Stream Error:", err.message);
+        if (!res.headersSent) res.status(500).send("Error streaming audio");
+        if (stream) stream.destroy();
+    }
+});
 
 app.get('/search', async (req, res) => {
     const query = req.query.q;
@@ -125,7 +182,7 @@ io.on('connection', (socket) => {
         const { roomCode, time, state, timestamp } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 1); 
+            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
             socket.to(roomCode).emit('sync_update', { time, state, hostTimestamp: timestamp });
         }
     });
