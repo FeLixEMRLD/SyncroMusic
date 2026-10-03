@@ -3,7 +3,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search'); 
-const ytdl = require('@distube/ytdl-core'); // NEW AUDIO STREAMING API
+const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors()); 
@@ -17,10 +17,13 @@ const activeRooms = {};
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
 
-// --- NEW AUDIO PROXY ENDPOINT (BYPASSES ADS) ---
+// --- FORTIFIED AUDIO PROXY ENDPOINT ---
 app.get('/stream/:videoId', async (req, res) => {
+    let stream;
     try {
         const videoId = req.params.videoId;
+        
+        // Trap getInfo errors so they don't kill the server
         const info = await ytdl.getInfo(videoId);
         const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
 
@@ -29,7 +32,20 @@ app.get('/stream/:videoId', async (req, res) => {
         const videoSize = format.contentLength;
         const range = req.headers.range;
 
-        // HTTP Range support so users can Seek/Skip through the song smoothly
+        stream = ytdl(videoId, { format });
+
+        // CRITICAL: Handle pipeline errors to prevent Node.js crashes
+        stream.on('error', (err) => {
+            console.error("Stream Pipeline Error:", err.message);
+            if (!res.headersSent) res.status(500).end();
+            if (stream) stream.destroy();
+        });
+
+        // Clean up memory if the user closes the browser/leaves the room
+        req.on('close', () => {
+            if (stream) stream.destroy();
+        });
+
         if (range && videoSize) {
             const parts = range.replace(/bytes=/, "").split("-");
             const start = parseInt(parts[0], 10);
@@ -42,17 +58,18 @@ app.get('/stream/:videoId', async (req, res) => {
                 'Content-Length': chunksize,
                 'Content-Type': 'audio/mpeg',
             });
-            ytdl(videoId, { format: format, range: { start, end } }).pipe(res);
+            stream.pipe(res);
         } else {
             res.writeHead(200, {
                 'Content-Length': videoSize,
                 'Content-Type': 'audio/mpeg',
             });
-            ytdl(videoId, { format: format }).pipe(res);
+            stream.pipe(res);
         }
     } catch (err) {
-        console.error("Stream Error:", err);
+        console.error("YTDL Error:", err.message);
         if (!res.headersSent) res.status(500).send("Error streaming audio");
+        if (stream) stream.destroy();
     }
 });
 
@@ -72,7 +89,7 @@ app.get('/search', async (req, res) => {
         searchCache.set(query.toLowerCase(), videos);
         res.json({ items: videos });
     } catch (e) {
-        console.error("Search Engine Error:", e);
+        console.error("Search Engine Error:", e.message);
         res.status(500).json({ error: 'Search failed' });
     }
 });
@@ -146,7 +163,6 @@ io.on('connection', (socket) => {
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             let finalTitle = title || "Unknown Song";
             
-            // If they pasted a raw link without a title, look it up instantly
             if (!title) {
                 try {
                     const v = await ytSearch({ videoId });
