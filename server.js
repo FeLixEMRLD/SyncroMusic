@@ -3,7 +3,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const ytSearch = require('yt-search'); 
-const ytdl = require('@distube/ytdl-core');
 
 const app = express();
 app.use(cors()); 
@@ -17,63 +16,6 @@ const activeRooms = {};
 const roomTimeouts = {}; 
 const searchCache = new Map(); 
 
-// --- FORTIFIED AUDIO PROXY ENDPOINT ---
-app.get('/stream/:videoId', async (req, res) => {
-    let stream;
-    try {
-        const videoId = req.params.videoId;
-        
-        const info = await ytdl.getInfo(videoId);
-        const format = ytdl.chooseFormat(info.formats, { filter: 'audioonly', quality: 'highestaudio' });
-
-        if (!format) return res.status(404).send("No audio format found");
-
-        const videoSize = format.contentLength;
-        const range = req.headers.range;
-        
-        // CRITICAL FIX: Extract the exact codec from YouTube (e.g., audio/webm or audio/mp4)
-        const mimeType = format.mimeType ? format.mimeType.split(';')[0] : 'audio/mpeg';
-
-        // Increased highWaterMark buffers the audio significantly faster to prevent stalling
-        stream = ytdl(videoId, { format, highWaterMark: 1 << 25 });
-
-        stream.on('error', (err) => {
-            console.error("Stream Pipeline Error:", err.message);
-            if (!res.headersSent) res.status(500).end();
-            if (stream) stream.destroy();
-        });
-
-        req.on('close', () => {
-            if (stream) stream.destroy();
-        });
-
-        if (range && videoSize) {
-            const parts = range.replace(/bytes=/, "").split("-");
-            const start = parseInt(parts[0], 10);
-            const end = parts[1] ? parseInt(parts[1], 10) : videoSize - 1;
-            const chunksize = (end - start) + 1;
-
-            res.writeHead(206, {
-                'Content-Range': `bytes ${start}-${end}/${videoSize}`,
-                'Accept-Ranges': 'bytes',
-                'Content-Length': chunksize,
-                'Content-Type': mimeType, // Sends the correct decoder instruction
-            });
-            stream.pipe(res);
-        } else {
-            res.writeHead(200, {
-                'Content-Length': videoSize,
-                'Content-Type': mimeType,
-            });
-            stream.pipe(res);
-        }
-    } catch (err) {
-        console.error("YTDL Error:", err.message);
-        if (!res.headersSent) res.status(500).send("Error streaming audio");
-        if (stream) stream.destroy();
-    }
-});
-
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
@@ -84,7 +26,7 @@ app.get('/search', async (req, res) => {
 
     try {
         const results = await ytSearch(query);
-        const videos = results.videos.slice(0, 5).map(v => ({
+        const videos = results.videos.slice(0, 10).map(v => ({
             id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
         }));
         searchCache.set(query.toLowerCase(), videos);
