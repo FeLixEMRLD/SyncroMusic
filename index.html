@@ -419,13 +419,13 @@
         let currentRoomCode = '';
         let currentActiveSongId = null;
         let currentGradientSetting = 0; 
+        
+        let latestHostTime = 0; // GLOBAL TRACKER FOR FORCE SYNC FIX
 
-        // THE BULLETPROOF YOUTUBE ENGINE RETURNS
         let ytPlayer;
         let isPlayerReady = false;
 
         let isDraggingSlider = false;
-        let isSeeking = false; 
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
@@ -680,12 +680,25 @@
             
             document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
             document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
+
+            // AD DETECTOR: Check if the playing video matches the room's song
+            const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
+            const inAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
+
+            if (inAd) {
+                document.getElementById('ui-song-status').innerText = "Playing Ad... Waiting to sync.";
+                return;
+            }
             
-            if (ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
+            if (ytPlayer.getVideoData && ytPlayer.getVideoData().title && currentActiveSongId) {
                 document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : (isBuffering ? "Buffering..." : "Paused");
             }
-        }
 
+            // Hides Force Sync button if the video successfully starts playing normally
+            if (isPlaying && !isCurrentUserHost) {
+                document.getElementById('skip-ad-btn').style.display = 'none';
+            }
+        }
 
         function startUIUpdates() {
             clearInterval(uiInterval);
@@ -693,6 +706,11 @@
                 if (isPlayerReady && ytPlayer.getDuration && !isDraggingSlider) {
                     const duration = ytPlayer.getDuration();
                     const current = ytPlayer.getCurrentTime();
+                    
+                    // Ad Detection inside UI loop to pause slider
+                    const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
+                    if (actualVid && currentActiveSongId && actualVid !== currentActiveSongId) return;
+
                     if (duration > 0) {
                         const percentage = (current / duration) * 100;
                         const slider = document.getElementById('ui-progress-slider');
@@ -726,8 +744,12 @@
             else ytPlayer.playVideo();
         }
 
+        // REWRITTEN MANUAL FORCE SYNC
         function manualSync() {
-            if (isPlayerReady) ytPlayer.playVideo();
+            if (isPlayerReady) {
+                ytPlayer.playVideo();
+                if (latestHostTime > 0) ytPlayer.seekTo(latestHostTime, true);
+            }
             document.getElementById('skip-ad-btn').style.display = 'none';
         }
 
@@ -804,9 +826,17 @@
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
             
+            // FIX: UNCOUPLED UI UPDATES FROM IFRAME READINESS
+            updateThumbnail(data.videoId);
+
             if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
-                ytPlayer.loadVideoById(data.videoId);
-                updateThumbnail(data.videoId);
+                if (isCurrentUserHost) {
+                    ytPlayer.loadVideoById(data.videoId);
+                } else {
+                    ytPlayer.cueVideoById(data.videoId);
+                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                    document.getElementById('skip-ad-btn').innerText = "Tap to Start";
+                }
                 startUIUpdates();
             } else {
                 pendingVideo = data;
@@ -815,32 +845,43 @@
 
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && isPlayerReady) {
-                // Network Ping Calculation
                 const ping = Math.max(0, (Date.now() - data.hostTimestamp) / 1000); 
-                const hostTime = data.time + ping; 
+                latestHostTime = data.time + ping; 
                 
                 const myState = ytPlayer.getPlayerState();
                 const myTime = ytPlayer.getCurrentTime();
-                const drift = hostTime - myTime;
+                const drift = latestHostTime - myTime;
+
+                // POST-AD RECOVERY LOGIC
+                const actualVid = ytPlayer.getVideoData() ? ytPlayer.getVideoData().video_id : null;
+                const inAd = (actualVid && currentActiveSongId && actualVid !== currentActiveSongId);
+
+                if (inAd) {
+                    document.getElementById('ui-song-status').innerText = "Playing Ad... Waiting to sync.";
+                    return; // Completely ignore sync while an ad is running
+                }
                 
-                // Smart Playback Rate Adjustment (No more buffering loops!)
+                // Smart Sync Math
                 if (Math.abs(drift) > 4) {
-                    ytPlayer.seekTo(hostTime, true);
-                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                    ytPlayer.seekTo(latestHostTime, true);
                 } else if (drift > 0.5) {
                     ytPlayer.setPlaybackRate(1.25);
                 } else if (drift < -0.5) {
                     ytPlayer.setPlaybackRate(0.75);
                 } else {
                     ytPlayer.setPlaybackRate(1.0);
-                    document.getElementById('skip-ad-btn').style.display = 'none';
                 }
                 
+                // State Enforcer
                 if (data.state === 1 && myState !== 1 && myState !== 3) {
                     ytPlayer.playVideo();
+                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                    document.getElementById('skip-ad-btn').innerText = "Force Sync";
                 } else if (data.state === 2 && myState !== 2) { 
                     ytPlayer.pauseVideo();
                     ytPlayer.setPlaybackRate(1.0);
+                } else if (myState === 1 && Math.abs(drift) <= 4) {
+                    document.getElementById('skip-ad-btn').style.display = 'none';
                 }
             }
         });
@@ -852,10 +893,10 @@
 
             document.getElementById('ui-song-title').innerText = pendingVideo.title;
             document.getElementById('skip-ad-btn').style.display = 'none';
+            updateThumbnail(pendingVideo.videoId);
             
             if (currentVid !== pendingVideo.videoId) {
                 ytPlayer.loadVideoById({videoId: pendingVideo.videoId, startSeconds: pendingTime});
-                updateThumbnail(pendingVideo.videoId);
             } else {
                 if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
             }
