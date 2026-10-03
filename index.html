@@ -137,7 +137,16 @@
         .song-details h4 { margin: 0 0 5px 0; font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .song-details p { margin: 0; font-size: 13px; color: #aaa; transition: color 0.3s; }
         
-        .yt-container { width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; display: none; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .yt-container { position: relative; width: 100%; aspect-ratio: 16/9; border-radius: 12px; overflow: hidden; display: none; background: #000; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        
+        /* INVISIBLE SHIELD: Blocks clicks on the video timeline and pause button, but leaves a hole for Skip Ad */
+        .click-shield {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 10;
+            clip-path: polygon(0% 0%, 100% 0%, 100% 75%, 65% 75%, 65% 100%, 0% 100%);
+            display: none; /* Only activates for non-hosts */
+        }
 
         /* FLOATING SEARCH OVERLAY */
         #host-controls { display: none; margin-bottom: 20px; z-index: 50; position: relative; }
@@ -346,7 +355,9 @@
                         </div>
                     </div>
 
+                    <!-- YT PLAYER WITH INVISIBLE SHIELD -->
                     <div id="yt-player-container" class="yt-container">
+                        <div id="listener-shield" class="click-shield"></div>
                         <div id="yt-player"></div>
                     </div>
                 </div>
@@ -371,7 +382,7 @@
         let tempProfileColor = '';
 
         let isCurrentUserHost = false;
-        let currentPlayerRole = null; // Tracks if role changed to trigger remount
+        let currentPlayerRole = null;
 
         let modalActionContext = 'leave'; 
         let pendingSwitchCode = '';
@@ -393,18 +404,20 @@
 
         function onYouTubeIframeAPIReady() {
             ytApiLoaded = true;
-            // Player will be explicitly mounted when user joins/creates a room
         }
 
-        // DYNAMICALLY MOUNT PLAYER SO LISTENERS HAVE NO CONTROLS
+        // MOUNT THE PLAYER EXPLICITLY TO SET CONTROLS
         function mountPlayer() {
             if (!ytApiLoaded) return;
             
             if (player) {
                 player.destroy();
                 isPlayerReady = false;
-                document.getElementById('yt-player-container').innerHTML = '<div id="yt-player"></div>';
+                document.getElementById('yt-player-container').innerHTML = '<div id="listener-shield" class="click-shield"></div><div id="yt-player"></div>';
             }
+
+            // Force shield deployment if listener
+            document.getElementById('listener-shield').style.display = isCurrentUserHost ? 'none' : 'block';
 
             player = new YT.Player('yt-player', {
                 height: '100%',
@@ -413,7 +426,7 @@
                 playerVars: { 
                     'playsinline': 1, 
                     'rel': 0,
-                    'controls': isCurrentUserHost ? 1 : 0, // Hosts get scrubber, Listeners get nothing
+                    'controls': isCurrentUserHost ? 1 : 0, 
                     'disablekb': isCurrentUserHost ? 0 : 1
                 },
                 events: {
@@ -423,26 +436,9 @@
                             if (pendingVideo) applyPendingVideo();
                             else player.loadVideoById(currentActiveSongId);
                         }
-                    },
-                    'onStateChange': onPlayerStateChange
+                    }
                 }
             });
-        }
-
-        // Emit state specifically for the host
-        function onPlayerStateChange(event) {
-            if (isCurrentUserHost && isPlayerReady) {
-                let state = 'PAUSED';
-                if (event.data === YT.PlayerState.PLAYING) state = 'PLAYING';
-                else if (event.data === YT.PlayerState.BUFFERING) state = 'BUFFERING';
-
-                socket.emit('sync_time', { 
-                    roomCode: currentRoomCode, 
-                    time: player.getCurrentTime() || 0, 
-                    state: state,
-                    timestamp: Date.now() 
-                });
-            }
         }
 
         window.onload = function() {
@@ -659,7 +655,7 @@
         }
 
         // ==========================================
-        // CORE MECHANIC: PEER-TO-PEER AD RACE SYNC
+        // FIXED HEARTBEAT & SYNC LOGIC
         // ==========================================
         
         setInterval(() => {
@@ -667,6 +663,7 @@
                 const vData = player.getVideoData();
                 let state = 'PAUSED';
                 if (player.getPlayerState() === YT.PlayerState.PLAYING) state = 'PLAYING';
+                else if (player.getPlayerState() === YT.PlayerState.BUFFERING) state = 'BUFFERING';
                 
                 socket.emit('player_status', {
                     roomCode: currentRoomCode,
@@ -704,18 +701,17 @@
             document.getElementById('ui-song-status').innerText = `Waiting for ${data.waitingOn.join(', ')} to finish ad...`;
             document.getElementById('ui-song-status').style.color = '#ff6b6b';
 
-            if (!amIInAd) {
+            if (!amIInAd && isPlayerReady) {
                 if (player.getPlayerState() === YT.PlayerState.PLAYING) {
                     player.pauseVideo();
                 }
-            } else {
+            } else if (isPlayerReady) {
                 if (player.getPlayerState() !== YT.PlayerState.PLAYING && player.getPlayerState() !== YT.PlayerState.BUFFERING) {
                     player.playVideo();
                 }
             }
         });
 
-        // FIXED SYNC BUG: Replaced strict numeric matching with correct string states
         socket.on('sync_update', (data) => {
             if (isWaitingForAd) isWaitingForAd = false;
 
@@ -724,7 +720,7 @@
             document.getElementById('ui-song-status').style.color = isHostPlaying ? '#2ecc71' : '#aaa';
 
             if (!isCurrentUserHost && isPlayerReady) {
-                // If paused, ping is 0 to avoid continuous drift snapping.
+                // If paused, ping is set to 0 to prevent the ping addition from causing a stutter loop
                 const ping = isHostPlaying ? Math.max(0, (Date.now() - data.hostTimestamp) / 1000) : 0;
                 const hostTime = data.time + ping; 
                 const localTime = player.getCurrentTime() || 0;
@@ -732,15 +728,15 @@
                 
                 const currentState = player.getPlayerState();
                 
-                // State Sync
+                // STATE SYNC
                 if (isHostPlaying && currentState !== YT.PlayerState.PLAYING && currentState !== YT.PlayerState.BUFFERING) {
                     player.playVideo();
                 } else if (!isHostPlaying && currentState === YT.PlayerState.PLAYING) {
                     player.pauseVideo();
                 }
 
-                // Expanded drift threshold to 2.5s to prevent stuttering/jumping
-                if (Math.abs(drift) > 2.5) {
+                // DRIFT CORRECTION (Tightened to 2 seconds now that the server loop is dead)
+                if (Math.abs(drift) > 2.0) {
                     player.seekTo(hostTime, true);
                 }
             }
@@ -759,7 +755,7 @@
         socket.on('room_updated', (data) => {
             isCurrentUserHost = (currentUsername === data.hostName);
             
-            // Re-mount the player if role changed so controls adjust automatically
+            // Auto-mounts the player appropriately so the listener gets the CSS Shield
             if (currentPlayerRole !== isCurrentUserHost) {
                 currentPlayerRole = isCurrentUserHost;
                 mountPlayer();
