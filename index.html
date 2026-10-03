@@ -395,7 +395,7 @@
     </div>
 
     <script>
-        const RENDER_URL = 'https://syncroserver-rfy8.onrender.com';
+      const RENDER_URL = 'https://syncroserver-rfy8.onrender.com';
         const socket = io(RENDER_URL);
         
         let currentUsername = '';
@@ -409,7 +409,6 @@
         let currentActiveSongId = null;
         let currentGradientSetting = 0; 
 
-        // --- NEW HTML5 AUDIO ENGINE ---
         const audioPlayer = new Audio();
         audioPlayer.crossOrigin = 'anonymous';
 
@@ -707,6 +706,13 @@
             else audioPlayer.pause();
         }
 
+        // Repurposed Ad-Skip button to override mobile autoplay blockers
+        function skipAd() {
+            audioPlayer.play().then(() => {
+                document.getElementById('skip-ad-btn').style.display = 'none';
+            }).catch(e => console.error("Manual sync failed", e));
+        }
+
         function handleSearchInput() {
             const query = document.getElementById('yt-search-input').value.trim();
             if (searchTimeout) clearTimeout(searchTimeout);
@@ -780,31 +786,45 @@
             document.getElementById('ui-song-title').innerText = data.title;
             document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
             
-            // Connect pure audio API
             audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
-            audioPlayer.currentTime = 0;
+            
+            // CRITICAL FIX: Wait for metadata before setting time to prevent mobile browser crash
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                audioPlayer.currentTime = 0;
+                
+                if (isCurrentUserHost) {
+                    audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
+                } else {
+                    // Force the Mobile Tap-To-Sync Button to appear if autoplay policy blocks the guest
+                    audioPlayer.play().catch(e => {
+                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                    });
+                }
+            }, { once: true });
             
             updateThumbnail(data.videoId);
             startUIUpdates();
-            
-            if (isCurrentUserHost) {
-                audioPlayer.play().catch(e => console.log("Waiting for user interaction"));
-            }
         });
 
         socket.on('sync_update', (data) => {
             if (!isCurrentUserHost && audioPlayer.src) {
-                // Latency compensation: Predict network delay by adding 150ms
                 const hostTime = data.time + 0.15; 
-                const myTime = audioPlayer.currentTime;
                 
-                // Only scrub if the guest is drastically out of sync (> 0.4 seconds off)
-                if (Math.abs(myTime - hostTime) > 0.4) {
-                    audioPlayer.currentTime = hostTime;
+                if (audioPlayer.readyState >= 1) { 
+                    const myTime = audioPlayer.currentTime;
+                    if (Math.abs(myTime - hostTime) > 0.4) {
+                        audioPlayer.currentTime = hostTime;
+                    }
                 }
                 
                 if (data.state === 'PLAYING' && audioPlayer.paused) {
-                    audioPlayer.play().catch(e => console.log("Autoplay blocked"));
+                    audioPlayer.play().then(() => {
+                        document.getElementById('skip-ad-btn').style.display = 'none';
+                    }).catch(e => {
+                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                    });
                 } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
                     audioPlayer.pause();
                 }
@@ -820,16 +840,35 @@
             
             if (currentVid !== pendingVideo.videoId) {
                 audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
-                audioPlayer.currentTime = pendingTime;
+                
+                // CRITICAL FIX: Safe metadata loading
+                audioPlayer.addEventListener('loadedmetadata', () => {
+                    audioPlayer.currentTime = pendingTime;
+                    if (pendingState) {
+                        audioPlayer.play().catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                        });
+                    }
+                }, { once: true });
+                
                 updateThumbnail(pendingVideo.videoId);
             } else {
-                if (Math.abs(audioPlayer.currentTime - pendingTime) > 0.4) {
-                    audioPlayer.currentTime = pendingTime;
+                if (audioPlayer.readyState >= 1) {
+                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 0.4) {
+                        audioPlayer.currentTime = pendingTime;
+                    }
+                }
+                
+                if (pendingState) {
+                    audioPlayer.play().catch(e => {
+                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync Audio";
+                    });
+                } else {
+                    audioPlayer.pause();
                 }
             }
-            
-            if (pendingState) audioPlayer.play().catch(e => console.log("Autoplay blocked"));
-            else audioPlayer.pause();
             
             startUIUpdates();
             pendingVideo = null;
@@ -843,7 +882,6 @@
             document.getElementById('header-end-btn-text').innerText = isCurrentUserHost ? 'End Room' : 'Leave Room';
             document.getElementById('ui-progress-slider').style.pointerEvents = isCurrentUserHost ? 'auto' : 'none';
 
-            // Lightweight heartbeat sync (every 2 seconds instead of network spam)
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
                 syncInterval = setInterval(() => {
