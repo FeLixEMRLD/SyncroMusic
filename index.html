@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2225%22 fill=%22%23c49a02%22/><text x=%2250%22 y=%2272%22 font-size=%2265%22 font-family=%22Inter, sans-serif%22 font-weight=%22800%22 fill=%22%23fff%22 text-anchor=%22middle%22>S</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Poppins:wght@300;400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     
     <style>
         body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; color: white; height: 100vh; overflow-x: hidden; background: #000; }
@@ -383,7 +384,7 @@
                         </div>
                         
                         <div class="controls-wrapper">
-                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="manualSync()">Tap to Sync</button>
+                            <button id="skip-ad-btn" class="skip-ad-btn" onclick="manualSync()">Force Sync</button>
                             <button id="host-play-btn" class="play-pause-btn grad-0" style="display: none;" onclick="toggleHostPlay()">
                                 <svg id="icon-play" style="display:block; margin-left: 3px;" width="22" height="22" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
                                 <svg id="icon-pause" style="display:none;" width="22" height="22" viewBox="0 0 24 24" fill="white"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
@@ -391,6 +392,10 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- INVISIBLE YOUTUBE IFRAME ENGINE -->
+                <div id="youtube-player" style="position: absolute; left: -9999px; width: 200px; height: 200px; opacity: 0.01; pointer-events: none;"></div>
+
             </div>
 
             <div class="glass-card glass-effect">
@@ -415,8 +420,9 @@
         let currentActiveSongId = null;
         let currentGradientSetting = 0; 
 
-        const audioPlayer = new Audio();
-        audioPlayer.crossOrigin = 'anonymous';
+        // THE BULLETPROOF YOUTUBE ENGINE RETURNS
+        let ytPlayer;
+        let isPlayerReady = false;
 
         let isDraggingSlider = false;
         let isSeeking = false; 
@@ -652,43 +658,41 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
-        audioPlayer.addEventListener('error', (e) => {
-            console.error("Audio Engine Error:", audioPlayer.error);
-            document.getElementById('ui-song-status').innerText = "Stream failed. Searching fallback...";
-        });
 
-        audioPlayer.addEventListener('seeking', () => isSeeking = true);
-        audioPlayer.addEventListener('seeked', () => isSeeking = false);
+        // --- YOUTUBE IFRAME LOGIC ---
+        function onYouTubeIframeAPIReady() {
+            ytPlayer = new YT.Player('youtube-player', {
+                height: '200', width: '200', videoId: '', 
+                playerVars: { 'autoplay': 1, 'controls': 0, 'disablekb': 1, 'rel': 0 },
+                events: {
+                    'onReady': () => { 
+                        isPlayerReady = true; 
+                        if (pendingVideo) applyPendingVideo();
+                    },
+                    'onStateChange': onPlayerStateChange
+                }
+            });
+        }
 
-        audioPlayer.addEventListener('play', () => {
-            document.getElementById('icon-play').style.display = 'none';
-            document.getElementById('icon-pause').style.display = 'block';
-            document.getElementById('ui-song-status').innerText = "Playing Now";
-            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PLAYING' });
-        });
-
-        audioPlayer.addEventListener('pause', () => {
-            document.getElementById('icon-play').style.display = 'block';
-            document.getElementById('icon-pause').style.display = 'none';
-            document.getElementById('ui-song-status').innerText = "Paused";
-            if (isCurrentUserHost) socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PAUSED' });
-        });
-
-        audioPlayer.addEventListener('waiting', () => {
-            document.getElementById('ui-song-status').innerText = "Buffering...";
-        });
-
-        audioPlayer.addEventListener('playing', () => {
-            document.getElementById('ui-song-status').innerText = "Playing Now";
-        });
+        function onPlayerStateChange(event) {
+            const isPlaying = (event.data === YT.PlayerState.PLAYING);
+            const isBuffering = (event.data === YT.PlayerState.BUFFERING);
+            
+            document.getElementById('icon-play').style.display = isPlaying ? 'none' : 'block';
+            document.getElementById('icon-pause').style.display = isPlaying ? 'block' : 'none';
+            
+            if (ytPlayer.getVideoData && ytPlayer.getVideoData().title) {
+                document.getElementById('ui-song-status').innerText = isPlaying ? "Playing Now" : (isBuffering ? "Buffering..." : "Paused");
+            }
+        }
 
 
         function startUIUpdates() {
             clearInterval(uiInterval);
             uiInterval = setInterval(() => {
-                if (!isNaN(audioPlayer.duration) && !isDraggingSlider) {
-                    const duration = audioPlayer.duration;
-                    const current = audioPlayer.currentTime;
+                if (isPlayerReady && ytPlayer.getDuration && !isDraggingSlider) {
+                    const duration = ytPlayer.getDuration();
+                    const current = ytPlayer.getCurrentTime();
                     if (duration > 0) {
                         const percentage = (current / duration) * 100;
                         const slider = document.getElementById('ui-progress-slider');
@@ -707,26 +711,24 @@
 
         function hostSeekTo(value) {
             isDraggingSlider = false;
-            if (isCurrentUserHost && !isNaN(audioPlayer.duration)) {
-                const seekTime = (value / 100) * audioPlayer.duration;
-                audioPlayer.currentTime = seekTime;
-                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: audioPlayer.paused ? 'PAUSED' : 'PLAYING' });
+            if (isCurrentUserHost && isPlayerReady && ytPlayer.getDuration) {
+                const duration = ytPlayer.getDuration();
+                const seekTime = (value / 100) * duration;
+                ytPlayer.seekTo(seekTime, true);
+                socket.emit('sync_time', { roomCode: currentRoomCode, time: seekTime, state: ytPlayer.getPlayerState(), timestamp: Date.now() });
             }
         }
 
         function toggleHostPlay() {
-            if (!audioPlayer.src) return;
-            if (audioPlayer.paused) audioPlayer.play();
-            else audioPlayer.pause();
+            if (!isPlayerReady) return;
+            const isPlaying = (ytPlayer.getPlayerState() === YT.PlayerState.PLAYING);
+            if (isPlaying) ytPlayer.pauseVideo();
+            else ytPlayer.playVideo();
         }
 
         function manualSync() {
-            const playPromise = audioPlayer.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    document.getElementById('skip-ad-btn').style.display = 'none';
-                }).catch(e => console.error("Manual sync failed", e));
-            }
+            if (isPlayerReady) ytPlayer.playVideo();
+            document.getElementById('skip-ad-btn').style.display = 'none';
         }
 
         function handleSearchInput() {
@@ -796,99 +798,54 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        // --- NEW PIPED API PROXY (ZERO BACKEND LOAD) ---
-        async function getAudioStreamUrl(videoId) {
-            const instances = [
-                'https://pipedapi.kavin.rocks',
-                'https://pipedapi.smnz.de',
-                'https://pipedapi.adminforge.de'
-            ];
-            
-            for (let api of instances) {
-                try {
-                    const res = await fetch(`${api}/streams/${videoId}`);
-                    if (!res.ok) continue;
-                    const data = await res.json();
-                    
-                    if (data.audioStreams && data.audioStreams.length > 0) {
-                        return data.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0].url;
-                    }
-                } catch (e) {
-                    console.log(`Fallback to next proxy instance...`);
-                }
-            }
-            return null;
-        }
-
-        socket.on('song_loaded', async (data) => {
+        // --- NEW SMART SYNC & PING COMPENSATION ---
+        socket.on('song_loaded', (data) => {
             currentActiveSongId = data.videoId;
             document.getElementById('ui-song-title').innerText = data.title;
-            document.getElementById('ui-song-status').innerText = "Extracting raw audio...";
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            const streamUrl = await getAudioStreamUrl(data.videoId);
-            
-            if (!streamUrl) {
-                document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
-                return;
+            if (isPlayerReady && ytPlayer && typeof ytPlayer.loadVideoById === 'function') {
+                ytPlayer.loadVideoById(data.videoId);
+                updateThumbnail(data.videoId);
+                startUIUpdates();
+            } else {
+                pendingVideo = data;
             }
-
-            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
-            audioPlayer.src = streamUrl;
-            audioPlayer.playbackRate = 1.0;
-            
-            audioPlayer.addEventListener('loadedmetadata', () => {
-                audioPlayer.currentTime = 0;
-                const playPromise = audioPlayer.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(e => {
-                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = isCurrentUserHost ? "Tap to Start" : "Tap to Sync";
-                    });
-                }
-            }, { once: true });
-            
-            updateThumbnail(data.videoId);
-            startUIUpdates();
         });
 
         socket.on('sync_update', (data) => {
-            if (!isCurrentUserHost && audioPlayer.src && !isSeeking) {
-                const hostTime = data.time; 
+            if (!isCurrentUserHost && isPlayerReady) {
+                // Network Ping Calculation
+                const ping = Math.max(0, (Date.now() - data.hostTimestamp) / 1000); 
+                const hostTime = data.time + ping; 
                 
-                if (audioPlayer.readyState >= 2) { 
-                    const myTime = audioPlayer.currentTime;
-                    const drift = hostTime - myTime;
-                    
-                    // Smart Sync: Smoothly corrects audio drift without re-buffering
-                    if (Math.abs(drift) > 3) {
-                        audioPlayer.currentTime = hostTime; 
-                    } else if (drift > 0.4) {
-                        audioPlayer.playbackRate = 1.15;
-                    } else if (drift < -0.4) {
-                        audioPlayer.playbackRate = 0.85; 
-                    } else {
-                        audioPlayer.playbackRate = 1.0; 
-                    }
+                const myState = ytPlayer.getPlayerState();
+                const myTime = ytPlayer.getCurrentTime();
+                const drift = hostTime - myTime;
+                
+                // Smart Playback Rate Adjustment (No more buffering loops!)
+                if (Math.abs(drift) > 4) {
+                    ytPlayer.seekTo(hostTime, true);
+                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                } else if (drift > 0.5) {
+                    ytPlayer.setPlaybackRate(1.25);
+                } else if (drift < -0.5) {
+                    ytPlayer.setPlaybackRate(0.75);
+                } else {
+                    ytPlayer.setPlaybackRate(1.0);
+                    document.getElementById('skip-ad-btn').style.display = 'none';
                 }
                 
-                if (data.state === 'PLAYING' && audioPlayer.paused) {
-                    const playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            document.getElementById('skip-ad-btn').style.display = 'none';
-                        }).catch(e => {
-                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                        });
-                    }
-                } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
-                    audioPlayer.pause();
+                if (data.state === 1 && myState !== 1 && myState !== 3) {
+                    ytPlayer.playVideo();
+                } else if (data.state === 2 && myState !== 2) { 
+                    ytPlayer.pauseVideo();
+                    ytPlayer.setPlaybackRate(1.0);
                 }
             }
         });
 
-        async function applyPendingVideo() {
+        function applyPendingVideo() {
             if (!pendingVideo) return;
             const currentVid = currentActiveSongId;
             currentActiveSongId = pendingVideo.videoId;
@@ -897,51 +854,14 @@
             document.getElementById('skip-ad-btn').style.display = 'none';
             
             if (currentVid !== pendingVideo.videoId) {
-                document.getElementById('ui-song-status').innerText = "Extracting raw audio...";
-                const streamUrl = await getAudioStreamUrl(pendingVideo.videoId);
-                
-                if (!streamUrl) {
-                    document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
-                    return;
-                }
-
-                document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
-                audioPlayer.src = streamUrl;
-                audioPlayer.playbackRate = 1.0;
-                
-                audioPlayer.addEventListener('loadedmetadata', () => {
-                    audioPlayer.currentTime = pendingTime;
-                    if (pendingState) {
-                        const playPromise = audioPlayer.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(e => {
-                                document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                                document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                            });
-                        }
-                    }
-                }, { once: true });
-                
+                ytPlayer.loadVideoById({videoId: pendingVideo.videoId, startSeconds: pendingTime});
                 updateThumbnail(pendingVideo.videoId);
             } else {
-                if (audioPlayer.readyState >= 1) {
-                    if (Math.abs(audioPlayer.currentTime - pendingTime) > 3) {
-                        audioPlayer.currentTime = pendingTime;
-                    }
-                }
-                
-                if (pendingState) {
-                    const playPromise = audioPlayer.play();
-                    if (playPromise !== undefined) {
-                        playPromise.catch(e => {
-                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                        });
-                    }
-                } else {
-                    audioPlayer.pause();
-                }
+                if (Math.abs(ytPlayer.getCurrentTime() - pendingTime) > 0.4) ytPlayer.seekTo(pendingTime);
             }
+            
+            if (pendingState) ytPlayer.playVideo();
+            else ytPlayer.pauseVideo();
             
             startUIUpdates();
             pendingVideo = null;
@@ -958,10 +878,15 @@
             if (isCurrentUserHost) {
                 clearInterval(syncInterval);
                 syncInterval = setInterval(() => {
-                    if(!audioPlayer.paused && audioPlayer.src) {
-                        socket.emit('sync_time', { roomCode: currentRoomCode, time: audioPlayer.currentTime, state: 'PLAYING' });
+                    if(isPlayerReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) {
+                        socket.emit('sync_time', { 
+                            roomCode: currentRoomCode, 
+                            time: ytPlayer.getCurrentTime(), 
+                            state: YT.PlayerState.PLAYING,
+                            timestamp: Date.now() 
+                        });
                     }
-                }, 2000); 
+                }, 1500); 
             } else {
                 clearInterval(syncInterval);
             }
@@ -970,7 +895,7 @@
                 pendingVideo = { videoId: data.currentVideo, title: data.currentTitle };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
-                applyPendingVideo();
+                if (isPlayerReady) applyPendingVideo();
             }
             
             const titleEl = document.getElementById('display-room-title');
@@ -1176,8 +1101,7 @@
             document.getElementById('album-art-svg').style.display = 'block';
             document.getElementById('skip-ad-btn').style.display = 'none';
             currentActiveSongId = null;
-            
-            audioPlayer.src = "";
+            if (isPlayerReady) ytPlayer.stopVideo();
         }
 
         function openModal() {
@@ -1218,7 +1142,7 @@
         function forceClearRoomState() {
             clearInterval(syncInterval);
             clearInterval(uiInterval);
-            audioPlayer.src = ""; 
+            if (isPlayerReady) ytPlayer.stopVideo();
             currentRoomCode = '';
             localStorage.removeItem('syncro_room_code');
             document.getElementById('live-user-list').innerHTML = '';
