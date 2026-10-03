@@ -46,7 +46,6 @@
         .nav-item.active { color: black; font-weight: 500; }
         #active-pill { position: absolute; top: 0; left: 0; height: 100%; background-color: white; border-radius: 20px; z-index: 0; transition: all 0.3s ease; }
         
-        /* SLEEK PROFILE UI */
         .user-profile-container { position: relative; display: inline-block; z-index: 200; }
         .user-profile { display: flex; align-items: center; gap: 12px; font-size: 14px; font-weight: 600; padding: 4px 6px 4px 14px; border-radius: 25px; transition: transform 0.2s ease, background 0.2s; color: white; cursor: pointer; background: transparent; }
         .user-profile:hover { transform: scale(1.03); background: rgba(255,255,255,0.1); }
@@ -132,7 +131,7 @@
         .dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
         .glass-card { border-radius: 16px; padding: 25px; position: relative; }
         
-        /* MOBILE OPTIMIZED PLAYER UI */
+        /* PLAYER UI */
         .custom-player { display: flex; align-items: center; gap: 20px; width: 100%; box-sizing: border-box; }
         .album-art-placeholder { width: 80px; height: 80px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #888; flex-shrink: 0; overflow: hidden; position: relative;}
         .song-details { flex-grow: 1; overflow: hidden; }
@@ -153,15 +152,15 @@
             color: black; 
             border: none; 
             border-radius: 20px; 
-            padding: 8px 16px; 
-            font-size: 13px; 
+            padding: 10px 24px; 
+            font-size: 14px; 
             cursor: pointer; 
-            font-weight: 600; 
-            transition: all 0.2s; 
-            font-family: 'Inter', sans-serif;
-            margin-right: 10px;
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+            font-family: 'Poppins', sans-serif;
+            margin-right: 15px;
         }
-        .skip-ad-btn:hover { background: #f0f0f0; transform: scale(1.05); }
+        .skip-ad-btn:hover { transform: scale(1.05); }
 
         /* FLOATING SEARCH OVERLAY */
         #host-controls { display: none; margin-bottom: 20px; z-index: 50; position: relative; }
@@ -209,7 +208,6 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* EXTREME MOBILE OPTIMIZATIONS */
         @media (max-width: 768px) {
             nav { flex-direction: column; padding: 20px; gap: 15px; }
             .nav-container { width: 100%; overflow-x: auto; justify-content: flex-start; padding-bottom: 5px; flex-wrap: nowrap; }
@@ -421,7 +419,7 @@
         audioPlayer.crossOrigin = 'anonymous';
 
         let isDraggingSlider = false;
-        let isSeeking = false; // Tracks if user is manually scrubbing
+        let isSeeking = false; 
         let syncInterval;
         let uiInterval;
         let searchTimeout = null;
@@ -654,10 +652,9 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
-        // --- FORTIFIED AUDIO EVENT LISTENERS ---
         audioPlayer.addEventListener('error', (e) => {
             console.error("Audio Engine Error:", audioPlayer.error);
-            document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
+            document.getElementById('ui-song-status').innerText = "Stream failed. Searching fallback...";
         });
 
         audioPlayer.addEventListener('seeking', () => isSeeking = true);
@@ -724,9 +721,12 @@
         }
 
         function manualSync() {
-            audioPlayer.play().then(() => {
-                document.getElementById('skip-ad-btn').style.display = 'none';
-            }).catch(e => console.error("Manual sync failed", e));
+            const playPromise = audioPlayer.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    document.getElementById('skip-ad-btn').style.display = 'none';
+                }).catch(e => console.error("Manual sync failed", e));
+            }
         }
 
         function handleSearchInput() {
@@ -796,22 +796,56 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(videoId);
         }
 
-        // --- NEW SMART SYNC LOGIC ---
-        socket.on('song_loaded', (data) => {
+        // --- NEW PIPED API PROXY (ZERO BACKEND LOAD) ---
+        async function getAudioStreamUrl(videoId) {
+            const instances = [
+                'https://pipedapi.kavin.rocks',
+                'https://pipedapi.smnz.de',
+                'https://pipedapi.adminforge.de'
+            ];
+            
+            for (let api of instances) {
+                try {
+                    const res = await fetch(`${api}/streams/${videoId}`);
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    
+                    if (data.audioStreams && data.audioStreams.length > 0) {
+                        return data.audioStreams.sort((a, b) => b.bitrate - a.bitrate)[0].url;
+                    }
+                } catch (e) {
+                    console.log(`Fallback to next proxy instance...`);
+                }
+            }
+            return null;
+        }
+
+        socket.on('song_loaded', async (data) => {
             currentActiveSongId = data.videoId;
             document.getElementById('ui-song-title').innerText = data.title;
-            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+            document.getElementById('ui-song-status').innerText = "Extracting raw audio...";
             document.getElementById('skip-ad-btn').style.display = 'none';
             
-            audioPlayer.src = `${RENDER_URL}/stream/${data.videoId}`;
+            const streamUrl = await getAudioStreamUrl(data.videoId);
+            
+            if (!streamUrl) {
+                document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
+                return;
+            }
+
+            document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+            audioPlayer.src = streamUrl;
             audioPlayer.playbackRate = 1.0;
             
-            audioPlayer.addEventListener('canplay', () => {
+            audioPlayer.addEventListener('loadedmetadata', () => {
                 audioPlayer.currentTime = 0;
-                audioPlayer.play().catch(e => {
-                    document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                    document.getElementById('skip-ad-btn').innerText = isCurrentUserHost ? "Tap to Start" : "Tap to Sync";
-                });
+                const playPromise = audioPlayer.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                        document.getElementById('skip-ad-btn').innerText = isCurrentUserHost ? "Tap to Start" : "Tap to Sync";
+                    });
+                }
             }, { once: true });
             
             updateThumbnail(data.videoId);
@@ -826,65 +860,84 @@
                     const myTime = audioPlayer.currentTime;
                     const drift = hostTime - myTime;
                     
-                    // Smart Sync: Adjusts playback speed instead of breaking network requests
+                    // Smart Sync: Smoothly corrects audio drift without re-buffering
                     if (Math.abs(drift) > 3) {
-                        audioPlayer.currentTime = hostTime; // Hard seek only if severely behind
+                        audioPlayer.currentTime = hostTime; 
                     } else if (drift > 0.4) {
-                        audioPlayer.playbackRate = 1.15; // Speed up to catch host
+                        audioPlayer.playbackRate = 1.15;
                     } else if (drift < -0.4) {
-                        audioPlayer.playbackRate = 0.85; // Slow down to let host catch up
+                        audioPlayer.playbackRate = 0.85; 
                     } else {
-                        audioPlayer.playbackRate = 1.0; // Perfectly synced
+                        audioPlayer.playbackRate = 1.0; 
                     }
                 }
                 
                 if (data.state === 'PLAYING' && audioPlayer.paused) {
-                    audioPlayer.play().then(() => {
-                        document.getElementById('skip-ad-btn').style.display = 'none';
-                    }).catch(e => {
-                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                    });
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            document.getElementById('skip-ad-btn').style.display = 'none';
+                        }).catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
+                    }
                 } else if (data.state === 'PAUSED' && !audioPlayer.paused) {
                     audioPlayer.pause();
                 }
             }
         });
 
-        function applyPendingVideo() {
+        async function applyPendingVideo() {
             if (!pendingVideo) return;
             const currentVid = currentActiveSongId;
             currentActiveSongId = pendingVideo.videoId;
 
             document.getElementById('ui-song-title').innerText = pendingVideo.title;
+            document.getElementById('skip-ad-btn').style.display = 'none';
             
             if (currentVid !== pendingVideo.videoId) {
-                audioPlayer.src = `${RENDER_URL}/stream/${pendingVideo.videoId}`;
+                document.getElementById('ui-song-status').innerText = "Extracting raw audio...";
+                const streamUrl = await getAudioStreamUrl(pendingVideo.videoId);
+                
+                if (!streamUrl) {
+                    document.getElementById('ui-song-status').innerText = "Stream failed. Try another song.";
+                    return;
+                }
+
+                document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
+                audioPlayer.src = streamUrl;
                 audioPlayer.playbackRate = 1.0;
                 
-                audioPlayer.addEventListener('canplay', () => {
+                audioPlayer.addEventListener('loadedmetadata', () => {
                     audioPlayer.currentTime = pendingTime;
                     if (pendingState) {
-                        audioPlayer.play().catch(e => {
-                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                        });
+                        const playPromise = audioPlayer.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(e => {
+                                document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                                document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                            });
+                        }
                     }
                 }, { once: true });
                 
                 updateThumbnail(pendingVideo.videoId);
             } else {
-                if (audioPlayer.readyState >= 2) {
+                if (audioPlayer.readyState >= 1) {
                     if (Math.abs(audioPlayer.currentTime - pendingTime) > 3) {
                         audioPlayer.currentTime = pendingTime;
                     }
                 }
                 
                 if (pendingState) {
-                    audioPlayer.play().catch(e => {
-                        document.getElementById('skip-ad-btn').style.display = 'inline-block';
-                        document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
-                    });
+                    const playPromise = audioPlayer.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(e => {
+                            document.getElementById('skip-ad-btn').style.display = 'inline-block';
+                            document.getElementById('skip-ad-btn').innerText = "Tap to Sync";
+                        });
+                    }
                 } else {
                     audioPlayer.pause();
                 }
