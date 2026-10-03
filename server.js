@@ -2,7 +2,6 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
-const ytSearch = require('yt-search'); 
 
 const app = express();
 app.use(cors()); 
@@ -14,27 +13,80 @@ const io = new Server(server, {
 
 const activeRooms = {}; 
 const roomTimeouts = {}; 
-const searchCache = new Map(); 
 
+// --- PIPED INSTANCE ARRAY (FALLBACK ARCHITECTURE) ---
+const pipedInstances = [
+    'https://pipedapi.kavin.rocks',
+    'https://pipedapi.smnz.de',
+    'https://pipedapi.adminforge.de',
+    'https://pipedapi.qwik.space',
+    'https://api.piped.projectsegfau.lt'
+];
+
+// --- SERVER-SIDE SEARCH PROXY ---
 app.get('/search', async (req, res) => {
     const query = req.query.q;
     if (!query) return res.json({ items: [] });
-    
-    if (searchCache.has(query.toLowerCase())) {
-        return res.json({ items: searchCache.get(query.toLowerCase()) });
-    }
 
-    try {
-        const results = await ytSearch(query);
-        const videos = results.videos.slice(0, 8).map(v => ({
-            id: v.videoId, title: v.title, thumbnail: v.thumbnail, author: v.author.name
-        }));
-        searchCache.set(query.toLowerCase(), videos);
-        res.json({ items: videos });
-    } catch (e) {
-        console.error("Search Engine Error:", e.message);
-        res.status(500).json({ error: 'Search failed' });
+    for (let api of pipedInstances) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4000);
+            
+            const response = await fetch(`${api}/search?q=${encodeURIComponent(query)}&filter=all`, { signal: controller.signal });
+            clearTimeout(timeout);
+            
+            if (!response.ok) continue;
+            const data = await response.json();
+            
+            const streams = data.items.filter(item => item.type === 'stream').slice(0, 8);
+            if (streams.length > 0) {
+                const results = streams.map(item => ({
+                    id: item.url.split('?v=')[1],
+                    title: item.title,
+                    thumbnail: item.thumbnail,
+                    author: item.uploaderName
+                }));
+                return res.json({ items: results });
+            }
+        } catch (e) {
+            console.log(`Search fallback triggered from ${api}`);
+        }
     }
+    res.status(500).json({ error: 'Search failed on all proxy instances.' });
+});
+
+// --- FRESH STREAM URL GENERATOR (PREVENTS TOKEN EXPIRY) ---
+app.get('/api/stream/:id', async (req, res) => {
+    const videoId = req.params.id;
+    
+    for (let api of pipedInstances) {
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 4000);
+            
+            const response = await fetch(`${api}/streams/${videoId}`, { signal: controller.signal });
+            clearTimeout(timeout);
+            
+            if (!response.ok) continue;
+            const data = await response.json();
+            
+            if (data.audioStreams && data.audioStreams.length > 0) {
+                // Safely extract native MP4 audio to prevent mobile codec crashes
+                const mp4Stream = data.audioStreams.find(s => s.mimeType && s.mimeType.includes('mp4'));
+                const streamUrl = mp4Stream ? mp4Stream.url : data.audioStreams[0].url;
+                
+                return res.json({ 
+                    streamUrl: streamUrl, 
+                    title: data.title, 
+                    thumbnail: data.thumbnailUrl 
+                });
+            }
+        } catch (e) {
+            console.log(`Stream fallback triggered from ${api}`);
+        }
+    }
+    res.status(500).json({ error: 'Failed to extract ad-free stream.' });
 });
 
 app.get('/check-room/:code', (req, res) => {
@@ -43,6 +95,7 @@ app.get('/check-room/:code', (req, res) => {
     else res.json({ valid: false });
 });
 
+// --- WEBSOCKET ENGINE ---
 io.on('connection', (socket) => {
     console.log(`User Connected: ${socket.id}`);
 
@@ -53,7 +106,7 @@ io.on('connection', (socket) => {
         socket.join(roomCode);
         activeRooms[roomCode] = { 
             hostId: socket.id, hostName: username, customRoomName: customRoomName || '', 
-            gradientIndex: gradientIndex || 'dynamic', currentVideo: null, currentTitle: '',
+            gradientIndex: gradientIndex || 'dynamic', currentVideo: null,
             currentTimestamp: 0, isPlaying: false, sockets: {} 
         };
         activeRooms[roomCode].sockets[socket.id] = { username, color };
@@ -101,15 +154,13 @@ io.on('connection', (socket) => {
         }
     });
 
-    socket.on('load_song', async (data) => {
-        const { roomCode, videoId, title } = data;
+    socket.on('load_song', (videoId) => {
+        const roomCode = socket.roomCode;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
-            let finalTitle = title || "Unknown Song";
             activeRooms[roomCode].currentVideo = videoId;
-            activeRooms[roomCode].currentTitle = finalTitle;
             activeRooms[roomCode].currentTimestamp = 0;
             activeRooms[roomCode].isPlaying = true;
-            io.to(roomCode).emit('song_loaded', { videoId, title: finalTitle });
+            io.to(roomCode).emit('song_loaded', videoId);
         }
     });
 
@@ -117,7 +168,7 @@ io.on('connection', (socket) => {
         const { roomCode, time, state, timestamp } = data;
         if (activeRooms[roomCode] && activeRooms[roomCode].hostId === socket.id) {
             activeRooms[roomCode].currentTimestamp = time;
-            activeRooms[roomCode].isPlaying = (state === 'PLAYING'); 
+            activeRooms[roomCode].isPlaying = (state === 'PLAYING');
             socket.to(roomCode).emit('sync_update', { time, state, hostTimestamp: timestamp });
         }
     });
@@ -164,8 +215,7 @@ io.on('connection', (socket) => {
         return {
             hostName: room.hostName, customRoomName: room.customRoomName,
             gradientIndex: room.gradientIndex, currentVideo: room.currentVideo,
-            currentTitle: room.currentTitle, currentTimestamp: room.currentTimestamp, 
-            isPlaying: room.isPlaying, users: uniqueUsers
+            currentTimestamp: room.currentTimestamp, isPlaying: room.isPlaying, users: uniqueUsers
         };
     }
 });
