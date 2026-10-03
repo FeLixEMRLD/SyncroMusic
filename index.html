@@ -641,7 +641,6 @@
             socket.emit('change_gradient', { roomCode: currentRoomCode, gradientIndex: setting });
         }
 
-        // --- PURE HTML AUDIO EVENTS ---
         audioPlayer.addEventListener('error', (e) => {
             console.error("Audio Engine Error");
             document.getElementById('ui-song-status').innerText = "Stream error. Host must re-queue.";
@@ -769,7 +768,8 @@
         }
 
         function executeHostLoad(item) {
-            socket.emit('load_song', item.id);
+            // Send the entire object so the backend doesn't have to scrape for the title
+            socket.emit('load_song', { id: item.id, title: item.title, thumbnail: item.thumbnail });
         }
 
         function updateThumbnail(thumbnailUrl) {
@@ -780,9 +780,16 @@
             if (currentGradientSetting === 'dynamic') extractAndApplyDynamicGradient(thumbnailUrl);
         }
 
-        // FIX: Reverted strictly to the reliable /api/stream/ route for everything
-        socket.on('song_loaded', async (videoId) => {
+        socket.on('song_loaded', async (dataPayload) => {
+            const videoId = dataPayload.id;
+            
             currentActiveSongId = videoId;
+            currentThumbnailUrl = dataPayload.thumbnail;
+            
+            // Instantly update UI from the websocket data
+            document.getElementById('ui-song-title').innerText = dataPayload.title;
+            updateThumbnail(dataPayload.thumbnail);
+            
             document.getElementById('ui-song-status').innerText = "Requesting secure audio stream...";
             document.getElementById('skip-ad-btn').style.display = 'none';
             
@@ -791,10 +798,6 @@
                 const data = await res.json();
                 
                 if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
-                document.getElementById('ui-song-title').innerText = data.title;
-                currentThumbnailUrl = data.thumbnail;
-                updateThumbnail(data.thumbnail);
 
                 document.getElementById('ui-song-status').innerText = "Loading Audio Stream...";
                 audioPlayer.src = data.streamUrl;
@@ -857,15 +860,18 @@
             }
         });
 
-        // FIX: Reverted applyPendingVideo to match the working route
         async function applyPendingVideo() {
             if (!pendingVideo) return;
             const targetVideoId = pendingVideo.videoId;
             const targetTime = pendingTime;
             const targetState = pendingState;
-            pendingVideo = null;
-
+            
             if (currentActiveSongId !== targetVideoId) {
+                currentActiveSongId = targetVideoId;
+                currentThumbnailUrl = pendingVideo.thumbnail;
+                
+                document.getElementById('ui-song-title').innerText = pendingVideo.title;
+                updateThumbnail(pendingVideo.thumbnail);
                 document.getElementById('ui-song-status').innerText = "Fetching secure stream...";
                 document.getElementById('skip-ad-btn').style.display = 'none';
 
@@ -874,11 +880,6 @@
                     const data = await res.json();
                     
                     if (data.error || !data.streamUrl) throw new Error("Stream failed");
-
-                    currentActiveSongId = targetVideoId;
-                    currentThumbnailUrl = data.thumbnail;
-                    document.getElementById('ui-song-title').innerText = data.title;
-                    updateThumbnail(data.thumbnail);
 
                     audioPlayer.src = data.streamUrl;
                     audioPlayer.playbackRate = 1.0;
@@ -917,7 +918,7 @@
                     audioPlayer.pause();
                 }
             }
-            
+            pendingVideo = null;
             startUIUpdates();
         }
 
@@ -946,7 +947,11 @@
             }
 
             if (data.currentVideo) {
-                pendingVideo = { videoId: data.currentVideo };
+                pendingVideo = { 
+                    videoId: data.currentVideo,
+                    title: data.currentTitle,
+                    thumbnail: data.currentThumbnail
+                };
                 pendingTime = data.currentTimestamp;
                 pendingState = data.isPlaying;
                 applyPendingVideo();
@@ -1207,6 +1212,6 @@
             navigateTo('home', document.querySelectorAll('.nav-item')[0]);
         }
     </script>
-
+       
 </body>
 </html>
